@@ -104,9 +104,23 @@ class SentimentAgent:
         if not os.path.exists(SENTIMENT_HISTORY_FILE):
             pd.DataFrame(columns=['timestamp', 'sentiment_score', 'num_tweets']).to_csv(SENTIMENT_HISTORY_FILE, index=False)
         
-        # Load the sentiment model at initialization
+        # Load the sentiment model at initialization with retry logic
         cprint("🤖 Loading sentiment model...", "cyan")
-        self.init_sentiment_model()
+        max_retries = 3
+        retry_count = 0
+        
+        while (self.tokenizer is None or self.model is None) and retry_count < max_retries:
+            try:
+                self.init_sentiment_model()
+                if self.tokenizer is not None and self.model is not None:
+                    break
+            except Exception as e:
+                print(f"⚠️ Error initializing model (attempt {retry_count + 1}/{max_retries}): {str(e)}")
+                retry_count += 1
+                if retry_count < max_retries:
+                    time.sleep(1)  # Wait before retrying
+                else:
+                    raise ValueError(f"Failed to initialize sentiment model after {max_retries} attempts")
             
         cprint("🌙 Moon Dev's Sentiment Agent initialized! (Twitter functionality disabled)", "green")
         
@@ -123,19 +137,24 @@ class SentimentAgent:
 
     def analyze_sentiment(self, texts):
         """Analyze sentiment of a batch of texts"""
-        self.init_sentiment_model()
-        
+        if self.tokenizer is None or self.model is None:
+            raise ValueError("Sentiment model not initialized")
+            
         sentiments = []
         batch_size = 8  # Process in small batches to avoid memory issues
         
-        for i in range(0, len(texts), batch_size):
-            batch_texts = texts[i:i + batch_size]
-            inputs = self.tokenizer(batch_texts, padding=True, truncation=True, max_length=128, return_tensors="pt")
-            
-            with torch.no_grad():
-                outputs = self.model(**inputs)
-                predictions = torch.nn.functional.softmax(outputs.logits, dim=-1)
-                sentiments.extend(predictions.tolist())
+        try:
+            for i in range(0, len(texts), batch_size):
+                batch_texts = texts[i:i + batch_size]
+                inputs = self.tokenizer(batch_texts, padding=True, truncation=True, max_length=128, return_tensors="pt")
+                
+                with torch.no_grad():
+                    outputs = self.model(**inputs)
+                    predictions = torch.nn.functional.softmax(outputs.logits, dim=-1)
+                    sentiments.extend(predictions.tolist())
+        except Exception as e:
+            cprint(f"❌ Error analyzing sentiment: {str(e)}", "red")
+            return 0.0  # Return neutral sentiment on error
         
         # Convert to sentiment scores (-1 to 1)
         scores = []
