@@ -118,9 +118,13 @@ class ModelFactory:
             cprint("\n🔄 Initializing Ollama model...", "cyan")
             model_class = self.MODEL_IMPLEMENTATIONS["ollama"]
             model_name = self.DEFAULT_MODELS["ollama"]
+            if not model_name:
+                raise ValueError("Model name cannot be empty")
             cprint(f"🔄 Initializing Ollama with model {model_name}...", "cyan")
             try:
                 model_instance = model_class(api_key=None, model_name=model_name)
+                if not model_instance:
+                    raise ValueError(f"Failed to create model instance for {model_name}")
                 if model_instance.is_available():
                     self._models["ollama"] = model_instance
                     initialized = True
@@ -168,15 +172,23 @@ class ModelFactory:
         try:
             if model_type == "ollama":
                 model_name = model_name or self.DEFAULT_MODELS["ollama"]
+                if not model_name:
+                    raise ValueError("Model name cannot be empty")
                 cprint(f"🔄 Initializing Ollama with model {model_name}...", "cyan")
-                model = self.MODEL_IMPLEMENTATIONS[model_type](
-                    api_key=None,
-                    model_name=model_name
-                )
-                if model.is_available():
-                    self._models[model_type] = model
-                    cprint(f"✨ Successfully initialized Ollama with model {model_name}", "green")
-                    return model
+                try:
+                    model = self.MODEL_IMPLEMENTATIONS[model_type](
+                        api_key=None,
+                        model_name=model_name
+                    )
+                    if model and model.is_available():
+                        self._models[model_type] = model
+                        cprint(f"✨ Successfully initialized Ollama with model {model_name}", "green")
+                        return model
+                    else:
+                        cprint(f"⚠️ Model {model_name} not available", "yellow")
+                except Exception as e:
+                    cprint(f"❌ Error initializing model: {str(e)}", "red")
+                    return None
             else:
                 if model_type not in self._models:
                     key_name = self._get_api_key_mapping().get(model_type)
@@ -236,6 +248,9 @@ class ModelFactory:
                     self._initialize_models()
                 
                 model_name = self.DEFAULT_MODELS["ollama"]
+                if not model_name:
+                    raise ValueError("Model name cannot be empty")
+                
                 if "ollama" not in self._models:
                     model = self.get_model("ollama", model_name)
                     if not model:
@@ -260,4 +275,4 @@ class ModelFactory:
         return None
 
 # Create a singleton instance
-model_factory = ModelFactory()                            
+model_factory = ModelFactory()                                      
