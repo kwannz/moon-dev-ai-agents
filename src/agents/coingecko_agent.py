@@ -232,8 +232,8 @@ from datetime import datetime, timedelta
 import time
 from dotenv import load_dotenv
 from termcolor import colored, cprint
-import anthropic
 from pathlib import Path
+from src.models import model_factory
 import openai
 
 # Local imports
@@ -276,24 +276,15 @@ cleanup_old_memory_files()  # Clean up old files on startup
 class AIAgent:
     """Individual AI Agent for collaborative decision making"""
     
-    def __init__(self, name: str, model: str = None):
+    def __init__(self, name: str, model: str = "deepseek-r1:1.5b"):
         self.name = name
-        self.model = model or AI_MODEL
+        self.model_name = model
         
-        # Initialize appropriate client based on model
-        if "deepseek" in self.model.lower():
-            deepseek_key = os.getenv("DEEPSEEK_KEY")
-            if deepseek_key:
-                self.client = openai.OpenAI(
-                    api_key=deepseek_key,
-                    base_url=DEEPSEEK_BASE_URL
-                )
-                print(f"🚀 {name} using DeepSeek model: {model}")
-            else:
-                raise ValueError("🚨 DEEPSEEK_KEY not found in environment variables!")
-        else:
-            self.client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_KEY"))
-            print(f"🤖 {name} using Claude model: {model}")
+        # Initialize Ollama model
+        self.model = model_factory.get_model("ollama", self.model_name)
+        if not self.model:
+            raise ValueError(f"Could not initialize Ollama model {self.model_name}")
+        print(f"🤖 {name} using Ollama model: {model}")
             
         # Use a simpler memory file name
         self.memory_file = AGENT_MEMORY_DIR / f"{name.lower().replace(' ', '_')}.json"
@@ -360,30 +351,14 @@ Remember to format your response like this:
 [Fun reference to Moon Dev's trading style]
 """
             
-            # Get AI response with correct client
-            if "deepseek" in self.model.lower():
-                response = self.client.chat.completions.create(
-                    model=self.model,
-                    messages=[
-                        {"role": "system", "content": prompt},
-                        {"role": "user", "content": market_context}
-                    ],
-                    max_tokens=max_tokens,
-                    temperature=temperature
-                )
-                response_text = response.choices[0].message.content
-            else:
-                message = self.client.messages.create(
-                    model=self.model,
-                    max_tokens=max_tokens,
-                    temperature=temperature,
-                    system=prompt,
-                    messages=[{
-                        "role": "user",
-                        "content": market_context
-                    }]
-                )
-                response_text = str(message.content)
+            # Get AI response using Ollama model
+            response_text = self.model.generate_response(
+                system_prompt=prompt,
+                user_content=market_context,
+                temperature=temperature
+            )
+            if response_text is None:
+                raise ValueError("Failed to get model response")
             
             # Clean up the response
             response = (response_text
@@ -548,8 +523,9 @@ class TokenExtractorAgent:
     """Agent that extracts token/crypto symbols from conversations"""
     
     def __init__(self):
-        self.client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_KEY"))
-        self.model = TOKEN_EXTRACTOR_MODEL
+        self.model = model_factory.get_model("ollama", "deepseek-r1:1.5b")
+        if not self.model:
+            raise ValueError("Could not initialize Ollama model")
         self.token_history = self._load_token_history()
         cprint("🔍 Token Extractor Agent initialized!", "white", "on_cyan")
         
@@ -567,14 +543,9 @@ class TokenExtractorAgent:
         try:
             print_section("🔍 Extracting Mentioned Tokens", "on_cyan")
             
-            message = self.client.messages.create(
-                model=self.model,
-                max_tokens=EXTRACTOR_MAX_TOKENS,
-                temperature=EXTRACTOR_TEMP,
-                system=TOKEN_EXTRACTOR_PROMPT,  # Use the token extractor prompt
-                messages=[{
-                    "role": "user",
-                    "content": f"""
+            response = self.model.generate_response(
+                system_prompt=TOKEN_EXTRACTOR_PROMPT,
+                user_content=f"""
 Agent One said:
 {agent_one_msg}
 
@@ -582,12 +553,12 @@ Agent Two said:
 {agent_two_msg}
 
 Extract all token symbols and return as a simple list.
-"""
-                }]
+""",
+                temperature=EXTRACTOR_TEMP
             )
             
             # Clean up response and split into list
-            tokens = str(message.content).strip().split('\n')
+            tokens = str(response).strip().split('\n')
             tokens = [t.strip().upper() for t in tokens if t.strip()]
             
             # Create records for each token
@@ -633,14 +604,9 @@ class MultiAgentSystem:
     def generate_round_synopsis(self, agent_one_response: str, agent_two_response: str) -> str:
         """Generate a brief synopsis of the round's key points using Synopsis Agent"""
         try:
-            message = self.agent_one.client.messages.create(
-                model="claude-3-haiku-20240307",
-                max_tokens=SYNOPSIS_MAX_TOKENS,
-                temperature=SYNOPSIS_TEMP,
-                system=SYNOPSIS_AGENT_PROMPT,  # Use the synopsis agent prompt
-                messages=[{
-                    "role": "user",
-                    "content": f"""
+            response = self.agent_one.model.generate_response(
+                system_prompt=SYNOPSIS_AGENT_PROMPT,
+                user_content=f"""
 Agent One said:
 {agent_one_response}
 
@@ -648,11 +614,11 @@ Agent Two said:
 {agent_two_response}
 
 Create a brief synopsis of this trading round.
-"""
-                }]
+""",
+                temperature=SYNOPSIS_TEMP
             )
             
-            synopsis = str(message.content).strip()
+            synopsis = str(response).strip()
             return synopsis
             
         except Exception as e:

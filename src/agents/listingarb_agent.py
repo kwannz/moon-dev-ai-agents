@@ -109,8 +109,8 @@ from datetime import datetime, timedelta
 import time
 from pathlib import Path
 from termcolor import colored, cprint
-import anthropic
 from dotenv import load_dotenv
+from src.models import model_factory
 import requests
 import numpy as np
 import concurrent.futures

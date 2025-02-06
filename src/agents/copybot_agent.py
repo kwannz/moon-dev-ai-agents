@@ -13,7 +13,6 @@ Need an API key? for a limited time, bootcamp members get free api keys for clau
 
 import os
 import pandas as pd
-import anthropic
 from termcolor import colored, cprint
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
@@ -21,6 +20,7 @@ import time
 from src.config import *
 from src import nice_funcs as n
 from src.data.ohlcv_collector import collect_all_tokens, collect_token_data
+from src.models import model_factory
 
 # Data path for current copybot portfolio
 COPYBOT_PORTFOLIO_PATH = '/Users/md/Dropbox/dev/github/solana-copy-trader/csvs/current_portfolio.csv'
@@ -68,7 +68,9 @@ class CopyBotAgent:
     def __init__(self):
         """Initialize the CopyBot agent with LLM"""
         load_dotenv()
-        self.client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_KEY"))
+        self.model = model_factory.get_model("ollama", "deepseek-r1:1.5b")
+        if not self.model:
+            raise ValueError("Could not initialize Ollama model")
         self.recommendations_df = pd.DataFrame(columns=['token', 'action', 'confidence', 'reasoning'])
         print("🤖 Moon Dev's CopyBot Agent initialized!")
         
@@ -137,18 +139,11 @@ class CopyBotAgent:
             print("\n🤖 Sending data to Moon Dev's AI for analysis...")
             
             # Get LLM analysis
-            message = self.client.messages.create(
-                model=AI_MODEL,
-                max_tokens=AI_MAX_TOKENS,
-                temperature=AI_TEMPERATURE,
-                messages=[{
-                    "role": "user",
-                    "content": full_prompt
-                }]
+            response = self.model.generate_response(
+                system_prompt="You are Moon Dev's CopyBot Agent. Analyze portfolio positions and market data.",
+                user_content=full_prompt,
+                temperature=AI_TEMPERATURE
             )
-            
-            # Parse response
-            response = message.content
             if isinstance(response, list):
                 response = '\n'.join([
                     item.text if hasattr(item, 'text') else str(item)

@@ -14,8 +14,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 import time
 from dotenv import load_dotenv
-import anthropic
-import openai
+from src.models import model_factory
 from src import nice_funcs as n
 from src import nice_funcs_hl as hl
 from src.agents.base_agent import BaseAgent

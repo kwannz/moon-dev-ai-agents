@@ -25,7 +25,6 @@ import os
 import time as time_lib
 from datetime import datetime, timedelta, time
 import openai
-from anthropic import Anthropic
 from termcolor import cprint
 from dotenv import load_dotenv
 from random import randint, uniform
@@ -177,17 +176,10 @@ class FocusAgent:
         self.openai_client = openai.OpenAI(api_key=openai_key)
 
         
-        # Initialize Anthropic for Claude models
-        anthropic_key = os.getenv("ANTHROPIC_KEY")
-        if not anthropic_key:
-            raise ValueError("🚨 ANTHROPIC_KEY not found in environment variables!")
-        self.anthropic_client = Anthropic(api_key=anthropic_key)
-        
-        # Initialize Google Speech client
-        google_creds = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
-        if not google_creds:
-            raise ValueError("🚨 GOOGLE_APPLICATION_CREDENTIALS not found!")
-        self.speech_client = speech.SpeechClient()
+        # Initialize model using factory
+        self.model = model_factory.get_model(MODEL_TYPE, MODEL_NAME)
+        if not self.model:
+            raise ValueError(f"🚨 Could not initialize {MODEL_TYPE} {MODEL_NAME} model!")
         
         cprint("🎯 Moon Dev's Focus Agent initialized!", "green")
         

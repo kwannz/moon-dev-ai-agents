@@ -29,7 +29,7 @@ from collections import deque
 from src.agents.base_agent import BaseAgent
 import traceback
 import numpy as np
-import anthropic
+from src.models import model_factory
 
 # Get the project root directory
 PROJECT_ROOT = Path(__file__).parent.parent.parent
@@ -677,4 +677,4 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"❌ Error in main loop: {str(e)}")
             print("🔧 Moon Dev suggests checking the logs and trying again!")
-            time.sleep(60)  # Sleep for 1 minute on error 
+            time.sleep(60)  # Sleep for 1 minute on error  

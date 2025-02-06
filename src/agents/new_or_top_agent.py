@@ -98,8 +98,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
-import anthropic
-import openai
+from src.models import model_factory
 from typing import Dict, List
 import time
 from termcolor import colored, cprint

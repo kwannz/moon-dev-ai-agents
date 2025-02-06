@@ -15,8 +15,8 @@ from pathlib import Path
 import re
 
 import pandas as pd
-from anthropic import Anthropic
 from dotenv import load_dotenv
+from src.models import model_factory
 import openai
 
 from src.agents.base_agent import BaseAgent

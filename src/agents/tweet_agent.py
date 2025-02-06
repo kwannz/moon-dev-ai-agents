@@ -27,9 +27,8 @@ import time
 from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
-import openai
-import anthropic
 import traceback
+from src.models import model_factory
 import math
 from termcolor import colored, cprint
 import sys
@@ -97,31 +96,10 @@ class TweetAgent:
         
         load_dotenv()
         
-        # Get API keys
-        openai_key = os.getenv("OPENAI_KEY")
-        anthropic_key = os.getenv("ANTHROPIC_KEY")
-        
-        if not openai_key:
-            raise ValueError("🚨 OPENAI_KEY not found in environment variables!")
-        if not anthropic_key:
-            raise ValueError("🚨 ANTHROPIC_KEY not found in environment variables!")
-            
-        openai.api_key = openai_key
-        self.client = anthropic.Anthropic(api_key=anthropic_key)
-
-        # Initialize DeepSeek client if needed
-        if "deepseek" in self.ai_model.lower():
-            deepseek_key = os.getenv("DEEPSEEK_KEY")
-            if deepseek_key:
-                self.deepseek_client = openai.OpenAI(
-                    api_key=deepseek_key,
-                    base_url=DEEPSEEK_BASE_URL
-                )
-            else:
-                self.deepseek_client = None
-                print("⚠️ DEEPSEEK_KEY not found - DeepSeek model will not be available")
-        else:
-            self.deepseek_client = None
+        # Initialize Ollama model
+        self.model = model_factory.get_model("ollama", "deepseek-r1:1.5b")
+        if not self.model:
+            raise ValueError("Could not initialize Ollama model")
         
         # Create tweets directory if it doesn't exist
         self.tweets_dir = Path("/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/tweets")
@@ -187,39 +165,14 @@ class TweetAgent:
                 # Prepare the context
                 context = TWEET_PROMPT.format(text=chunk)
                 
-                # Use either DeepSeek or Claude based on model setting
-                if "deepseek" in self.ai_model.lower():
-                    if not self.deepseek_client:
-                        raise ValueError("🚨 DeepSeek client not initialized - check DEEPSEEK_KEY")
-                        
-                    # Make DeepSeek API call
-                    response = self.deepseek_client.chat.completions.create(
-                        model=self.ai_model,
-                        messages=[
-                            {"role": "system", "content": TWEET_PROMPT},
-                            {"role": "user", "content": context}
-                        ],
-                        max_tokens=self.ai_max_tokens,
-                        temperature=self.ai_temperature,
-                        stream=False
-                    )
-                    response_text = response.choices[0].message.content.strip()
-                else:
-                    # Get tweets using Claude
-                    message = self.client.messages.create(
-                        model=self.ai_model,
-                        max_tokens=self.ai_max_tokens,
-                        temperature=self.ai_temperature,
-                        messages=[{
-                            "role": "user",
-                            "content": context
-                        }]
-                    )
-                    # Handle both string and list responses
-                    if isinstance(message.content, list):
-                        response_text = message.content[0].text if message.content else ""
-                    else:
-                        response_text = message.content
+                # Get tweets using Ollama
+                response_text = self.model.generate_response(
+                    system_prompt="You are Moon Dev's Tweet Generator. Generate tweets based on the provided text.",
+                    user_content=context,
+                    temperature=self.ai_temperature
+                )
+                if response_text is None:
+                    response_text = ""
                 
                 # Parse tweets from response and remove any numbering
                 chunk_tweets = []

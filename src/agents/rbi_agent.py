@@ -251,8 +251,8 @@ from io import BytesIO
 import PyPDF2
 from youtube_transcript_api import YouTubeTranscriptApi
 import openai
-from anthropic import Anthropic
 from pathlib import Path
+from src.models import model_factory
 from termcolor import cprint
 import threading
 import itertools

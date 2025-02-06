@@ -23,8 +23,8 @@ from datetime import datetime, timedelta
 from termcolor import colored, cprint
 from dotenv import load_dotenv
 import openai
-import anthropic
 from pathlib import Path
+from src.models import model_factory
 from src import nice_funcs as n
 from src import nice_funcs_hl as hl
 from src.agents.api import MoonDevAPI
