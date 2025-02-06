@@ -117,12 +117,13 @@ class ModelFactory:
         try:
             cprint("\n🔄 Initializing Ollama model...", "cyan")
             model_class = self.MODEL_IMPLEMENTATIONS["ollama"]
-            model_instance = model_class(api_key=None, model_name=self.DEFAULT_MODELS["ollama"])
+            model_name = self.DEFAULT_MODELS["ollama"]
+            model_instance = model_class(api_key=None, model_name=model_name)
             
             if model_instance.is_available():
                 self._models["ollama"] = model_instance
                 initialized = True
-                cprint("✨ Successfully initialized Ollama", "green")
+                cprint(f"✨ Successfully initialized Ollama with model {model_name}", "green")
             else:
                 cprint("⚠️ Ollama server not available - make sure 'ollama serve' is running", "yellow")
         except Exception as e:
@@ -162,9 +163,11 @@ class ModelFactory:
         
         try:
             if model_type == "ollama":
+                model_name = model_name or self.DEFAULT_MODELS["ollama"]
+                cprint(f"🔄 Initializing Ollama with model {model_name}...", "cyan")
                 model = self.MODEL_IMPLEMENTATIONS[model_type](
                     api_key=None,
-                    model_name=model_name or self.DEFAULT_MODELS["ollama"]
+                    model_name=model_name
                 )
                 if model.is_available():
                     self._models[model_type] = model
@@ -228,10 +231,11 @@ class ModelFactory:
                 if not self._models:
                     self._initialize_models()
                 
+                model_name = self.DEFAULT_MODELS["ollama"]
                 if "ollama" not in self._models:
-                    model = self.get_model("ollama", "deepseek-r1:1.5b")
+                    model = self.get_model("ollama", model_name)
                     if not model:
-                        raise ValueError("Could not initialize Ollama model")
+                        raise ValueError(f"Could not initialize Ollama model {model_name}")
                     self._models["ollama"] = model
                 
                 response = self._models["ollama"].generate_response(system_prompt, user_content, temperature)
@@ -245,8 +249,11 @@ class ModelFactory:
                 retry_count += 1
                 if retry_count < max_retries:
                     time.sleep(1)  # Wait before retrying
+                    # Try to reinitialize the model
+                    if "ollama" in self._models:
+                        del self._models["ollama"]
                 
         return None
 
 # Create a singleton instance
-model_factory = ModelFactory()                    
+model_factory = ModelFactory()                          
