@@ -226,28 +226,15 @@ class ModelFactory:
         return model_type in self._models and self._models[model_type].is_available()
 
     def generate_response(self, system_prompt, user_content, temperature=0.7, max_tokens=None):
-        """Generate a response from the model with no caching"""
+        """Generate a response using the selected model"""
         try:
-            # Add random nonce to prevent caching
-            nonce = f"_{random.randint(1, 1000000)}"
-            
-            response = self.client.chat.completions.create(
-                model=self.model_name,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": f"{user_content}{nonce}"}  # Add nonce to force new response
-                ],
-                temperature=temperature,
-                max_tokens=max_tokens if max_tokens else self.max_tokens
-            )
-            
-            return response.choices[0].message
-            
+            model = self.get_model("ollama", "deepseek-r1:1.5b")
+            if not model:
+                raise ValueError("Could not initialize Ollama model")
+            return model.generate_response(system_prompt, user_content, temperature)
         except Exception as e:
-            if "503" in str(e):
-                raise e  # Let the retry logic handle 503s
             cprint(f"❌ Model error: {str(e)}", "red")
             return None
 
 # Create a singleton instance
-model_factory = ModelFactory() 
+model_factory = ModelFactory()  
