@@ -15,13 +15,12 @@ class OllamaModel(BaseModel):
     
     # Available Ollama models - can be expanded based on what's installed locally
     AVAILABLE_MODELS = [
-        "deepseek-r1",  # DeepSeek R1 through Ollama
-        "gemma:2b",     # Google's Gemma 2B model
-        "llama3.2",     # Meta's Llama 3.2 model - fast and efficient
-        # implement your own local models through hugging face/ollama here
+        "deepseek-r1:1.5b",  # DeepSeek R1 1.5B through Ollama
+        "gemma:2b",          # Google's Gemma 2B model
+        "llama3.2",          # Meta's Llama 3.2 model - fast and efficient
     ]
     
-    def __init__(self, api_key=None, model_name="llama3.2"):
+    def __init__(self, api_key=None, model_name="deepseek-r1:1.5b"):
         """Initialize Ollama model
         
         Args:
@@ -123,4 +122,4 @@ class OllamaModel(BaseModel):
             return None
     
     def __str__(self):
-        return f"OllamaModel(model={self.model_name})" 
+        return f"OllamaModel(model={self.model_name})"    
