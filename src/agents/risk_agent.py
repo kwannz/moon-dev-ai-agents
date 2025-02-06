@@ -66,30 +66,13 @@ class RiskAgent(BaseAgent):
         """Initialize Moon Dev's Risk Agent 🛡️"""
         super().__init__('risk')  # Initialize base agent with type
         
-        # Set AI parameters - use config values unless overridden
-        self.ai_model = AI_MODEL if AI_MODEL else config.AI_MODEL
-        self.ai_temperature = AI_TEMPERATURE if AI_TEMPERATURE > 0 else config.AI_TEMPERATURE
-        self.ai_max_tokens = AI_MAX_TOKENS if AI_MAX_TOKENS > 0 else config.AI_MAX_TOKENS
-        
-        print(f"🤖 Using AI Model: {self.ai_model}")
-        if AI_MODEL or AI_TEMPERATURE > 0 or AI_MAX_TOKENS > 0:
-            print("⚠️ Note: Using some override settings instead of config.py defaults")
-            if AI_MODEL:
-                print(f"  - Model: {AI_MODEL}")
-            if AI_TEMPERATURE > 0:
-                print(f"  - Temperature: {AI_TEMPERATURE}")
-            if AI_MAX_TOKENS > 0:
-                print(f"  - Max Tokens: {AI_MAX_TOKENS}")
-                
-        load_dotenv()
-        
         # Initialize Ollama model
         print("🚀 Initializing Ollama model...")
-            
-        # Initialize Ollama model
-        self.model = model_factory.get_model("ollama", "deepseek-r1:1.5b")
+        self.model = model_factory.get_model(MODEL_TYPE, MODEL_NAME)
         if not self.model:
-            raise ValueError("Could not initialize Ollama model")
+            raise ValueError(f"Could not initialize {MODEL_TYPE} {MODEL_NAME} model")
+            
+        self.ai_temperature = AI_TEMPERATURE if AI_TEMPERATURE > 0 else config.AI_TEMPERATURE
         
         self.override_active = False
         self.last_override_check = None
@@ -265,17 +248,16 @@ class RiskAgent(BaseAgent):
             
             cprint("🤖 AI Agent analyzing market data...", "white", "on_green")
             
-            # Use Ollama model
-            print("🤖 Using Ollama for analysis...")
-            response_text = self.model.generate_response(
+            # Use model factory
+            print("🤖 Using model for analysis...")
+            response = self.model.generate_response(
                 system_prompt="You are Moon Dev's Risk Management AI. Analyze positions and respond with OVERRIDE or RESPECT_LIMIT.",
                 user_content=prompt,
                 temperature=self.ai_temperature
             )
             
             # Handle response
-            if response_text is None:
-                response_text = "RESPECT_LIMIT: Failed to get model response"
+            response_text = str(response) if response else "RESPECT_LIMIT: Failed to get model response"
             
             self.last_override_check = datetime.now()
             
@@ -459,17 +441,16 @@ Respond with:
 CLOSE_ALL or HOLD_POSITIONS
 Then explain your reasoning.
 """
-            # Use Ollama model
-            print("🤖 Using Ollama for analysis...")
-            response_text = self.model.generate_response(
+            # Use model factory
+            print("🤖 Using model for analysis...")
+            response = self.model.generate_response(
                 system_prompt="You are Moon Dev's Risk Management AI. Analyze the breach and decide whether to close positions.",
                 user_content=prompt,
                 temperature=self.ai_temperature
             )
             
             # Handle response
-            if response_text is None:
-                response_text = "CLOSE_ALL: Failed to get model response"
+            response_text = str(response) if response else "CLOSE_ALL: Failed to get model response"
             
             print("\n🤖 AI Risk Assessment:")
             print("=" * 50)
