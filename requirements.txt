@@ -13,12 +13,15 @@ python-dateutil==2.8.2
 backoff==2.2.1
 youtube-transcript-api==0.6.2
 openai==1.59.5
-groq==0.16.0  # Moon Dev's Groq API integration 🚀
+groq==0.16.0
 selenium>=4.16.0
 pillow>=10.2.0
 webdriver-manager>=4.0.1
 backtesting>=0.3.3
-moviepy>=1.0.3  # Moon Dev's video processing magic ✨
-tqdm>=4.66.1  # Progress bars for Moon Dev's sanity 🎯
-yt-dlp>=2024.3.10  # Moon Dev's YouTube downloader 🎥
-# Add any other dependencies your agents need
+moviepy>=1.0.3
+tqdm>=4.66.1
+yt-dlp>=2024.3.10
+torch>=2.2.0
+transformers>=4.38.1
+sentencepiece>=0.2.0
+accelerate>=0.27.0
