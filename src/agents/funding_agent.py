@@ -454,18 +454,18 @@ class FundingAgent(BaseAgent):
                     # Get fun status emoji based on rate
                     if row['annual_rate'] > 20:
                         status = "🔥 SUPER HOT!"
-                elif row['annual_rate'] < -5:
-                    status = "❄️ SUPER COLD"
-                elif row['annual_rate'] > 10:
-                    status = "📈 HEATING UP"
-                elif row['annual_rate'] < 0:
-                    status = "📉 COOLING"
-                else:
-                    status = "😴 CHILL"
+                    elif row['annual_rate'] < -5:
+                        status = "❄️ SUPER COLD"
+                    elif row['annual_rate'] > 10:
+                        status = "📈 HEATING UP"
+                    elif row['annual_rate'] < 0:
+                        status = "📉 COOLING"
+                    else:
+                        status = "😴 CHILL"
                     
-                # Truncate symbol to 4 characters
-                symbol = row['symbol'][:4]
-                print(f"║  {symbol:<4} │  {row['annual_rate']:>8.2f}%  │  {status:<13} ║")
+                    # Truncate symbol to 4 characters
+                    symbol = row['symbol'][:4]
+                    print(f"║  {symbol:<4} │  {row['annual_rate']:>8.2f}%  │  {status:<13} ║")
             
             print("╚" + "═" * 50 + "╝")
             
