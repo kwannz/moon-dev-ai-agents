@@ -166,13 +166,16 @@ class TweetAgent:
                 context = TWEET_PROMPT.format(text=chunk)
                 
                 # Get tweets using Ollama
-                response_text = self.model.generate_response(
+                response = self.model.generate_response(
                     system_prompt="You are Moon Dev's Tweet Generator. Generate tweets based on the provided text.",
                     user_content=context,
                     temperature=self.ai_temperature
                 )
-                if response_text is None:
-                    response_text = ""
+                if not response:
+                    print("❌ Failed to get model response")
+                    continue
+                    
+                response_text = str(response)
                 
                 # Parse tweets from response and remove any numbering
                 chunk_tweets = []
