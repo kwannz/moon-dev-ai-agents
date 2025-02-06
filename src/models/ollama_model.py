@@ -47,9 +47,11 @@ class OllamaModel(BaseModel):
                     if self.model_name not in model_names:
                         cprint(f"⚠️ Model {self.model_name} not found! Please run:", "yellow")
                         cprint(f"   ollama pull {self.model_name}", "yellow")
+                        raise ValueError(f"Model {self.model_name} not found")
                 else:
                     cprint("⚠️ No models found! Please pull the model:", "yellow")
                     cprint(f"   ollama pull {self.model_name}", "yellow")
+                    raise ValueError("No models found")
             else:
                 cprint(f"⚠️ Ollama API returned status code: {response.status_code}", "yellow")
                 raise ConnectionError(f"Ollama API returned status code: {response.status_code}")
@@ -122,4 +124,4 @@ class OllamaModel(BaseModel):
             return None
     
     def __str__(self):
-        return f"OllamaModel(model={self.model_name})"    
+        return f"OllamaModel(model={self.model_name})"      
