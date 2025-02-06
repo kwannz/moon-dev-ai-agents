@@ -346,10 +346,13 @@ class ChartAnalysisAgent(BaseAgent):
             print("╟" + "─" * 60 + "╢")
             
             # Print last 5 candles with proper timestamp formatting
-            last_5 = data.tail(5)
+            last_5 = data.tail(5).copy()
             last_5.index = pd.to_datetime(last_5.index)
             for idx, row in last_5.iterrows():
-                time_str = idx.to_pydatetime().strftime('%Y-%m-%d %H:%M')  # Include date and time
+                try:
+                    time_str = pd.to_datetime(str(idx)).strftime('%Y-%m-%d %H:%M')
+                except:
+                    time_str = str(idx)[:16]  # Fallback to string slicing if conversion fails
                 print(f"║ {time_str} │ {row['open']:.2f} │ {row['high']:.2f} │ {row['low']:.2f} │ {row['close']:.2f} │ {row['volume']:.0f} │")
             
             print("\n║ Technical Indicators:")
