@@ -322,33 +322,18 @@ class LiquidationAgent(BaseAgent):
             
             print(f"\n🤖 Analyzing liquidation spike with AI...")
             
-            # Use DeepSeek if configured
-            if self.deepseek_client and MODEL_OVERRIDE.lower() == "deepseek-chat":
-                print("🚀 Using DeepSeek for analysis...")
-                response = self.deepseek_client.chat.completions.create(
-                    model="deepseek-chat",
-                    messages=[
-                        {"role": "system", "content": "You are a liquidation analyst. You must respond in exactly 3 lines: BUY/SELL/NOTHING, reason, and confidence."},
-                        {"role": "user", "content": context}
-                    ],
-                    max_tokens=self.ai_max_tokens,
-                    temperature=self.ai_temperature,
-                    stream=False
-                )
-                response_text = response.choices[0].message.content.strip()
-            else:
-                # Use Claude as before
-                print("🤖 Using Claude for analysis...")
-                message = self.client.messages.create(
-                    model=self.ai_model,
-                    max_tokens=self.ai_max_tokens,
-                    temperature=self.ai_temperature,
-                    messages=[{
-                        "role": "user",
-                        "content": context
-                    }]
-                )
-                response_text = str(message.content)
+            # Get AI analysis using model factory
+            response = self.model.generate_response(
+                system_prompt="You are a liquidation analyst. You must respond in exactly 3 lines: BUY/SELL/NOTHING, reason, and confidence.",
+                user_content=context,
+                temperature=self.ai_temperature
+            )
+            
+            if not response:
+                print("❌ No response from AI")
+                return None
+                
+            response_text = str(response)
             
             # Handle response
             if not response_text:
