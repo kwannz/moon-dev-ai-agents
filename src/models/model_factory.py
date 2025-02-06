@@ -25,12 +25,7 @@ class ModelFactory:
     
     # Default models for each type
     DEFAULT_MODELS = {
-        "claude": "claude-3-5-haiku-latest",  # Latest fast Claude model
-        "groq": "mixtral-8x7b-32768",        # Fast Mixtral model
-        "openai": "gpt-4o",                  # Latest GPT-4 Optimized
-        "gemini": "gemini-2.0-flash-exp",    # Latest Gemini model
-        "deepseek": "deepseek-chat",         # Fast chat model
-        "ollama": "deepseek-r1:1.5b"         # DeepSeek R1 1.5B - fast and efficient
+        "ollama": "deepseek-r1:1.5b"  # DeepSeek R1 1.5B through Ollama
     }
     
     def __init__(self):
@@ -53,85 +48,23 @@ class ModelFactory:
         cprint("\n🏭 Moon Dev's Model Factory Initialization", "cyan")
         cprint("═" * 50, "cyan")
         
-        # Debug current environment without exposing values
-        cprint("\n🔍 Environment Check:", "cyan")
-        for key in ["GROQ_API_KEY", "OPENAI_KEY", "ANTHROPIC_KEY", "GEMINI_KEY", "DEEPSEEK_KEY"]:
-            value = os.getenv(key)
-            if value and len(value.strip()) > 0:
-                cprint(f"  ├─ {key}: Found ({len(value)} chars)", "green")
-            else:
-                cprint(f"  ├─ {key}: Not found or empty", "red")
-        
-        # Try to initialize each model type
-        for model_type, key_name in self._get_api_key_mapping().items():
-            cprint(f"\n🔄 Initializing {model_type} model...", "cyan")
-            cprint(f"  ├─ Looking for {key_name}...", "cyan")
-            
-            if api_key := os.getenv(key_name):
-                try:
-                    cprint(f"  ├─ Found {key_name} ({len(api_key)} chars)", "green")
-                    cprint(f"  ├─ Getting model class for {model_type}...", "cyan")
-                    
-                    if model_type not in self.MODEL_IMPLEMENTATIONS:
-                        cprint(f"  ├─ ❌ Model type not found in implementations!", "red")
-                        cprint(f"  └─ Available implementations: {list(self.MODEL_IMPLEMENTATIONS.keys())}", "yellow")
-                        continue
-                    
-                    model_class = self.MODEL_IMPLEMENTATIONS[model_type]
-                    cprint(f"  ├─ Using model class: {model_class.__name__}", "cyan")
-                    
-                    # Create instance with more detailed error handling
-                    try:
-                        cprint(f"  ├─ Creating model instance...", "cyan")
-                        cprint(f"  ├─ Default model name: {self.DEFAULT_MODELS[model_type]}", "cyan")
-                        model_instance = model_class(api_key)
-                        cprint(f"  ├─ Model instance created", "green")
-                        
-                        # Test if instance is properly initialized
-                        cprint(f"  ├─ Testing model availability...", "cyan")
-                        if model_instance.is_available():
-                            self._models[model_type] = model_instance
-                            initialized = True
-                            cprint(f"  └─ ✨ Successfully initialized {model_type}", "green")
-                        else:
-                            cprint(f"  └─ ⚠️ Model instance created but not available", "yellow")
-                    except Exception as instance_error:
-                        cprint(f"  ├─ ⚠️ Error creating model instance", "yellow")
-                        cprint(f"  ├─ Error type: {type(instance_error).__name__}", "yellow")
-                        cprint(f"  ├─ Error message: {str(instance_error)}", "yellow")
-                        if hasattr(instance_error, '__traceback__'):
-                            import traceback
-                            cprint(f"  └─ Traceback:\n{traceback.format_exc()}", "yellow")
-                        
-                except Exception as e:
-                    cprint(f"  ├─ ⚠️ Failed to initialize {model_type} model", "yellow")
-                    cprint(f"  ├─ Error type: {type(e).__name__}", "yellow")
-                    cprint(f"  ├─ Error message: {str(e)}", "yellow")
-                    if hasattr(e, '__traceback__'):
-                        import traceback
-                        cprint(f"  └─ Traceback:\n{traceback.format_exc()}", "yellow")
-            else:
-                cprint(f"  └─ ℹ️ {key_name} not found", "blue")
-        
-        # Initialize Ollama separately since it doesn't need an API key
+        # Initialize Ollama model
         try:
-            cprint("\n🔄 Initializing Ollama model...", "cyan")
             model_class = self.MODEL_IMPLEMENTATIONS["ollama"]
             model_name = self.DEFAULT_MODELS["ollama"]
             if not model_name:
                 raise ValueError("Model name cannot be empty")
             cprint(f"🔄 Initializing Ollama with model {model_name}...", "cyan")
-            try:
-                model_instance = model_class(api_key=None, model_name=model_name)
-                if model_instance.is_available():
-                    self._models["ollama"] = model_instance
-                    initialized = True
-                    cprint(f"✨ Successfully initialized Ollama with model {model_name}", "green")
-                else:
-                    cprint("⚠️ Ollama server not available - make sure 'ollama serve' is running", "yellow")
-            except Exception as e:
-                cprint(f"❌ Failed to initialize Ollama model {model_name}: {str(e)}", "red")
-                raise
+            model_instance = model_class(api_key=None, model_name=model_name)
+            if model_instance.is_available():
+                self._models["ollama"] = model_instance
+                initialized = True
+                cprint(f"✨ Successfully initialized Ollama with model {model_name}", "green")
+            else:
+                cprint("⚠️ Ollama server not available - make sure 'ollama serve' is running", "yellow")
+        except Exception as e:
+            cprint(f"❌ Failed to initialize Ollama model: {str(e)}", "red")
+            raise
         except Exception as e:
             cprint(f"❌ Failed to initialize Ollama: {str(e)}", "red")
         
@@ -277,4 +210,4 @@ class ModelFactory:
         return None
 
 # Create a singleton instance
-model_factory = ModelFactory()                                          
+model_factory = ModelFactory()                                              
