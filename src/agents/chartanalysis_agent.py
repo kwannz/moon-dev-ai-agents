@@ -22,6 +22,7 @@ import traceback
 import base64
 from io import BytesIO
 import re
+import openai
 
 # Get the project root directory
 PROJECT_ROOT = Path(__file__).parent.parent.parent
@@ -86,18 +87,18 @@ class ChartAnalysisAgent(BaseAgent):
         
         # Initialize API clients
         openai_key = os.getenv("OPENAI_KEY")
-        anthropic_key = os.getenv("ANTHROPIC_KEY")
-        
-        if not openai_key or not anthropic_key:
-            raise ValueError("🚨 API keys not found in environment variables!")
+        if not openai_key:
+            raise ValueError("🚨 OpenAI API key not found in environment variables!")
             
         self.openai_client = openai.OpenAI(api_key=openai_key)  # For TTS only
-        self.client = anthropic.Anthropic(api_key=anthropic_key)
         
-        # Set AI parameters - use config values unless overridden
-        self.ai_model = AI_MODEL if AI_MODEL else config.AI_MODEL
+        # Initialize Ollama model
+        self.model = model_factory.get_model("ollama", "deepseek-r1:1.5b")
+        if not self.model:
+            raise ValueError("Could not initialize Ollama model")
+            
+        # Set AI parameters
         self.ai_temperature = AI_TEMPERATURE if AI_TEMPERATURE > 0 else config.AI_TEMPERATURE
-        self.ai_max_tokens = AI_MAX_TOKENS if AI_MAX_TOKENS > 0 else config.AI_MAX_TOKENS
         
         print("📊 Chuck the Chart Agent initialized!")
         print(f"🤖 Using AI Model: {self.ai_model}")
@@ -178,36 +179,25 @@ class ChartAnalysisAgent(BaseAgent):
             
             print(f"\n🤖 Analyzing {symbol} with AI...")
             
-            # Get AI analysis using instance settings
-            message = self.client.messages.create(
-                model=self.ai_model,
-                max_tokens=self.ai_max_tokens,
-                temperature=self.ai_temperature,
-                messages=[{
-                    "role": "user",
-                    "content": context
-                }]
+            # Get AI analysis using model factory
+            response = self.model.generate_response(
+                system_prompt="You are Moon Dev's Chart Analysis AI. Analyze chart data and provide trading signals.",
+                user_content=context,
+                temperature=self.ai_temperature
             )
             
-            if not message or not message.content:
+            if not response:
                 print("❌ No response from AI")
                 return None
                 
             # Debug: Print raw response
             print("\n🔍 Raw response:")
-            print(repr(message.content))
+            print(str(response))
             
-            # Get the raw content and convert to string
-            content = str(message.content)
+            # Get the content as string
+            content = str(response)
             
-            # Clean up TextBlock formatting - new format handling
-            if 'TextBlock' in content:
-                # Extract just the text content between quotes
-                match = re.search(r"text='([^']*)'", content, re.IGNORECASE)
-                if match:
-                    content = match.group(1)
-            
-            # Clean up any remaining formatting
+            # Clean up any formatting
             content = content.replace('\\n', '\n')
             content = content.strip('[]')
             
