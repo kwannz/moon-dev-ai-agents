@@ -91,7 +91,7 @@ cprint(f"📝 .env Path: {env_path}", "cyan")
 
 # Model override settings
 MODEL_TYPE = "ollama"  # Choose from model types above
-MODEL_NAME = "llama3.2"  # Choose from models above
+MODEL_NAME = "deepseek-r1:1.5b"  # Choose from models above
 
 # Configuration for faster testing
 MIN_INTERVAL_MINUTES = 6  # Less than a second

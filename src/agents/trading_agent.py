@@ -58,7 +58,6 @@ Remember:
 - Cash must be stored as USDC using USDC_ADDRESS: {USDC_ADDRESS}
 """
 
-import anthropic
 import os
 import pandas as pd
 import json
@@ -71,13 +70,19 @@ import time
 from src.config import *
 from src import nice_funcs as n
 from src.data.ohlcv_collector import collect_all_tokens
+from src.agents.focus_agent import MODEL_TYPE, MODEL_NAME
+from src.models.model_factory import model_factory
 
 # Load environment variables
 load_dotenv()
 
 class TradingAgent:
     def __init__(self):
-        self.client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_KEY"))
+        self.model_type = MODEL_TYPE
+        self.model_name = MODEL_NAME
+        self.model = model_factory.get_model(self.model_type, self.model_name)
+        if not self.model:
+            raise ValueError(f"🚨 Could not initialize {self.model_type} {self.model_name} model!")
         self.recommendations_df = pd.DataFrame(columns=['token', 'action', 'confidence', 'reasoning'])
         print("🤖 Moon Dev's LLM Trading Agent initialized!")
 
@@ -99,20 +104,11 @@ Strategy Signals Available:
             else:
                 strategy_context = "No strategy signals available."
             
-            message = self.client.messages.create(
-                model=AI_MODEL,
-                max_tokens=AI_MAX_TOKENS,
-                temperature=AI_TEMPERATURE,
-                messages=[
-                    {
-                        "role": "user", 
-                        "content": f"{TRADING_PROMPT.format(strategy_context=strategy_context)}\n\nMarket Data to Analyze:\n{market_data}"
-                    }
-                ]
+            response = self.model.generate_response(
+                system_prompt=TRADING_PROMPT.format(strategy_context=strategy_context),
+                user_content=f"Market Data to Analyze:\n{market_data}",
+                temperature=AI_TEMPERATURE
             )
-            
-            # Parse the response - handle both string and list responses
-            response = message.content
             if isinstance(response, list):
                 # Extract text from TextBlock objects if present
                 response = '\n'.join([
@@ -466,4 +462,4 @@ def main():
             time.sleep(INTERVAL)
 
 if __name__ == "__main__":
-    main() 
+    main()    
