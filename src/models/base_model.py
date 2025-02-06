@@ -26,6 +26,7 @@ class BaseModel(ABC):
     def __init__(self, api_key: str, **kwargs):
         self.api_key = api_key
         self.client = None
+        self.model_name = kwargs.get('model_name', '')
         self.initialize_client(**kwargs)
     
     @abstractmethod
@@ -47,4 +48,4 @@ class BaseModel(ABC):
     @abstractmethod
     def model_type(self) -> str:
         """Return the type/name of the model"""
-        pass  
+        pass    

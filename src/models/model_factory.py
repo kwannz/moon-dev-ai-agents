@@ -11,11 +11,6 @@ from termcolor import cprint
 from dotenv import load_dotenv
 from pathlib import Path
 from .base_model import BaseModel
-from .claude_model import ClaudeModel
-from .groq_model import GroqModel
-from .openai_model import OpenAIModel
-from .gemini_model import GeminiModel
-from .deepseek_model import DeepSeekModel
 from .ollama_model import OllamaModel
 import random
 
@@ -24,12 +19,7 @@ class ModelFactory:
     
     # Map model types to their implementations
     MODEL_IMPLEMENTATIONS = {
-        "claude": ClaudeModel,
-        "groq": GroqModel,
-        "openai": OpenAIModel,
-        "gemini": GeminiModel,
-        "deepseek": DeepSeekModel,
-        "ollama": OllamaModel  # Add Ollama implementation
+        "ollama": OllamaModel  # Using only Ollama for local model deployment
     }
     
     # Default models for each type
@@ -204,14 +194,7 @@ class ModelFactory:
     
     def _get_api_key_mapping(self) -> Dict[str, str]:
         """Get mapping of model types to their API key environment variable names"""
-        return {
-            "claude": "ANTHROPIC_KEY",
-            "groq": "GROQ_API_KEY",
-            "openai": "OPENAI_KEY",
-            "gemini": "GEMINI_KEY",
-            "deepseek": "DEEPSEEK_KEY",
-            # Ollama doesn't need an API key as it runs locally
-        }
+        return {}
     
     @property
     def available_models(self) -> Dict[str, list]:
@@ -237,4 +220,4 @@ class ModelFactory:
             return None
 
 # Create a singleton instance
-model_factory = ModelFactory()  
+model_factory = ModelFactory()      
