@@ -401,41 +401,18 @@ class WhaleAgent(BaseAgent):
                 market_data=market_data_str
             )
             
-            # Use either DeepSeek or Claude based on model setting
-            if "deepseek" in self.ai_model.lower():
-                if not self.deepseek_client:
-                    raise ValueError("🚨 DeepSeek client not initialized - check DEEPSEEK_KEY")
-                    
-                print(f"\n🤖 Analyzing whale movement with DeepSeek model: {self.ai_model}...")
-                # Make DeepSeek API call
-                response = self.deepseek_client.chat.completions.create(
-                    model=self.ai_model,  # Use the actual model from override
-                    messages=[
-                        {"role": "system", "content": WHALE_ANALYSIS_PROMPT},
-                        {"role": "user", "content": context}
-                    ],
-                    max_tokens=self.ai_max_tokens,
-                    temperature=self.ai_temperature,
-                    stream=False
-                )
-                response_text = response.choices[0].message.content.strip()
-            else:
-                print(f"\n🤖 Analyzing whale movement with Claude model: {self.ai_model}...")
-                # Get AI analysis using Claude
-                message = self.client.messages.create(
-                    model=self.ai_model,
-                    max_tokens=self.ai_max_tokens,
-                    temperature=self.ai_temperature,
-                    messages=[{
-                        "role": "user",
-                        "content": context
-                    }]
-                )
-                # Handle both string and list responses
-                if isinstance(message.content, list):
-                    response_text = message.content[0].text if message.content else ""
-                else:
-                    response_text = message.content
+            # Get AI analysis using model factory
+            response = self.model.generate_response(
+                system_prompt=WHALE_ANALYSIS_PROMPT,
+                user_content=context,
+                temperature=self.ai_temperature
+            )
+            
+            if not response:
+                print("❌ No response from AI")
+                return None
+                
+            response_text = str(response)
             
             # Handle response
             if not response_text:
@@ -677,4 +654,4 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"❌ Error in main loop: {str(e)}")
             print("🔧 Moon Dev suggests checking the logs and trying again!")
-            time.sleep(60)  # Sleep for 1 minute on error  
+            time.sleep(60)  # Sleep for 1 minute on error      
