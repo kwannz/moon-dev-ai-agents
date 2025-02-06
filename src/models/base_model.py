@@ -23,11 +23,11 @@ class ModelResponse:
 class BaseModel(ABC):
     """Base interface for all AI models"""
     
-    def __init__(self, api_key: str, **kwargs):
+    def __init__(self, api_key: str, model_name: Optional[str] = '', **kwargs):
         self.api_key = api_key
         self.client = None
-        self.model_name = kwargs.get('model_name', '')
-        self.initialize_client(**kwargs)
+        self.model_name = model_name or ''
+        self.initialize_client()
     
     @abstractmethod
     def initialize_client(self, **kwargs) -> None:
@@ -54,4 +54,4 @@ class BaseModel(ABC):
     @abstractmethod
     def AVAILABLE_MODELS(self) -> list:
         """Return list of available models"""
-        pass  
+        pass      

@@ -32,12 +32,8 @@ class OllamaModel(BaseModel):
             api_key: Not used for Ollama but kept for compatibility
             model_name: Name of the Ollama model to use
         """
-        if not model_name:
-            raise ValueError("Model name cannot be empty")
         self.base_url = "http://localhost:11434/api"  # Default Ollama API endpoint
-        self.model_name = model_name
-        # Pass a dummy API key to satisfy BaseModel
-        super().__init__(api_key="LOCAL_OLLAMA")
+        super().__init__(api_key="LOCAL_OLLAMA", model_name=model_name)
         self.initialize_client()
         
     def initialize_client(self):
@@ -49,7 +45,6 @@ class OllamaModel(BaseModel):
             response = requests.get(f"{self.base_url}/tags")
             if response.status_code == 200:
                 cprint(f"✨ Successfully connected to Ollama API", "green")
-                # Print available models
                 models = response.json().get("models", [])
                 if models:
                     model_names = [model["name"] for model in models]
@@ -134,4 +129,4 @@ class OllamaModel(BaseModel):
             return None
     
     def __str__(self):
-        return f"OllamaModel(model={self.model_name})"              
+        return f"OllamaModel(model={self.model_name})"                  
