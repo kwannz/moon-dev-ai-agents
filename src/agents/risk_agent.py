@@ -3,9 +3,9 @@
 Built with love by Moon Dev 🚀
 """
 
-# Model override settings - Adding DeepSeek support
-MODEL_OVERRIDE = "0"  # Set to "deepseek-chat" or "deepseek-reasoner" to use DeepSeek, "0" to use default
-DEEPSEEK_BASE_URL = "https://api.deepseek.com"  # Base URL for DeepSeek API
+# Model settings
+MODEL_TYPE = "ollama"  # Using Ollama for local model deployment
+MODEL_NAME = "deepseek-r1:1.5b"  # Using DeepSeek R1 model
 
 # 🛡️ Risk Override Prompt - The Secret Sauce!
 RISK_OVERRIDE_PROMPT = """
@@ -41,8 +41,8 @@ or
 RESPECT_LIMIT: <detailed reason for each position>
 """
 
-import anthropic
 import os
+import re
 import pandas as pd
 import json
 from termcolor import colored, cprint
@@ -56,6 +56,7 @@ import time
 from src.config import *
 from src.agents.base_agent import BaseAgent
 import traceback
+from src.models import model_factory
 
 # Load environment variables
 load_dotenv()
@@ -82,28 +83,13 @@ class RiskAgent(BaseAgent):
                 
         load_dotenv()
         
-        # Get API keys
-        openai_key = os.getenv("OPENAI_KEY")
-        anthropic_key = os.getenv("ANTHROPIC_KEY")
-        deepseek_key = os.getenv("DEEPSEEK_KEY")
-        
-        if not openai_key:
-            raise ValueError("🚨 OPENAI_KEY not found in environment variables!")
-        if not anthropic_key:
-            raise ValueError("🚨 ANTHROPIC_KEY not found in environment variables!")
+        # Initialize Ollama model
+        print("🚀 Initializing Ollama model...")
             
-        # Initialize OpenAI client for DeepSeek
-        if deepseek_key and MODEL_OVERRIDE.lower() == "deepseek-chat":
-            self.deepseek_client = openai.OpenAI(
-                api_key=deepseek_key,
-                base_url=DEEPSEEK_BASE_URL
-            )
-            print("🚀 DeepSeek model initialized!")
-        else:
-            self.deepseek_client = None
-            
-        # Initialize Anthropic client
-        self.client = anthropic.Anthropic(api_key=anthropic_key)
+        # Initialize Ollama model
+        self.model = model_factory.get_model("ollama", "deepseek-r1:1.5b")
+        if not self.model:
+            raise ValueError("Could not initialize Ollama model")
         
         self.override_active = False
         self.last_override_check = None
@@ -279,48 +265,26 @@ class RiskAgent(BaseAgent):
             
             cprint("🤖 AI Agent analyzing market data...", "white", "on_green")
             
-            # Use DeepSeek if configured
-            if self.deepseek_client and MODEL_OVERRIDE.lower() == "deepseek-chat":
-                print("🚀 Using DeepSeek for analysis...")
-                response = self.deepseek_client.chat.completions.create(
-                    model="deepseek-chat",
-                    messages=[
-                        {"role": "system", "content": "You are Moon Dev's Risk Management AI. Analyze positions and respond with OVERRIDE or RESPECT_LIMIT."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    max_tokens=self.ai_max_tokens,
-                    temperature=self.ai_temperature,
-                    stream=False
-                )
-                response_text = response.choices[0].message.content.strip()
-            else:
-                # Use Claude as before
-                print("🤖 Using Claude for analysis...")
-                message = self.client.messages.create(
-                    model=self.ai_model,
-                    max_tokens=self.ai_max_tokens,
-                    temperature=self.ai_temperature,
-                    messages=[{
-                        "role": "user",
-                        "content": prompt
-                    }]
-                )
-                response_text = str(message.content)
+            # Use Ollama model
+            print("🤖 Using Ollama for analysis...")
+            response_text = self.model.generate_response(
+                system_prompt="You are Moon Dev's Risk Management AI. Analyze positions and respond with OVERRIDE or RESPECT_LIMIT.",
+                user_content=prompt,
+                temperature=self.ai_temperature
+            )
             
-            # Handle TextBlock format if using Claude
-            if 'TextBlock' in response_text:
-                match = re.search(r"text='([^']*)'", response_text)
-                if match:
-                    response_text = match.group(1)
+            # Handle response
+            if response_text is None:
+                response_text = "RESPECT_LIMIT: Failed to get model response"
             
             self.last_override_check = datetime.now()
             
             # Check if we should override (keep positions open)
-            self.override_active = "OVERRIDE" in response_text.upper()
+            self.override_active = "OVERRIDE" in str(response_text).upper()
             
             # Print the AI's reasoning with model info
             cprint("\n🧠 Risk Agent Analysis:", "white", "on_blue")
-            cprint(f"Using model: {'DeepSeek' if self.deepseek_client else 'Claude'}", "white", "on_blue")
+            cprint("Using model: Ollama (deepseek-r1:1.5b)", "white", "on_blue")
             print(response_text)
             
             if self.override_active:
@@ -495,44 +459,22 @@ Respond with:
 CLOSE_ALL or HOLD_POSITIONS
 Then explain your reasoning.
 """
-            # Use DeepSeek if configured
-            if self.deepseek_client and MODEL_OVERRIDE.lower() == "deepseek-chat":
-                print("🚀 Using DeepSeek for analysis...")
-                response = self.deepseek_client.chat.completions.create(
-                    model="deepseek-chat",
-                    messages=[
-                        {"role": "system", "content": "You are Moon Dev's Risk Management AI. Analyze the breach and decide whether to close positions."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    max_tokens=self.ai_max_tokens,
-                    temperature=self.ai_temperature,
-                    stream=False
-                )
-                response_text = response.choices[0].message.content.strip()
-            else:
-                # Use Claude as before
-                print("🤖 Using Claude for analysis...")
-                message = self.client.messages.create(
-                    model=self.ai_model,
-                    max_tokens=self.ai_max_tokens,
-                    temperature=self.ai_temperature,
-                    messages=[{
-                        "role": "user",
-                        "content": prompt
-                    }]
-                )
-                response_text = str(message.content)
+            # Use Ollama model
+            print("🤖 Using Ollama for analysis...")
+            response_text = self.model.generate_response(
+                system_prompt="You are Moon Dev's Risk Management AI. Analyze the breach and decide whether to close positions.",
+                user_content=prompt,
+                temperature=self.ai_temperature
+            )
             
-            # Handle TextBlock format if using Claude
-            if 'TextBlock' in response_text:
-                match = re.search(r"text='([^']*)'", response_text)
-                if match:
-                    response_text = match.group(1)
+            # Handle response
+            if response_text is None:
+                response_text = "CLOSE_ALL: Failed to get model response"
             
             print("\n🤖 AI Risk Assessment:")
             print("=" * 50)
-            print(f"Using model: {'DeepSeek' if self.deepseek_client else 'Claude'}")
-            print(response_text)
+            print("Using model: Ollama (deepseek-r1:1.5b)")
+            print(str(response_text))
             print("=" * 50)
             
             # Parse decision
