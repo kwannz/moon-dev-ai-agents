@@ -214,22 +214,10 @@ class AIAgent:
     
     def __init__(self, name: str, model: str):
         self.name = name
-        self.model = model
-        
-        # Initialize appropriate client based on model
-        if "deepseek" in self.model.lower():
-            deepseek_key = os.getenv("DEEPSEEK_KEY")
-            if deepseek_key:
-                self.client = openai.OpenAI(
-                    api_key=deepseek_key,
-                    base_url=DEEPSEEK_BASE_URL
-                )
-                print(f"🚀 {name} using DeepSeek model: {model}")
-            else:
-                raise ValueError("🚨 DEEPSEEK_KEY not found in environment variables!")
-        else:
-            self.client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_KEY"))
-            print(f"🤖 {name} using Claude model: {model}")
+        self.model = model_factory.get_model("ollama", "deepseek-r1:1.5b")
+        if not self.model:
+            raise ValueError("Could not initialize Ollama model")
+        print(f"🤖 {name} using Ollama model: deepseek-r1:1.5b")
             
         self.memory_file = Path(f"src/data/agent_memory/{name.lower().replace(' ', '_')}.json")
         self.memory = {
@@ -322,27 +310,18 @@ Focus on:
 
 Remember to reference specific data points from the OHLCV table in your analysis!"""
             
-            # Get AI response with correct client
-            if "deepseek" in self.model.lower():
-                response = self.client.chat.completions.create(
-                    model=self.model,
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
-                    ],
-                    max_tokens=300,
-                    temperature=0.7
-                )
-                analysis = response.choices[0].message.content
-            else:
-                response = self.client.messages.create(
-                    model=self.model,
-                    max_tokens=300,
-                    temperature=0.7,
-                    system=system_prompt,
-                    messages=[{"role": "user", "content": user_prompt}]
-                )
-                analysis = response.content[0].text
+            # Get AI response using model factory
+            response = self.model.generate_response(
+                system_prompt=system_prompt,
+                user_content=user_prompt,
+                temperature=0.7
+            )
+            
+            if not response:
+                print("❌ No response from AI")
+                return "Error: No response from AI"
+                
+            analysis = str(response)
             
             # Update memory with OHLCV context
             if not isinstance(self.memory['analyzed_tokens'], list):
