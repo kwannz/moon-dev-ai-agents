@@ -144,18 +144,16 @@ class CopyBotAgent:
                 user_content=full_prompt,
                 temperature=AI_TEMPERATURE
             )
-            if isinstance(response, list):
-                response = '\n'.join([
-                    item.text if hasattr(item, 'text') else str(item)
-                    for item in response
-                ])
-            
+            if not response:
+                return None
+                
+            response_text = str(response)
             print("\n🎯 AI Analysis Results:")
             print("=" * 50)
-            print(response)
+            print(response_text)
             print("=" * 50)
             
-            lines = response.split('\n')
+            lines = response_text.split('\n')
             action = lines[0].strip() if lines else "NOTHING"
             
             # Extract confidence
