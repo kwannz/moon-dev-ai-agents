@@ -152,9 +152,24 @@ class FocusAgent:
                 cprint(f"❌ Missing {key}", "red")
         
         # Initialize model using factory
-        self.model = model_factory.get_model(MODEL_TYPE, MODEL_NAME)
-        if not self.model:
-            raise ValueError(f"🚨 Could not initialize {MODEL_TYPE} {MODEL_NAME} model! Check API key and model availability.")
+        print(f"🚀 Initializing {MODEL_TYPE} model...")
+        self.model = None
+        max_retries = 3
+        retry_count = 0
+        
+        while self.model is None and retry_count < max_retries:
+            try:
+                self.model = model_factory.get_model(MODEL_TYPE, MODEL_NAME)
+                if self.model and hasattr(self.model, 'generate_response'):
+                    break
+                raise ValueError("Could not initialize model")
+            except Exception as e:
+                print(f"⚠️ Error initializing model (attempt {retry_count + 1}/{max_retries}): {str(e)}")
+                retry_count += 1
+                if retry_count < max_retries:
+                    time.sleep(1)  # Wait before retrying
+                else:
+                    raise ValueError(f"Failed to initialize {MODEL_TYPE} {MODEL_NAME} model after {max_retries} attempts")
         
         self._announce_model()  # Announce after initialization
         

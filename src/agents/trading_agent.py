@@ -80,9 +80,24 @@ class TradingAgent:
     def __init__(self):
         self.model_type = MODEL_TYPE
         self.model_name = MODEL_NAME
-        self.model = model_factory.get_model(self.model_type, self.model_name)
-        if not self.model:
-            raise ValueError(f"🚨 Could not initialize {self.model_type} {self.model_name} model!")
+        print(f"🚀 Initializing {self.model_type} model...")
+        self.model = None
+        max_retries = 3
+        retry_count = 0
+        
+        while self.model is None and retry_count < max_retries:
+            try:
+                self.model = model_factory.get_model(self.model_type, self.model_name)
+                if self.model and hasattr(self.model, 'generate_response'):
+                    break
+                raise ValueError("Could not initialize model")
+            except Exception as e:
+                print(f"⚠️ Error initializing model (attempt {retry_count + 1}/{max_retries}): {str(e)}")
+                retry_count += 1
+                if retry_count < max_retries:
+                    time.sleep(1)  # Wait before retrying
+                else:
+                    raise ValueError(f"Failed to initialize {self.model_type} {self.model_name} model after {max_retries} attempts")
         self.recommendations_df = pd.DataFrame(columns=['token', 'action', 'confidence', 'reasoning'])
         print("🤖 Moon Dev's LLM Trading Agent initialized!")
 
@@ -436,4 +451,4 @@ def main():
             time.sleep(INTERVAL)
 
 if __name__ == "__main__":
-    main()          
+    main()            
