@@ -24,8 +24,6 @@ if not env_path.exists():
 import os
 import time as time_lib
 from datetime import datetime, timedelta, time
-from google.cloud import speech_v1p1beta1 as speech
-import pyaudio
 import openai
 from anthropic import Anthropic
 from termcolor import cprint
@@ -222,67 +220,8 @@ class FocusAgent:
         return uniform(MIN_INTERVAL_MINUTES * 60, MAX_INTERVAL_MINUTES * 60)
         
     def record_audio(self):
-        """Record audio for specified duration"""
-        config = speech.RecognitionConfig(
-            encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-            sample_rate_hertz=SAMPLE_RATE,
-            language_code="en-US",
-            enable_automatic_punctuation=True,  # Add punctuation
-            model="latest_long",  # Use long-form model
-            use_enhanced=True  # Use enhanced model
-        )
-        streaming_config = speech.StreamingRecognitionConfig(
-            config=config,
-            interim_results=True  # Get interim results for better completeness
-        )
-        
-        def audio_generator():
-            audio = pyaudio.PyAudio()
-            stream = audio.open(
-                format=pyaudio.paInt16,
-                channels=1,
-                rate=SAMPLE_RATE,
-                input=True,
-                frames_per_buffer=AUDIO_CHUNK_SIZE
-            )
-            
-            start_time = time_lib.time()
-            try:
-                while time_lib.time() - start_time < RECORDING_DURATION:
-                    data = stream.read(AUDIO_CHUNK_SIZE, exception_on_overflow=False)
-                    yield data
-                # Add a small silence at the end to ensure we get the last word
-                yield b'\x00' * AUDIO_CHUNK_SIZE
-            finally:
-                stream.stop_stream()
-                stream.close()
-                audio.terminate()
-        
-        try:
-            self.is_recording = True
-            self.current_transcript = []
-            
-            requests = (speech.StreamingRecognizeRequest(audio_content=chunk)
-                      for chunk in audio_generator())
-            
-            responses = self.speech_client.streaming_recognize(
-                config=streaming_config,
-                requests=requests
-            )
-            
-            for response in responses:
-                if response.results:
-                    for result in response.results:
-                        if result.is_final:
-                            self.current_transcript.append(result.alternatives[0].transcript)
-            
-            # Small delay to ensure we get the complete transcript
-            time_lib.sleep(0.5)
-                            
-        except Exception as e:
-            cprint(f"❌ Error recording audio: {str(e)}", "red")
-        finally:
-            self.is_recording = False
+        """Disabled audio recording - not required for trading functionality"""
+        self.current_transcript = [TEST_TRANSCRIPT]  # Use test transcript for development
 
     def _announce(self, message, force_voice=False):
         """Announce message with optional voice"""
