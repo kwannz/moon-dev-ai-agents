@@ -109,14 +109,10 @@ Strategy Signals Available:
                 user_content=f"Market Data to Analyze:\n{market_data}",
                 temperature=AI_TEMPERATURE
             )
-            if isinstance(response, list):
-                # Extract text from TextBlock objects if present
-                response = '\n'.join([
-                    item.text if hasattr(item, 'text') else str(item)
-                    for item in response
-                ])
-            
-            lines = response.split('\n')
+            if not response:
+                return None
+                
+            lines = str(response).split('\n')
             action = lines[0].strip() if lines else "NOTHING"
             
             # Extract confidence from the response (assuming it's mentioned as a percentage)
@@ -166,37 +162,22 @@ Strategy Signals Available:
             cprint(f"🎯 Maximum position size: ${max_position_size:.2f} ({MAX_POSITION_PERCENTAGE}% of ${usd_size:.2f})", "cyan")
             
             # Get allocation from AI
-            message = self.client.messages.create(
-                model=AI_MODEL,
-                max_tokens=AI_MAX_TOKENS,
-                temperature=AI_TEMPERATURE,
-                messages=[{
-                    "role": "user", 
-                    "content": f"""You are Moon Dev's Portfolio Allocation AI 🌙
-
-Given:
-- Total portfolio size: ${usd_size}
-- Maximum position size: ${max_position_size} ({MAX_POSITION_PERCENTAGE}% of total)
-- Minimum cash (USDC) buffer: {CASH_PERCENTAGE}%
-- Available tokens: {MONITORED_TOKENS}
-- USDC Address: {USDC_ADDRESS}
-
-Provide a portfolio allocation that:
-1. Never exceeds max position size per token
-2. Maintains minimum cash buffer
-3. Returns allocation as a JSON object with token addresses as keys and USD amounts as values
-4. Uses exact USDC address: {USDC_ADDRESS} for cash allocation
-
-Example format:
-{{
-    "token_address": amount_in_usd,
-    "{USDC_ADDRESS}": remaining_cash_amount  # Use exact USDC address
-}}"""
-                }]
+            response = self.model.generate_response(
+                system_prompt=ALLOCATION_PROMPT.format(
+                    MAX_POSITION_PERCENTAGE=MAX_POSITION_PERCENTAGE,
+                    CASH_PERCENTAGE=CASH_PERCENTAGE,
+                    USDC_ADDRESS=USDC_ADDRESS
+                ),
+                user_content=f"""Portfolio size: ${usd_size}
+Maximum position size: ${max_position_size}
+Available tokens: {MONITORED_TOKENS}""",
+                temperature=AI_TEMPERATURE
             )
             
             # Parse the response
-            allocations = self.parse_allocation_response(str(message.content))
+            if not response:
+                return None
+            allocations = self.parse_allocation_response(str(response))
             if not allocations:
                 return None
                 
@@ -291,10 +272,6 @@ Example format:
     def parse_allocation_response(self, response):
         """Parse the AI's allocation response and handle both string and TextBlock formats"""
         try:
-            # Handle TextBlock format from Claude 3
-            if isinstance(response, list):
-                response = response[0].text if hasattr(response[0], 'text') else str(response[0])
-            
             print("🔍 Raw response received:")
             print(response)
             
@@ -363,12 +340,9 @@ Example format:
             
             return allocations
             
-        except json.JSONDecodeError as e:
-            print(f"❌ Error parsing allocation JSON: {e}")
-            print(f"🔍 Raw text received:\n{allocation_text}")
-            return None
         except Exception as e:
-            print(f"❌ Unexpected error parsing allocations: {e}")
+            print(f"❌ Error parsing allocations: {e}")
+            print(f"🔍 Raw text received:\n{allocation_text}")
             return None
 
     def run(self):
@@ -462,4 +436,4 @@ def main():
             time.sleep(INTERVAL)
 
 if __name__ == "__main__":
-    main()    
+    main()          
