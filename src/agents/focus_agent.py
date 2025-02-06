@@ -152,34 +152,17 @@ class FocusAgent:
                 cprint(f"❌ Missing {key}", "red")
         
         # Initialize model using factory
-        self.model_factory = model_factory
-        self.model = self.model_factory.get_model(MODEL_TYPE, MODEL_NAME)
-        
+        self.model = model_factory.get_model(MODEL_TYPE, MODEL_NAME)
         if not self.model:
             raise ValueError(f"🚨 Could not initialize {MODEL_TYPE} {MODEL_NAME} model! Check API key and model availability.")
         
         self._announce_model()  # Announce after initialization
-        
-        # Print model info with pricing if available
-        if MODEL_TYPE == "openai":
-            model_info = self.model.AVAILABLE_MODELS.get(MODEL_NAME, {})
-            cprint(f"\n💫 Moon Dev's Focus Agent using OpenAI!", "green")
-            cprint(f"🤖 Model: {model_info.get('description', '')}", "cyan")
-            cprint(f"💰 Pricing:", "yellow")
-            cprint(f"  ├─ Input: {model_info.get('input_price', '')}", "yellow")
-            cprint(f"  └─ Output: {model_info.get('output_price', '')}", "yellow")
         
         # Initialize voice client
         openai_key = os.getenv("OPENAI_KEY")
         if not openai_key:
             raise ValueError("🚨 OPENAI_KEY not found in environment variables!")
         self.openai_client = openai.OpenAI(api_key=openai_key)
-
-        
-        # Initialize model using factory
-        self.model = model_factory.get_model(MODEL_TYPE, MODEL_NAME)
-        if not self.model:
-            raise ValueError(f"🚨 Could not initialize {MODEL_TYPE} {MODEL_NAME} model!")
         
         cprint("🎯 Moon Dev's Focus Agent initialized!", "green")
         
@@ -258,29 +241,17 @@ class FocusAgent:
             cprint(f"  ├─ Length: {len(transcript)} chars", "cyan")
             cprint(f"  └─ Content type check: {'chicken' in transcript.lower()}", "yellow")
             
-            # For Ollama models
-            if MODEL_TYPE == "ollama":
-                cprint("\n🧠 Using Ollama model...", "cyan")
-                response = self.model.generate_response(
-                    system_prompt="You are Moon Dev's Focus AI. You analyze focus and provide ratings. NO MARKDOWN OR FORMATTING. RESPOND WITH EXACTLY TWO LINES: A SCORE LINE (X/10) AND ONE SINGLE ENCOURAGING SENTENCE.",
-                    user_content=FOCUS_PROMPT.format(transcript=transcript),
-                    temperature=0.7
-                )
+            # Generate response using model factory
+            response = self.model.generate_response(
+                system_prompt=FOCUS_PROMPT,
+                user_content=transcript,
+                temperature=AI_TEMPERATURE
+            )
+            
+            if not response:
+                raise ValueError("Failed to get model response")
                 
-                # Handle raw string response from Ollama
-                if isinstance(response, str):
-                    response_content = response
-                else:
-                    response_content = response.content if hasattr(response, 'content') else str(response)
-            else:
-                # For other API-based models
-                response = self.model.generate_response(
-                    system_prompt=FOCUS_PROMPT,
-                    user_content=transcript,
-                    temperature=AI_TEMPERATURE,
-                    max_tokens=AI_MAX_TOKENS
-                )
-                response_content = response.content
+            response_content = str(response)
             
             # Print raw response for debugging
             cprint(f"\n📝 Raw model response:", "magenta")
