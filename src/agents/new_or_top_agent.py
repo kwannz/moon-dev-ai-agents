@@ -364,29 +364,17 @@ class NewOrTopAgent:
             
             print_fancy("🧠 AI Agent Processing...", 'yellow', 'on_blue', SPINNER_EMOJIS)
             
-            # Get AI response
-            if "deepseek" in AI_MODEL.lower():
-                response = self.ai_client.chat.completions.create(
-                    model=AI_MODEL,
-                    messages=[
-                        {"role": "system", "content": "You are a cryptocurrency analyst."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    max_tokens=500,
-                    temperature=0.7
-                )
-                analysis = response.choices[0].message.content
-            else:
-                response = self.ai_client.messages.create(
-                    model=AI_MODEL,
-                    max_tokens=500,
-                    temperature=0.7,
-                    messages=[{
-                        "role": "user",
-                        "content": prompt
-                    }]
-                )
-                analysis = response.content[0].text
+            # Get AI response using Ollama model
+            response = self.model.generate_response(
+                system_prompt="You are a cryptocurrency analyst.",
+                user_content=prompt,
+                temperature=0.7
+            )
+            
+            if not response:
+                raise ValueError("Failed to get model response")
+                
+            analysis = str(response)
                 
             # Extract and display recommendation prominently
             recommendation = self.extract_recommendation(analysis)
