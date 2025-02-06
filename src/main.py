@@ -27,11 +27,11 @@ load_dotenv()
 
 # Agent Configuration
 ACTIVE_AGENTS = {
-    'risk': False,      # Risk management agent
-    'trading': False,   # LLM trading agent
-    'strategy': False,  # Strategy-based trading agent
-    'copybot': False,   # CopyBot agent
-    'sentiment': False, # Run sentiment_agent.py directly instead
+    'risk': True,      # Risk management agent
+    'trading': True,   # LLM trading agent
+    'strategy': True,  # Strategy-based trading agent
+    'copybot': True,   # CopyBot agent
+    'sentiment': True, # Run sentiment_agent.py directly instead
     # whale_agent is run from whale_agent.py
     # Add more agents here as we build them:
     # 'portfolio': False,  # Future portfolio optimization agent
