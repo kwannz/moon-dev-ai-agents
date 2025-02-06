@@ -94,11 +94,11 @@ class StrategyAgent:
                 ),
                 temperature=AI_TEMPERATURE
             )
-            if isinstance(response, list):
-                response = response[0].text if hasattr(response[0], 'text') else str(response[0])
-            
+            if not response:
+                return None
+                
             # Parse response
-            lines = response.split('\n')
+            lines = str(response).split('\n')
             decisions = lines[0].strip().split(',')
             reasoning = '\n'.join(lines[1:])
             
@@ -275,4 +275,4 @@ class StrategyAgent:
                 
         except Exception as e:
             print(f"❌ Error executing strategy signals: {str(e)}")
-            print("🔧 Moon Dev suggests checking the logs and trying again!")  
+            print("🔧 Moon Dev suggests checking the logs and trying again!")    
