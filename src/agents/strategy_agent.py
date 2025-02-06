@@ -6,12 +6,12 @@ Handles all strategy-based trading decisions
 from src.config import *
 import json
 from termcolor import cprint
-import anthropic
 import os
 import importlib
 import inspect
 import time
 from src import nice_funcs as n
+from src.models import model_factory
 
 # 🎯 Strategy Evaluation Prompt
 STRATEGY_EVAL_PROMPT = """
@@ -50,7 +50,9 @@ class StrategyAgent:
     def __init__(self):
         """Initialize the Strategy Agent"""
         self.enabled_strategies = []
-        self.client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_KEY"))
+        self.model = model_factory.get_model("ollama", "deepseek-r1:1.5b")
+        if not self.model:
+            raise ValueError("Could not initialize Ollama model")
         
         if ENABLE_STRATEGIES:
             try:
@@ -84,20 +86,14 @@ class StrategyAgent:
             # Format signals for prompt
             signals_str = json.dumps(signals, indent=2)
             
-            message = self.client.messages.create(
-                model=AI_MODEL,
-                max_tokens=AI_MAX_TOKENS,
-                temperature=AI_TEMPERATURE,
-                messages=[{
-                    "role": "user",
-                    "content": STRATEGY_EVAL_PROMPT.format(
-                        strategy_signals=signals_str,
-                        market_data=market_data
-                    )
-                }]
+            response = self.model.generate_response(
+                system_prompt="You are Moon Dev's Strategy Validation Assistant. Analyze strategy signals and validate recommendations.",
+                user_content=STRATEGY_EVAL_PROMPT.format(
+                    strategy_signals=signals_str,
+                    market_data=market_data
+                ),
+                temperature=AI_TEMPERATURE
             )
-            
-            response = message.content
             if isinstance(response, list):
                 response = response[0].text if hasattr(response[0], 'text') else str(response[0])
             
@@ -279,4 +275,4 @@ class StrategyAgent:
                 
         except Exception as e:
             print(f"❌ Error executing strategy signals: {str(e)}")
-            print("🔧 Moon Dev suggests checking the logs and trying again!") 
+            print("🔧 Moon Dev suggests checking the logs and trying again!")  
