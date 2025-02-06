@@ -281,9 +281,24 @@ class AIAgent:
         self.model_name = model
         
         # Initialize Ollama model
-        self.model = model_factory.get_model("ollama", self.model_name)
-        if not self.model:
-            raise ValueError(f"Could not initialize Ollama model {self.model_name}")
+        print(f"🚀 Initializing Ollama model for {name}...")
+        self.model = None
+        max_retries = 3
+        retry_count = 0
+        
+        while self.model is None and retry_count < max_retries:
+            try:
+                self.model = model_factory.get_model("ollama", self.model_name)
+                if self.model and hasattr(self.model, 'generate_response'):
+                    break
+                raise ValueError("Could not initialize Ollama model")
+            except Exception as e:
+                print(f"⚠️ Error initializing model (attempt {retry_count + 1}/{max_retries}): {str(e)}")
+                retry_count += 1
+                if retry_count < max_retries:
+                    time.sleep(1)  # Wait before retrying
+                else:
+                    raise ValueError(f"Failed to initialize model after {max_retries} attempts")
         print(f"🤖 {name} using Ollama model: {model}")
             
         # Use a simpler memory file name
@@ -308,7 +323,7 @@ class AIAgent:
         with open(self.memory_file, 'w') as f:
             json.dump(self.memory, f, indent=2)
             
-    def think(self, market_data: Dict, other_agent_message: str = None) -> str:
+    def think(self, market_data: Dict, other_agent_message: Optional[str] = None) -> str:
         """Process market data and other agent's message to make decisions"""
         try:
             print_section(f"🤔 {self.name} is thinking...", "on_magenta")
@@ -472,7 +487,8 @@ class CoinGeckoAPI:
     def get_exchanges(self) -> List[Dict]:
         """Get all exchanges data"""
         print("💱 Getting exchanges data...")
-        return self._make_request("exchanges")
+        response = self._make_request("exchanges")
+        return response if isinstance(response, list) else []
 
     def get_exchange_rates(self) -> Dict:
         """Get BTC-to-Currency exchange rates"""
@@ -523,9 +539,25 @@ class TokenExtractorAgent:
     """Agent that extracts token/crypto symbols from conversations"""
     
     def __init__(self):
-        self.model = model_factory.get_model("ollama", "deepseek-r1:1.5b")
-        if not self.model:
-            raise ValueError("Could not initialize Ollama model")
+        print("🚀 Initializing Ollama model for Token Extractor...")
+        self.model = None
+        max_retries = 3
+        retry_count = 0
+        
+        while self.model is None and retry_count < max_retries:
+            try:
+                self.model = model_factory.get_model("ollama", "deepseek-r1:1.5b")
+                if self.model and hasattr(self.model, 'generate_response'):
+                    break
+                raise ValueError("Could not initialize Ollama model")
+            except Exception as e:
+                print(f"⚠️ Error initializing model (attempt {retry_count + 1}/{max_retries}): {str(e)}")
+                retry_count += 1
+                if retry_count < max_retries:
+                    time.sleep(1)  # Wait before retrying
+                else:
+                    raise ValueError(f"Failed to initialize model after {max_retries} attempts")
+                    
         self.token_history = self._load_token_history()
         cprint("🔍 Token Extractor Agent initialized!", "white", "on_cyan")
         

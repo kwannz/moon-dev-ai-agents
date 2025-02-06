@@ -107,9 +107,24 @@ class FundingArbAgent(BaseAgent):
         openai.api_key = openai_key
         
         # Initialize Ollama model
-        self.model = model_factory.get_model("ollama", "deepseek-r1:1.5b")
-        if not self.model:
-            raise ValueError("Could not initialize Ollama model")
+        print("🚀 Initializing Ollama model...")
+        self.model = None
+        max_retries = 3
+        retry_count = 0
+        
+        while self.model is None and retry_count < max_retries:
+            try:
+                self.model = model_factory.get_model("ollama", "deepseek-r1:1.5b")
+                if self.model and hasattr(self.model, 'generate_response'):
+                    break
+                raise ValueError("Could not initialize Ollama model")
+            except Exception as e:
+                print(f"⚠️ Error initializing model (attempt {retry_count + 1}/{max_retries}): {str(e)}")
+                retry_count += 1
+                if retry_count < max_retries:
+                    time.sleep(1)  # Wait before retrying
+                else:
+                    raise ValueError(f"Failed to initialize model after {max_retries} attempts")
         
         # Create data directories
         self.data_dir = Path("src/data/fundingarb")
@@ -183,7 +198,7 @@ class FundingArbAgent(BaseAgent):
                 'action': action,
                 'analysis': analysis,
                 'confidence': "Confidence: 100%",  # Default confidence for announcements
-                'model_used': 'deepseek-chat' if self.deepseek_client else self.ai_model
+                'model_used': 'deepseek-r1:1.5b'
             }
             print(f"✅ Valid analysis format: {result}")  # Debug print
             return result
