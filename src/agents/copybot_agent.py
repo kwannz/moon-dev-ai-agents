@@ -68,9 +68,23 @@ class CopyBotAgent:
     def __init__(self):
         """Initialize the CopyBot agent with LLM"""
         load_dotenv()
-        self.model = model_factory.get_model("ollama", "deepseek-r1:1.5b")
-        if not self.model:
-            raise ValueError("Could not initialize Ollama model")
+        self.model = None
+        max_retries = 3
+        retry_count = 0
+        
+        while self.model is None and retry_count < max_retries:
+            try:
+                self.model = model_factory.get_model("ollama", "deepseek-r1:1.5b")
+                if not self.model:
+                    raise ValueError("Could not initialize Ollama model")
+            except Exception as e:
+                print(f"⚠️ Error initializing model (attempt {retry_count + 1}/{max_retries}): {str(e)}")
+                retry_count += 1
+                if retry_count < max_retries:
+                    time.sleep(1)  # Wait before retrying
+                else:
+                    raise ValueError(f"Failed to initialize model after {max_retries} attempts")
+                    
         self.recommendations_df = pd.DataFrame(columns=['token', 'action', 'confidence', 'reasoning'])
         print("🤖 Moon Dev's CopyBot Agent initialized!")
         

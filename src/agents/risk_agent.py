@@ -68,9 +68,15 @@ class RiskAgent(BaseAgent):
         
         # Initialize Ollama model
         print("🚀 Initializing Ollama model...")
-        self.model = model_factory.get_model(MODEL_TYPE, MODEL_NAME)
-        if not self.model:
-            raise ValueError(f"Could not initialize {MODEL_TYPE} {MODEL_NAME} model")
+        self.model = None
+        while self.model is None:
+            try:
+                self.model = model_factory.get_model(MODEL_TYPE, MODEL_NAME)
+                if not self.model:
+                    raise ValueError(f"Could not initialize {MODEL_TYPE} {MODEL_NAME} model")
+            except Exception as e:
+                print(f"⚠️ Error initializing model: {str(e)}")
+                time.sleep(1)  # Wait before retrying
             
         self.ai_temperature = AI_TEMPERATURE if AI_TEMPERATURE > 0 else config.AI_TEMPERATURE
         

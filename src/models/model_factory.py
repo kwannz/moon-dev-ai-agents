@@ -13,6 +13,7 @@ from pathlib import Path
 from .base_model import BaseModel
 from .ollama_model import OllamaModel
 import random
+import time
 
 class ModelFactory:
     """Factory for creating and managing AI models"""
@@ -219,20 +220,33 @@ class ModelFactory:
 
     def generate_response(self, system_prompt, user_content, temperature=0.7, max_tokens=None):
         """Generate a response using the selected model"""
-        try:
-            if not self._models:
-                self._initialize_models()
-            
-            if "ollama" not in self._models:
-                model = self.get_model("ollama", "deepseek-r1:1.5b")
-                if not model:
-                    raise ValueError("Could not initialize Ollama model")
-                self._models["ollama"] = model
-            
-            return self._models["ollama"].generate_response(system_prompt, user_content, temperature)
-        except Exception as e:
-            cprint(f"❌ Model error: {str(e)}", "red")
-            return None
+        max_retries = 3
+        retry_count = 0
+        
+        while retry_count < max_retries:
+            try:
+                if not self._models:
+                    self._initialize_models()
+                
+                if "ollama" not in self._models:
+                    model = self.get_model("ollama", "deepseek-r1:1.5b")
+                    if not model:
+                        raise ValueError("Could not initialize Ollama model")
+                    self._models["ollama"] = model
+                
+                response = self._models["ollama"].generate_response(system_prompt, user_content, temperature)
+                if response:
+                    return response
+                    
+                raise ValueError("Model returned empty response")
+                
+            except Exception as e:
+                cprint(f"❌ Model error (attempt {retry_count + 1}/{max_retries}): {str(e)}", "red")
+                retry_count += 1
+                if retry_count < max_retries:
+                    time.sleep(1)  # Wait before retrying
+                
+        return None
 
 # Create a singleton instance
-model_factory = ModelFactory()                
+model_factory = ModelFactory()                    

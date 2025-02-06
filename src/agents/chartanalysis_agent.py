@@ -93,17 +93,30 @@ class ChartAnalysisAgent(BaseAgent):
         self.openai_client = openai.OpenAI(api_key=openai_key)  # For TTS only
         
         # Initialize Ollama model
-        self.model = model_factory.get_model("ollama", "deepseek-r1:1.5b")
-        if not self.model:
-            raise ValueError("Could not initialize Ollama model")
+        self.model = None
+        max_retries = 3
+        retry_count = 0
+        
+        while self.model is None and retry_count < max_retries:
+            try:
+                self.model = model_factory.get_model("ollama", "deepseek-r1:1.5b")
+                if not self.model:
+                    raise ValueError("Could not initialize Ollama model")
+            except Exception as e:
+                print(f"⚠️ Error initializing model (attempt {retry_count + 1}/{max_retries}): {str(e)}")
+                retry_count += 1
+                if retry_count < max_retries:
+                    time.sleep(1)  # Wait before retrying
+                else:
+                    raise ValueError(f"Failed to initialize model after {max_retries} attempts")
             
         # Set AI parameters
         self.ai_temperature = AI_TEMPERATURE if AI_TEMPERATURE > 0 else config.AI_TEMPERATURE
         
         print("📊 Chuck the Chart Agent initialized!")
-        print(f"🤖 Using AI Model: {self.ai_model}")
-        if AI_MODEL or AI_TEMPERATURE > 0 or AI_MAX_TOKENS > 0:
-            print("⚠️ Note: Using some override settings instead of config.py defaults")
+        print("🤖 Using AI Model: deepseek-r1:1.5b")
+        if AI_TEMPERATURE > 0:
+            print(f"⚠️ Note: Using temperature override: {AI_TEMPERATURE}")
         print(f"🎯 Analyzing {len(TIMEFRAMES)} timeframes: {', '.join(TIMEFRAMES)}")
         print(f"📈 Using indicators: {', '.join(INDICATORS)}")
         
@@ -336,7 +349,7 @@ class ChartAnalysisAgent(BaseAgent):
             last_5 = data.tail(5)
             last_5.index = pd.to_datetime(last_5.index)
             for idx, row in last_5.iterrows():
-                time_str = idx.strftime('%Y-%m-%d %H:%M')  # Include date and time
+                time_str = idx.to_pydatetime().strftime('%Y-%m-%d %H:%M')  # Include date and time
                 print(f"║ {time_str} │ {row['open']:.2f} │ {row['high']:.2f} │ {row['low']:.2f} │ {row['close']:.2f} │ {row['volume']:.0f} │")
             
             print("\n║ Technical Indicators:")
