@@ -116,7 +116,7 @@ class ModelFactory:
         try:
             cprint("\n🔄 Initializing Ollama model...", "cyan")
             model_class = self.MODEL_IMPLEMENTATIONS["ollama"]
-            model_instance = model_class(model_name=self.DEFAULT_MODELS["ollama"])
+            model_instance = model_class(api_key=None, model_name=self.DEFAULT_MODELS["ollama"])
             
             if model_instance.is_available():
                 self._models["ollama"] = model_instance
@@ -158,37 +158,43 @@ class ModelFactory:
             for available_type in self.MODEL_IMPLEMENTATIONS.keys():
                 cprint(f"  ├─ {available_type}", "yellow")
             return None
-            
-        if model_type not in self._models:
-            key_name = self._get_api_key_mapping().get(model_type)
-            if key_name:
-                cprint(f"❌ Model type '{model_type}' not available - check {key_name} in .env", "red")
+        
+        try:
+            if model_type == "ollama":
+                model = self.MODEL_IMPLEMENTATIONS[model_type](
+                    api_key=None,
+                    model_name=model_name or self.DEFAULT_MODELS["ollama"]
+                )
+                if model.is_available():
+                    self._models[model_type] = model
+                    cprint(f"✨ Successfully initialized Ollama with model {model_name}", "green")
+                    return model
             else:
-                cprint(f"❌ Model type '{model_type}' not available", "red")
-            return None
-            
-        model = self._models[model_type]
-        if model_name and model.model_name != model_name:
-            cprint(f"🔄 Reinitializing {model_type} with model {model_name}...", "cyan")
-            try:
-                # Special handling for Ollama models
-                if model_type == "ollama":
-                    model = self.MODEL_IMPLEMENTATIONS[model_type](model_name=model_name)
-                else:
-                    # For API-based models that need a key
+                if model_type not in self._models:
+                    key_name = self._get_api_key_mapping().get(model_type)
+                    if key_name:
+                        cprint(f"❌ Model type '{model_type}' not available - check {key_name} in .env", "red")
+                    else:
+                        cprint(f"❌ Model type '{model_type}' not available", "red")
+                    return None
+                
+                model = self._models[model_type]
+                if model_name and model.model_name != model_name:
                     if api_key := os.getenv(self._get_api_key_mapping()[model_type]):
                         model = self.MODEL_IMPLEMENTATIONS[model_type](api_key, model_name=model_name)
+                        self._models[model_type] = model
+                        cprint(f"✨ Successfully reinitialized with new model", "green")
                     else:
                         cprint(f"❌ API key not found for {model_type}", "red")
                         return None
                 
-                self._models[model_type] = model
-                cprint(f"✨ Successfully reinitialized with new model", "green")
-            except Exception as e:
-                cprint(f"❌ Failed to initialize {model_type} with model {model_name}", "red")
-                cprint(f"❌ Error type: {type(e).__name__}", "red")
-                cprint(f"❌ Error: {str(e)}", "red")
-                return None
+                return model
+                
+        except Exception as e:
+            cprint(f"❌ Failed to initialize {model_type} with model {model_name}", "red")
+            cprint(f"❌ Error type: {type(e).__name__}", "red")
+            cprint(f"❌ Error: {str(e)}", "red")
+            return None
             
         return model
     
@@ -220,4 +226,4 @@ class ModelFactory:
             return None
 
 # Create a singleton instance
-model_factory = ModelFactory()        
+model_factory = ModelFactory()            
