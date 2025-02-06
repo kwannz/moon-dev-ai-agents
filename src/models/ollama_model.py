@@ -13,12 +13,17 @@ from .base_model import BaseModel
 class OllamaModel(BaseModel):
     """Implementation for local Ollama models"""
     
-    # Available Ollama models - can be expanded based on what's installed locally
-    AVAILABLE_MODELS = [
-        "deepseek-r1:1.5b",  # DeepSeek R1 1.5B through Ollama
-        "gemma:2b",          # Google's Gemma 2B model
-        "llama3.2",          # Meta's Llama 3.2 model - fast and efficient
-    ]
+    @property
+    def AVAILABLE_MODELS(self):
+        """Get available Ollama models"""
+        try:
+            response = requests.get(f"{self.base_url}/tags")
+            if response.status_code == 200:
+                models = response.json().get("models", [])
+                return [model["name"] for model in models]
+            return []
+        except:
+            return []
     
     def __init__(self, api_key=None, model_name="deepseek-r1:1.5b"):
         """Initialize Ollama model
@@ -124,4 +129,4 @@ class OllamaModel(BaseModel):
             return None
     
     def __str__(self):
-        return f"OllamaModel(model={self.model_name})"      
+        return f"OllamaModel(model={self.model_name})"        

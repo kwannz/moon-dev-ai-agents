@@ -118,14 +118,18 @@ class ModelFactory:
             cprint("\n🔄 Initializing Ollama model...", "cyan")
             model_class = self.MODEL_IMPLEMENTATIONS["ollama"]
             model_name = self.DEFAULT_MODELS["ollama"]
-            model_instance = model_class(api_key=None, model_name=model_name)
-            
-            if model_instance.is_available():
-                self._models["ollama"] = model_instance
-                initialized = True
-                cprint(f"✨ Successfully initialized Ollama with model {model_name}", "green")
-            else:
-                cprint("⚠️ Ollama server not available - make sure 'ollama serve' is running", "yellow")
+            cprint(f"🔄 Initializing Ollama with model {model_name}...", "cyan")
+            try:
+                model_instance = model_class(api_key=None, model_name=model_name)
+                if model_instance.is_available():
+                    self._models["ollama"] = model_instance
+                    initialized = True
+                    cprint(f"✨ Successfully initialized Ollama with model {model_name}", "green")
+                else:
+                    cprint("⚠️ Ollama server not available - make sure 'ollama serve' is running", "yellow")
+            except Exception as e:
+                cprint(f"❌ Failed to initialize Ollama model {model_name}: {str(e)}", "red")
+                raise
         except Exception as e:
             cprint(f"❌ Failed to initialize Ollama: {str(e)}", "red")
         
@@ -256,4 +260,4 @@ class ModelFactory:
         return None
 
 # Create a singleton instance
-model_factory = ModelFactory()                          
+model_factory = ModelFactory()                            
