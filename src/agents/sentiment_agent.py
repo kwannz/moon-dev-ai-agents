@@ -112,10 +112,14 @@ class SentimentAgent:
         
     def init_sentiment_model(self):
         """Initialize the BERT model for sentiment analysis"""
-        if self.model is None:
-            self.tokenizer = AutoTokenizer.from_pretrained("finiteautomata/bertweet-base-sentiment-analysis")
-            self.model = AutoModelForSequenceClassification.from_pretrained("finiteautomata/bertweet-base-sentiment-analysis")
-            cprint("✨ Sentiment model loaded!", "green")
+        if self.tokenizer is None or self.model is None:
+            try:
+                self.tokenizer = AutoTokenizer.from_pretrained("finiteautomata/bertweet-base-sentiment-analysis")
+                self.model = AutoModelForSequenceClassification.from_pretrained("finiteautomata/bertweet-base-sentiment-analysis")
+                cprint("✨ Sentiment model loaded!", "green")
+            except Exception as e:
+                cprint(f"❌ Error loading sentiment model: {str(e)}", "red")
+                raise
 
     def analyze_sentiment(self, texts):
         """Analyze sentiment of a batch of texts"""
@@ -204,7 +208,7 @@ class SentimentAgent:
                 cutoff_time = datetime.now() - timedelta(hours=24)
                 history_df = history_df[history_df['timestamp'] > cutoff_time]
                 # Convert back to ISO format for consistent storage
-                history_df['timestamp'] = history_df['timestamp'].dt.isoformat()
+                history_df['timestamp'] = history_df['timestamp'].apply(lambda x: x.isoformat())
                 # Append new data
                 history_df = pd.concat([history_df, new_data], ignore_index=True)
             else:
