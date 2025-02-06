@@ -49,6 +49,8 @@ class OllamaModel(BaseModel):
                 if models:
                     model_names = [model["name"] for model in models]
                     cprint(f"📚 Available Ollama models: {model_names}", "cyan")
+                    if not self.model_name:
+                        raise ValueError("Model name cannot be empty")
                     if self.model_name not in model_names:
                         cprint(f"⚠️ Model {self.model_name} not found! Please run:", "yellow")
                         cprint(f"   ollama pull {self.model_name}", "yellow")
@@ -129,4 +131,4 @@ class OllamaModel(BaseModel):
             return None
     
     def __str__(self):
-        return f"OllamaModel(model={self.model_name})"        
+        return f"OllamaModel(model={self.model_name})"          
