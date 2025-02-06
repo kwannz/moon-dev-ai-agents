@@ -205,10 +205,13 @@ class ModelFactory:
     @property
     def available_models(self) -> Dict[str, list]:
         """Get all available models and their configurations"""
-        return {
-            model_type: model.AVAILABLE_MODELS
-            for model_type, model in self._models.items()
-        }
+        models = {}
+        for model_type, model in self._models.items():
+            if hasattr(model, 'AVAILABLE_MODELS'):
+                models[model_type] = model.AVAILABLE_MODELS
+            else:
+                models[model_type] = []
+        return models
     
     def is_model_available(self, model_type: str) -> bool:
         """Check if a specific model type is available"""
@@ -217,13 +220,19 @@ class ModelFactory:
     def generate_response(self, system_prompt, user_content, temperature=0.7, max_tokens=None):
         """Generate a response using the selected model"""
         try:
-            model = self.get_model("ollama", "deepseek-r1:1.5b")
-            if not model:
-                raise ValueError("Could not initialize Ollama model")
-            return model.generate_response(system_prompt, user_content, temperature)
+            if not self._models:
+                self._initialize_models()
+            
+            if "ollama" not in self._models:
+                model = self.get_model("ollama", "deepseek-r1:1.5b")
+                if not model:
+                    raise ValueError("Could not initialize Ollama model")
+                self._models["ollama"] = model
+            
+            return self._models["ollama"].generate_response(system_prompt, user_content, temperature)
         except Exception as e:
             cprint(f"❌ Model error: {str(e)}", "red")
             return None
 
 # Create a singleton instance
-model_factory = ModelFactory()            
+model_factory = ModelFactory()                

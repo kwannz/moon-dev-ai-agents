@@ -48,4 +48,10 @@ class BaseModel(ABC):
     @abstractmethod
     def model_type(self) -> str:
         """Return the type/name of the model"""
-        pass    
+        pass
+        
+    @property
+    @abstractmethod
+    def AVAILABLE_MODELS(self) -> list:
+        """Return list of available models"""
+        pass  
