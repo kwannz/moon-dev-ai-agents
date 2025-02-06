@@ -98,9 +98,6 @@ class FundingAgent(BaseAgent):
         """Initialize Fran the Funding Agent"""
         super().__init__('funding')
         
-        # Set active model - use override if set, otherwise use config
-        self.active_model = MODEL_OVERRIDE if MODEL_OVERRIDE != "0" else config.AI_MODEL
-        
         load_dotenv()
         
         # Initialize OpenAI client for voice only
@@ -109,27 +106,13 @@ class FundingAgent(BaseAgent):
             raise ValueError("🚨 OPENAI_KEY not found in environment variables!")
         openai.api_key = openai_key
         
-        # Initialize Anthropic for Claude models
-        anthropic_key = os.getenv("ANTHROPIC_KEY")
-        if not anthropic_key:
-            raise ValueError("🚨 ANTHROPIC_KEY not found in environment variables!")
-        self.anthropic_client = anthropic.Anthropic(api_key=anthropic_key)
-        
-        # Initialize DeepSeek client if needed
-        if "deepseek" in self.active_model.lower():
-            deepseek_key = os.getenv("DEEPSEEK_KEY")
-            if deepseek_key:
-                self.deepseek_client = openai.OpenAI(
-                    api_key=deepseek_key,
-                    base_url=DEEPSEEK_BASE_URL
-                )
-                cprint("🚀 Moon Dev's Funding Agent using DeepSeek override!", "green")
-            else:
-                self.deepseek_client = None
-                cprint("⚠️ DEEPSEEK_KEY not found - DeepSeek model will not be available", "yellow")
-        else:
-            self.deepseek_client = None
-            cprint(f"🎯 Moon Dev's Funding Agent using Claude model: {self.active_model}!", "green")
+        # Initialize Ollama model
+        self.model = model_factory.get_model("ollama", "deepseek-r1:1.5b")
+        if not self.model:
+            raise ValueError("Could not initialize Ollama model")
+            
+        # Set AI parameters
+        self.ai_temperature = AI_TEMPERATURE if AI_TEMPERATURE > 0 else config.AI_TEMPERATURE
         
         self.api = MoonDevAPI()
         
@@ -194,35 +177,18 @@ class FundingAgent(BaseAgent):
             
             print(f"\n🤖 Analyzing {symbol} with AI...")
             
-            # Use either DeepSeek or Claude based on active_model
-            if "deepseek" in self.active_model.lower():
-                if not self.deepseek_client:
-                    raise ValueError("🚨 DeepSeek client not initialized - check DEEPSEEK_KEY")
-                    
-                cprint(f"🤖 Using DeepSeek model: {self.active_model}", "cyan")
-                response = self.deepseek_client.chat.completions.create(
-                    model="deepseek-chat",
-                    messages=[
-                        {"role": "system", "content": FUNDING_ANALYSIS_PROMPT},
-                        {"role": "user", "content": context}
-                    ],
-                    max_tokens=AI_MAX_TOKENS if AI_MAX_TOKENS > 0 else config.AI_MAX_TOKENS,
-                    temperature=AI_TEMPERATURE if AI_TEMPERATURE > 0 else config.AI_TEMPERATURE,
-                    stream=False
-                )
-                content = response.choices[0].message.content.strip()
-            else:
-                cprint(f"🤖 Using Claude model: {self.active_model}", "cyan")
-                response = self.anthropic_client.messages.create(
-                    model=self.active_model,
-                    max_tokens=AI_MAX_TOKENS if AI_MAX_TOKENS > 0 else config.AI_MAX_TOKENS,
-                    temperature=AI_TEMPERATURE if AI_TEMPERATURE > 0 else config.AI_TEMPERATURE,
-                    system=FUNDING_ANALYSIS_PROMPT,
-                    messages=[
-                        {"role": "user", "content": context}
-                    ]
-                )
-                content = response.content[0].text
+            # Get AI analysis using model factory
+            response = self.model.generate_response(
+                system_prompt="You are Moon Dev's Funding Analysis AI. Analyze funding rates and market data.",
+                user_content=context,
+                temperature=self.ai_temperature
+            )
+            
+            if not response:
+                print("❌ No response from AI")
+                return None
+                
+            content = str(response)
             
             # Debug: Print raw response
             print("\n🔍 Raw response:")
@@ -483,10 +449,11 @@ class FundingAgent(BaseAgent):
             print("║  Symbol  │  Annual Rate  │      Status      ║")
             print("╟" + "─" * 50 + "╢")
             
-            for _, row in current_data.iterrows():
-                # Get fun status emoji based on rate
-                if row['annual_rate'] > 20:
-                    status = "🔥 SUPER HOT!"
+            if current_data is not None:
+                for _, row in current_data.iterrows():
+                    # Get fun status emoji based on rate
+                    if row['annual_rate'] > 20:
+                        status = "🔥 SUPER HOT!"
                 elif row['annual_rate'] < -5:
                     status = "❄️ SUPER COLD"
                 elif row['annual_rate'] > 10:
