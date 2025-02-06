@@ -123,8 +123,6 @@ class ModelFactory:
             cprint(f"🔄 Initializing Ollama with model {model_name}...", "cyan")
             try:
                 model_instance = model_class(api_key=None, model_name=model_name)
-                if not model_instance:
-                    raise ValueError(f"Failed to create model instance for {model_name}")
                 if model_instance.is_available():
                     self._models["ollama"] = model_instance
                     initialized = True
@@ -257,6 +255,9 @@ class ModelFactory:
                         raise ValueError(f"Could not initialize Ollama model {model_name}")
                     self._models["ollama"] = model
                 
+                if not self._models["ollama"]:
+                    raise ValueError("Model not properly initialized")
+                
                 response = self._models["ollama"].generate_response(system_prompt, user_content, temperature)
                 if response:
                     return response
@@ -271,8 +272,9 @@ class ModelFactory:
                     # Try to reinitialize the model
                     if "ollama" in self._models:
                         del self._models["ollama"]
+                        self._models = {}  # Clear all models to force reinitialization
                 
         return None
 
 # Create a singleton instance
-model_factory = ModelFactory()                                      
+model_factory = ModelFactory()                                          

@@ -32,6 +32,8 @@ class OllamaModel(BaseModel):
             api_key: Not used for Ollama but kept for compatibility
             model_name: Name of the Ollama model to use
         """
+        if not model_name:
+            raise ValueError("Model name cannot be empty")
         self.base_url = "http://localhost:11434/api"  # Default Ollama API endpoint
         self.model_name = model_name
         # Pass a dummy API key to satisfy BaseModel
@@ -132,4 +134,4 @@ class OllamaModel(BaseModel):
             return None
     
     def __str__(self):
-        return f"OllamaModel(model={self.model_name})"            
+        return f"OllamaModel(model={self.model_name})"              
