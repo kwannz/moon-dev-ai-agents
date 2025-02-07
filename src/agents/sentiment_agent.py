@@ -92,9 +92,10 @@ def patched_client(*args, **kwargs):
 httpx.Client = patched_client
 
 # imports 
-class SentimentAgent:
+class SentimentAgent(BaseAgent):
     def __init__(self):
         """Initialize the Sentiment Agent"""
+        super().__init__("sentiment")
         self.tokenizer = None
         self.model = None
         self.audio_dir = Path("src/audio")
@@ -104,46 +105,36 @@ class SentimentAgent:
         if not os.path.exists(SENTIMENT_HISTORY_FILE):
             pd.DataFrame(columns=['timestamp', 'sentiment_score', 'num_tweets']).to_csv(SENTIMENT_HISTORY_FILE, index=False)
         
-        # Load the sentiment model at initialization with retry logic
+        # Load the sentiment model at initialization
         cprint("🤖 Loading sentiment model...", "cyan")
-        max_retries = 3
-        retry_count = 0
-        
-        while (self.tokenizer is None or self.model is None) and retry_count < max_retries:
-            try:
-                self.init_sentiment_model()
-                if self.tokenizer is not None and self.model is not None:
-                    break
-            except Exception as e:
-                print(f"⚠️ Error initializing model (attempt {retry_count + 1}/{max_retries}): {str(e)}")
-                retry_count += 1
-                if retry_count < max_retries:
-                    time.sleep(1)  # Wait before retrying
-                else:
-                    raise ValueError(f"Failed to initialize sentiment model after {max_retries} attempts")
-            
+        self.init_sentiment_model()
+        cprint("✨ Sentiment model loaded!", "green")
         cprint("🌙 Moon Dev's Sentiment Agent initialized! (Twitter functionality disabled)", "green")
         
     def init_sentiment_model(self):
         """Initialize the BERT model for sentiment analysis"""
-        if self.tokenizer is None or self.model is None:
-            try:
+        try:
+            if self.tokenizer is None or self.model is None:
                 self.tokenizer = AutoTokenizer.from_pretrained("finiteautomata/bertweet-base-sentiment-analysis")
                 self.model = AutoModelForSequenceClassification.from_pretrained("finiteautomata/bertweet-base-sentiment-analysis")
-                cprint("✨ Sentiment model loaded!", "green")
-            except Exception as e:
-                cprint(f"❌ Error loading sentiment model: {str(e)}", "red")
-                raise
+                return True
+            return False
+        except Exception as e:
+            cprint(f"❌ Error loading sentiment model: {str(e)}", "red")
+            raise
 
     def analyze_sentiment(self, texts):
         """Analyze sentiment of a batch of texts"""
-        if self.tokenizer is None or self.model is None:
-            raise ValueError("Sentiment model not initialized")
+        if not texts:
+            return 0.0
             
-        sentiments = []
-        batch_size = 8  # Process in small batches to avoid memory issues
-        
         try:
+            if self.tokenizer is None or self.model is None:
+                self.init_sentiment_model()
+                
+            sentiments = []
+            batch_size = 8  # Process in small batches to avoid memory issues
+            
             for i in range(0, len(texts), batch_size):
                 batch_texts = texts[i:i + batch_size]
                 inputs = self.tokenizer(batch_texts, padding=True, truncation=True, max_length=128, return_tensors="pt")
@@ -152,11 +143,14 @@ class SentimentAgent:
                     outputs = self.model(**inputs)
                     predictions = torch.nn.functional.softmax(outputs.logits, dim=-1)
                     sentiments.extend(predictions.tolist())
+                    
+            return self._calculate_sentiment_scores(sentiments)
         except Exception as e:
             cprint(f"❌ Error analyzing sentiment: {str(e)}", "red")
             return 0.0  # Return neutral sentiment on error
         
-        # Convert to sentiment scores (-1 to 1)
+    def _calculate_sentiment_scores(self, sentiments):
+        """Convert sentiment predictions to scores"""
         scores = []
         for sentiment in sentiments:
             # NEG, NEU, POS
@@ -399,8 +393,8 @@ class SentimentAgent:
         cprint("🌙 Moon Dev's Sentiment Analysis complete! 🚀", "green")
 
     def run(self):
-        """Main function to run sentiment analysis"""
-        self.run_async()
+        """Main function to run sentiment analysis (implements BaseAgent interface)"""
+        self.run_async()  # Run the async implementation while maintaining BaseAgent interface
 
 if __name__ == "__main__":
     try:
