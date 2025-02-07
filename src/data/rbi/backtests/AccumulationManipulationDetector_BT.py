@@ -1,6 +1,7 @@
 """
-AccumulationManipulationDetector strategy implementation using TA-Lib indicators.
-Detects accumulation and manipulation patterns in price action.
+Lumix Backtest AI - AccumulationManipulationDetector Strategy
+This implementation includes proper risk management and position sizing.
+Uses accumulation and manipulation patterns for trading decisions.
 """
 
 import os
@@ -11,7 +12,7 @@ import talib
 from backtesting import Backtest, Strategy
 
 # Data Handling
-print("Loading data from CSV...")
+print("✨ Loading data from CSV...")
 data_path = str(Path(__file__).parent.parent / "BTC-USD-15m.csv")
 data = pd.read_csv(data_path)
 
@@ -86,23 +87,23 @@ print(stats._strategy)
 strategy_name = "AccumulationManipulationDetector"
 chart_dir = str(Path(__file__).parent.parent / "charts")
 chart_file = os.path.join(chart_dir, f"{strategy_name}_chart.html")
-print(f"Saving initial chart to {chart_file}")
+print(f"✨ Saving initial chart to {chart_file}")
 bt.plot(filename=chart_file, open_browser=False)
 
 # Optimization
-print("Starting parameter optimization...")
+print("✨ Starting parameter optimization...")
 optim = bt.optimize(risk_reward=range(150, 251, 50),
                    maximize='Equity Final [$]',
                    constraint=lambda param: param.risk_reward > 0,
                    return_stats=True)
 
-print("Optimization complete!")
+print("✨ Optimization complete!")
 print(optim)
 print(optim._strategy)
 
 # Save optimized chart
 opt_chart_file = os.path.join(chart_dir, f"{strategy_name}_optimized_chart.html")
-print(f"Saving optimized chart to {opt_chart_file}")
+print(f"✨ Saving optimized chart to {opt_chart_file}")
 bt.plot(filename=opt_chart_file, open_browser=False)
 
-print("Backtest completed successfully!")
+print("✨ Backtest completed successfully!")

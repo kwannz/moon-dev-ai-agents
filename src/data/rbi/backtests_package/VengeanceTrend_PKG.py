@@ -1,7 +1,13 @@
+from pathlib import Path
 import pandas as pd
+import numpy as np
 import talib
 from backtesting import Backtest, Strategy
-import numpy as np
+
+"""
+Lumix Backtest AI - VengeanceTrend Strategy
+This implementation includes proper risk management and position sizing.
+"""
 
 # Clean and prepare the data
 def prepare_data(filepath):
@@ -33,7 +39,7 @@ class VengeanceTrend(Strategy):
     def init(self):
         # Calculate ATR for trailing stop
         self.atr = self.I(talib.ATR, self.data.High, self.data.Low, self.data.Close, timeperiod=self.atr_period)
-        print("🌙 Initialized VengeanceTrend Strategy with ATR-based trailing stops! 🚀")
+        print("✨ Initialized VengeanceTrend Strategy with ATR-based trailing stops!")
 
     def next(self):
         # Skip if ATR is not calculated yet
@@ -50,10 +56,10 @@ class VengeanceTrend(Strategy):
         # Entry logic: Buy on pullback in an uptrend
         if not self.position:
             if self.data.Close[-1] > self.data.Close[-2] and self.data.Close[-2] > self.data.Close[-3]:  # Uptrend
-                print("🌙 Detected Uptrend! Looking for a pullback entry... ✨")
+                print("✨ Detected Uptrend! Looking for a pullback entry...")
                 if self.data.Close[-1] < self.data.Close[-2]:  # Pullback
                     self.buy(size=position_size, sl=self.data.Close[-1] - self.trailing_stop_multiplier * current_atr)
-                    print(f"🚀 Entered Long at {self.data.Close[-1]} with trailing stop! 🌙")
+                    print(f"✨ Entered Long at {self.data.Close[-1]} with trailing stop!")
 
         # Trailing stop logic
         if self.position:
@@ -71,7 +77,7 @@ data = prepare_data(data_path)
 # Run initial backtest
 bt = Backtest(data, VengeanceTrend, cash=1_000_000, commission=0.002)
 stats = bt.run()
-print("🌙 Initial Backtest Results: 🌙")
+print("✨ Initial Backtest Results:")
 print(stats)
 print(stats._strategy)
 
@@ -85,12 +91,12 @@ optimization_results = bt.optimize(
     risk_per_trade=[0.01, 0.02, 0.03],
     maximize='Return [%]'
 )
-print("🌙 Optimization Results: 🌙")
+print("✨ Optimization Results:")
 print(optimization_results)
 
 # Run backtest with optimized parameters
 optimized_stats = bt.run(**optimization_results._params)
-print("🌙 Optimized Backtest Results: 🌙")
+print("✨ Optimized Backtest Results:")
 print(optimized_stats)
 print(optimized_stats._strategy)
 

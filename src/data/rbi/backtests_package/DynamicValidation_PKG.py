@@ -1,5 +1,6 @@
 """
-DynamicValidation strategy implementation using TA-Lib indicators.
+Lumix Backtest AI - DynamicValidation Strategy
+This implementation includes proper risk management and position sizing.
 Uses dynamic validation of lows and highs for trading decisions.
 """
 
@@ -25,7 +26,7 @@ class DynamicValidation(Strategy):
 
 # Load data
 data_path = str(Path(__file__).parent.parent / "BTC-USD-15m.csv")
-print("Loading data from:", data_path)
+print("✨ Loading data from:", data_path)
 data = pd.read_csv(data_path)
 
 # Clean column names and drop unnamed columns
@@ -44,4 +45,4 @@ chart_file = os.path.join(chart_dir, f"{strategy_name}_chart.html")
 print(f"Saving initial chart to: {chart_file}")
 bt.plot(filename=chart_file, open_browser=False)
 
-print("Backtest completed successfully!")
+print("✨ Backtest completed successfully!")
