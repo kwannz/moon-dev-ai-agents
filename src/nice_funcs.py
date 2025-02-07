@@ -451,62 +451,41 @@ def fetch_wallet_token_single(address, token_mint_address):
     return df
 
 
-def token_price(address):
+def token_price(address: str) -> float:
     url = f"https://public-api.birdeye.so/defi/price?address={address}"
     headers = {"X-API-KEY": BIRDEYE_API_KEY}
-    response = requests.get(url, headers=headers)
-    price_data = response.json()
-
-    print(price_data)
-
-    if price_data['success']:
-        return price_data['data']['value']
-    else:
-        return None
+    try:
+        response = requests.get(url, headers=headers)
+        price_data = response.json()
+        if price_data.get('success'):
+            return float(price_data.get('data', {}).get('value', 0))
+        return 0.0
+    except Exception as e:
+        print(f"Error getting token price: {str(e)}")
+        return 0.0
     
 # price = token_price('2zMMhcVQEXDtdE6vsFS7S7D5oUodfJHE8vd1gnBouauv')
 # print(price)
 # time.sleep(897)
 
 
-def get_position(token_mint_address):
+def get_position(token_mint_address: str) -> float:
     """
-    Fetches the balance of a specific token given its mint address from a DataFrame.
-
-    Parameters:
-    - dataframe: A pandas DataFrame containing token balances with columns ['Mint Address', 'Amount'].
-    - token_mint_address: The mint address of the token to find the balance for.
-
-    Returns:
-    - The balance of the specified token if found, otherwise a message indicating the token is not in the wallet.
+    Fetches the balance of a specific token given its mint address.
+    Returns the balance as a float, or 0.0 if not found.
     """
-    dataframe = fetch_wallet_token_single(address, token_mint_address)
+    try:
+        dataframe = fetch_wallet_token_single(address, token_mint_address)
+        if dataframe.empty:
+            return 0.0
 
-    #dataframe = pd.read_csv('data/token_per_addy.csv')
-
-    print('-----------------')
-    #print(dataframe)
-
-    #print(dataframe)
-
-    # Check if the DataFrame is empty
-    if dataframe.empty:
-        print("The DataFrame is empty. No positions to show.")
-        return 0  # Indicating no balance found
-
-    # Ensure 'Mint Address' column is treated as string for reliable comparison
-    dataframe['Mint Address'] = dataframe['Mint Address'].astype(str)
-
-    # Check if the token mint address exists in the DataFrame
-    if dataframe['Mint Address'].isin([token_mint_address]).any():
-        # Get the balance for the specified token
-        balance = dataframe.loc[dataframe['Mint Address'] == token_mint_address, 'Amount'].iloc[0]
-        #print(f"Balance for {token_mint_address[-4:]} token: {balance}")
-        return balance
-    else:
-        # If the token mint address is not found in the DataFrame, return a message indicating so
-        print("Token mint address not found in the wallet.")
-        return 0  # Indicating no balance found
+        dataframe['Mint Address'] = dataframe['Mint Address'].astype(str)
+        if dataframe['Mint Address'].isin([token_mint_address]).any():
+            return float(dataframe.loc[dataframe['Mint Address'] == token_mint_address, 'Amount'].iloc[0])
+        return 0.0
+    except Exception as e:
+        print(f"Error getting position: {str(e)}")
+        return 0.0
 
 
 def get_decimals(token_mint_address):
