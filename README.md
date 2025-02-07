@@ -112,7 +112,6 @@ Please check our official channels for educational resources and contact informa
 
 ### System Requirements
 - Python 3.10.9
-- Node.js and npm
 - Git
 
 ### Installation Steps
