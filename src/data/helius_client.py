@@ -21,8 +21,9 @@ class HeliusClient:
             raise ValueError("HELIUS_API_KEY environment variable is required")
         self.base_url = f"https://mainnet.helius-rpc.com/?api-key={self.api_key}"
         self.ws_url = f"wss://mainnet.helius-rpc.com/?api-key={self.api_key}"
-        self.parse_tx_url = f"https://api.helius.xyz/v0/transactions/?api-key={self.api_key}"
-        self.parse_tx_history_url = f"https://api.helius.xyz/v0/addresses/{{address}}/transactions/?api-key={self.api_key}"
+        self.headers = {
+            "Content-Type": "application/json"
+        }
         self.last_request_time = 0
         self.min_request_interval = 0.5  # 500ms between requests
         
@@ -35,16 +36,24 @@ class HeliusClient:
         self.last_request_time = time.time()
         
     def get_token_price(self, token_address: str) -> float:
-        """Get current token price using Jupiter API"""
+        """Get current token price using DAS API"""
         self._rate_limit()
         try:
-            response = requests.get(
-                f"https://price.jup.ag/v4/price?ids={token_address}"
+            response = requests.post(
+                f"{self.base_url}",
+                headers=self.headers,
+                json={
+                    "jsonrpc": "2.0",
+                    "id": "get-token-data",
+                    "method": "getTokenLargestAccounts",
+                    "params": [token_address]
+                }
             )
             response.raise_for_status()
             data = response.json()
-            if "data" in data and token_address in data["data"]:
-                return float(data["data"][token_address].get("price", 0))
+            if "result" in data and "value" in data["result"]:
+                largest_account = data["result"]["value"][0]
+                return float(largest_account["amount"]) / 1e9  # Convert to SOL
             return 0.0
         except Exception as e:
             cprint(f"❌ Failed to get token price: {str(e)}", "red")
