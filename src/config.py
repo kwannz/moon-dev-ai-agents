@@ -1,51 +1,47 @@
 """
-🌙 Moon Dev's Configuration File
-Built with love by Moon Dev 🚀
+Lumix Trading System Configuration
 """
 
-# 💰 Trading Configuration
-USDC_ADDRESS = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"  # Never trade or close
-SOL_ADDRESS = "So11111111111111111111111111111111111111111"   # Never trade or close
+# Token Addresses
+USDC_ADDRESS = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"  # USDC token address
+SOL_ADDRESS = "So11111111111111111111111111111112"   # Native SOL token address
 
-# Create a list of addresses to exclude from trading/closing
-EXCLUDED_TOKENS = [USDC_ADDRESS, SOL_ADDRESS]
+# Trading Exclusions
+EXCLUDED_TOKENS = [USDC_ADDRESS, SOL_ADDRESS]  # Never trade these tokens
 
-# Token List for Trading 📋
+# Token List for Trading
 MONITORED_TOKENS = [
-    '9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump',    # 🌬️ FART
-    # 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',    # 💵 USDC
-    'HeLp6NuQkmYB4pYWo2zYs22mESHXPQYzXbB8n4V98jwC',    # 🤖 AI16Z
-    # 'v62Jv9pwMTREWV9f6TetZfMafV254vo99p7HSF25BPr',     # 🎮 GG Solana
-    # 'KENJSUYLASHUMfHyy5o4Hp2FdNqZg1AsUPhfH2kYvEP',   # GRIFFAIN
-    # '8x5VqbHA8D7NkD52uNuS5nnt3PwA3pLD34ymskeSo2Wn',    # 🧠 ZEREBRO
-    # 'Df6yfrKC8kZE3KNkrHERKzAetSxbrWeniQfyJY4Jpump',    # 😎 CHILL GUY
-    # 'ED5nyyWEzpPPiWimP8vYm7sD7TD3LAt3Q3gRTWHzPJBY',    # 🌙 MOODENG
-    # 'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm',    # 🐕 WIF
+    '9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump',  # FART
+    'HeLp6NuQkmYB4pYWo2zYs22mESHXPQYzXbB8n4V98jwC'   # AI16Z
 ]
 
-# Moon Dev's Token Trading List 🚀
-# Each token is carefully selected by Moon Dev for maximum moon potential! 🌙
-tokens_to_trade = MONITORED_TOKENS  # Using the same list for trading
+# Trading List Configuration
+tokens_to_trade = MONITORED_TOKENS
 
-# Token and wallet settings
-symbol = '9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump'
-address = '4wgfCBf2WwLSRKLef9iW7JXZ2AfkxUxGM4XcKpHm3Sin' # YOUR WALLET ADDRESS HERE
+# Wallet Configuration
+WALLET_ADDRESS = "4BKPzFyjBaRP3L1PNDf3xTerJmbbxxESmDmZJ2CZYdQ5"  # Trading wallet address
+DEFAULT_SYMBOL = '9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump'
 
-# Position sizing 🎯
-usd_size = 25  # Size of position to hold
-max_usd_order_size = 3  # Max order size
-tx_sleep = 30  # Sleep between transactions
-slippage = 199  # Slippage settings
+# Position Sizing and Trading Parameters
+POSITION_SIZE_SOL = 0.05  # Maximum position size in SOL
+MAX_ORDER_SIZE_SOL = 0.02  # Maximum order size in SOL
+TX_SLEEP = 15  # Sleep between transactions (seconds)
+SLIPPAGE = 250  # 250 = 2.5% slippage for optimal execution
+PRIORITY_FEE = 100000  # ~0.02 USD at current SOL prices
+ORDERS_PER_OPEN = 2  # Multiple orders for better fill rates
+MAX_RETRIES = 3  # Maximum retry attempts for failed transactions
 
-# Risk Management Settings 🛡️
-CASH_PERCENTAGE = 20  # Minimum % to keep in USDC as safety buffer (0-100)
-MAX_POSITION_PERCENTAGE = 30  # Maximum % allocation per position (0-100)
-STOPLOSS_PRICE = 1 # NOT USED YET 1/5/25    
-BREAKOUT_PRICE = .0001 # NOT USED YET 1/5/25
-SLEEP_AFTER_CLOSE = 600  # Prevent overtrading
+# Risk Management Settings
+MIN_SOL_BALANCE = 0.05  # Minimum SOL balance required for trading
+CASH_PERCENTAGE = 30  # Minimum % to keep in SOL as safety buffer
+MAX_POSITION_PERCENTAGE = 20  # Maximum % allocation per position
+MAX_LOSS_PERCENTAGE = 5  # Maximum loss percentage per trade
+MAX_DAILY_TRADES = 10  # Maximum number of trades per day
+SLEEP_AFTER_CLOSE = 300  # Prevent overtrading (5 minutes)
 
-MAX_LOSS_GAIN_CHECK_HOURS = 12  # How far back to check for max loss/gain limits (in hours)
-SLEEP_BETWEEN_RUNS_MINUTES = 15  # How long to sleep between agent runs 🕒
+# Trading Monitoring
+MAX_LOSS_GAIN_CHECK_HOURS = 12  # How far back to check for max loss/gain limits
+SLEEP_BETWEEN_RUNS_MINUTES = 15  # Sleep between agent runs
 
 
 # Max Loss/Gain Settings FOR RISK AGENT 1/5/25
@@ -63,19 +59,23 @@ USE_AI_CONFIRMATION = True  # If True, consult AI before closing positions. If F
 MAX_LOSS_PERCENT = 5  # Maximum loss as percentage (e.g., 20 = 20% loss)
 MAX_GAIN_PERCENT = 5  # Maximum gain as percentage (e.g., 50 = 50% gain)
 
-# Transaction settings ⚡
-slippage = 199  # 500 = 5% and 50 = .5% slippage
+# Transaction Settings
+SLIPPAGE = 250  # 250 = 2.5% slippage for optimal trade execution
 PRIORITY_FEE = 100000  # ~0.02 USD at current SOL prices
-orders_per_open = 3  # Multiple orders for better fill rates
+ORDERS_PER_OPEN = 2  # Multiple orders for better fill rates
+MAX_RETRIES = 3  # Maximum retry attempts for failed transactions
+MIN_AMOUNT_OUT_BPS = 9700  # 97% of quote amount for minAmountOut protection
 
 # Market maker settings 📊
 buy_under = .0946
 sell_over = 1
 
-# Data collection settings 📈
-DAYSBACK_4_DATA = 3
-DATA_TIMEFRAME = '1H'  # 1m, 3m, 5m, 15m, 30m, 1H, 2H, 4H, 6H, 8H, 12H, 1D, 3D, 1W, 1M
-SAVE_OHLCV_DATA = False  # 🌙 Set to True to save data permanently, False will only use temp data during run
+# Market Data Configuration
+TIMEFRAME = '15m'  # Trading timeframe
+LOOKBACK_DAYS = 3  # Days of historical data to analyze
+MIN_VOLUME_24H = 1000  # Minimum 24h volume in USD
+MIN_LIQUIDITY = 5000  # Minimum liquidity in USD
+SAVE_MARKET_DATA = False  # Only use temp data during run
 
 # AI Model Settings 🤖
 AI_MODEL = "claude-3-haiku-20240307"  # Model Options:
