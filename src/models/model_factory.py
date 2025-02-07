@@ -11,46 +11,43 @@ from termcolor import cprint
 from .ollama_model import OllamaModel
 
 class ModelFactory:
+    _instance = None
+    
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(ModelFactory, cls).__new__(cls)
+            cls._instance.initialized = False
+        return cls._instance
+        
     def __init__(self):
+        if self.initialized:
+            return
+            
         self.models = {}
         self.initialized_models = []
         self.available_models = []
         
-        print("\nCreating new ModelFactory instance...")
-        
         # Load environment
         env_file = Path(__file__).parent.parent / ".env"
-        print(f"\nLoading environment from: {env_file}")
         if env_file.exists():
             print("Environment loaded")
-        
-        print("\nModel Factory Initialization")
-        print("═" * 50)
         
         # Initialize Ollama model
         try:
             ollama = OllamaModel()
-            if ollama.initialize():
+            if ollama.initialize_client():
                 self.models['ollama'] = ollama
                 self.initialized_models.append('ollama')
                 self.available_models.append('ollama')
         except Exception as e:
             print(f"Error initializing Ollama: {e}")
         
-        print("\n" + "═" * 50)
-        print("Initialization Summary:")
-        print(f"  ├─ Models attempted: {len(self.models)}")
-        print(f"  ├─ Models initialized: {len(self.initialized_models)}")
-        print(f"  └─ Available models: {self.available_models}")
-        
-        print("\nAvailable AI Models:")
-        for model_name in self.available_models:
-            print(f"  ├─ {model_name}: {self.models[model_name].model_name}")
-        print("  └─ Model Factory Ready!")
+        print("Model Factory Ready!")
+        self.initialized = True
 
     def get_model(self, model_type='ollama'):
         """Get an initialized model instance"""
         if model_type not in self.models:
             print(f"Error: Model {model_type} not available")
             return None
-        return self.models[model_type]
+        return self.models[model_type]    
