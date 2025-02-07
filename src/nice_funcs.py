@@ -402,10 +402,8 @@ def get_data(address, days_back_4_data, timeframe):
 
 def fetch_wallet_holdings_og(wallet_address: str) -> pd.DataFrame:
     """Fetch token holdings for a wallet using Helius API"""
+    df = pd.DataFrame(columns=['Mint Address', 'Amount', 'USD Value'])
     try:
-        # Initialize empty DataFrame
-        df = pd.DataFrame(columns=['Mint Address', 'Amount', 'USD Value'])
-        
         # Get wallet SOL balance
         helius_client = HeliusClient()
         sol_balance = helius_client.get_wallet_balance(wallet_address)
@@ -462,38 +460,17 @@ def fetch_wallet_holdings_og(wallet_address: str) -> pd.DataFrame:
         return df
     except Exception as e:
         cprint(f"Error fetching wallet holdings: {str(e)}", 'white', 'on_red')
-        return pd.DataFrame()
+        return df
 
-    url = f"https://public-api.birdeye.so/v1/wallet/token_list?wallet={address}"
-    headers = {"x-chain": "solana", "X-API-KEY": API_KEY}
-    response = requests.get(url, headers=headers)
 
-    if response.status_code == 200:
-        json_response = response.json()
 
-        if 'data' in json_response and 'items' in json_response['data']:
-            df = pd.DataFrame(json_response['data']['items'])
-            df = df[['address', 'uiAmount', 'valueUsd']]
-            df = df.rename(columns={'address': 'Mint Address', 'uiAmount': 'Amount', 'valueUsd': 'USD Value'})
-            df = df.dropna()
-            df = df[df['USD Value'] > 0.05]
-        else:
-            cprint("No data available in the response.", 'white', 'on_red')
 
-    else:
-        cprint(f"Failed to retrieve token list for {address}.", 'white', 'on_magenta')
 
-    # Print the DataFrame if it's not empty
-    if not df.empty:
-        print(df)
-        # Assuming cprint is a function you have for printing in color
-        cprint(f'** Total USD balance is {df["USD Value"].sum()}', 'white', 'on_green')
-        # Save the filtered DataFrame to a CSV file
-        # TOKEN_PER_ADDY_CSV = 'filtered_wallet_holdings.csv'  # Define your CSV file name
-        # df.to_csv(TOKEN_PER_ADDY_CSV, index=False)
-    else:
-        # If the DataFrame is empty, print a message or handle it as needed
-        cprint("No wallet holdings to display.", 'white', 'on_red')
+
+
+
+
+
 
     return df
 
