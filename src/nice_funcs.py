@@ -401,43 +401,61 @@ def get_data(address, days_back_4_data, timeframe):
 
 
 
-def fetch_wallet_holdings_og(address):
-
-    API_KEY = BIRDEYE_API_KEY  # Assume this is your API key; replace it with the actual one
-
-    # Initialize an empty DataFrame
-    df = pd.DataFrame(columns=['Mint Address', 'Amount', 'USD Value'])
-
-    url = f"https://public-api.birdeye.so/v1/wallet/token_list?wallet={address}"
-    headers = {"x-chain": "solana", "X-API-KEY": API_KEY}
-    response = requests.get(url, headers=headers)
-
-    if response.status_code == 200:
-        json_response = response.json()
-
-        if 'data' in json_response and 'items' in json_response['data']:
-            df = pd.DataFrame(json_response['data']['items'])
-            df = df[['address', 'uiAmount', 'valueUsd']]
-            df = df.rename(columns={'address': 'Mint Address', 'uiAmount': 'Amount', 'valueUsd': 'USD Value'})
-            df = df.dropna()
-            df = df[df['USD Value'] > 0.05]
-        else:
-            cprint("No data available in the response.", 'white', 'on_red')
-
-    else:
-        cprint(f"Failed to retrieve token list for {address}.", 'white', 'on_magenta')
-
-    # Print the DataFrame if it's not empty
-    if not df.empty:
-        print(df)
-        # Assuming cprint is a function you have for printing in color
-        cprint(f'** Total USD balance is {df["USD Value"].sum()}', 'white', 'on_green')
-        # Save the filtered DataFrame to a CSV file
-        # TOKEN_PER_ADDY_CSV = 'filtered_wallet_holdings.csv'  # Define your CSV file name
-        # df.to_csv(TOKEN_PER_ADDY_CSV, index=False)
-    else:
-        # If the DataFrame is empty, print a message or handle it as needed
-        cprint("No wallet holdings to display.", 'white', 'on_red')
+def fetch_wallet_holdings_og(wallet_address: str) -> pd.DataFrame:
+    """Fetch token holdings for a wallet using Helius API"""
+    try:
+        # Initialize empty DataFrame
+        df = pd.DataFrame(columns=['Mint Address', 'Amount', 'USD Value'])
+        
+        # Use Helius API to get token accounts
+        response = requests.post(
+            f"https://mainnet.helius-rpc.com/?api-key={HELIUS_API_KEY}",
+            headers={"Content-Type": "application/json"},
+            json={
+                "jsonrpc": "2.0",
+                "id": "get-token-accounts",
+                "method": "getTokenAccountsByOwner",
+                "params": [
+                    wallet_address,
+                    {"programId": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"},
+                    {"encoding": "jsonParsed"}
+                ]
+            }
+        )
+        response.raise_for_status()
+        data = response.json()
+        
+        if "result" in data and "value" in data["result"]:
+            accounts = data["result"]["value"]
+            rows = []
+            
+            for account in accounts:
+                if "data" in account["account"] and "parsed" in account["account"]["data"]:
+                    token_info = account["account"]["data"]["parsed"]["info"]
+                    mint = token_info.get("mint")
+                    amount = float(token_info.get("tokenAmount", {}).get("uiAmount", 0))
+                    
+                    # Get token price
+                    price = float(token_price(mint) or 0)
+                    usd_value = amount * price
+                    
+                    if usd_value > 0.05:  # Only include tokens worth more than $0.05
+                        rows.append({
+                            'Mint Address': mint,
+                            'Amount': amount,
+                            'USD Value': usd_value
+                        })
+            
+            if rows:
+                df = pd.DataFrame(rows)
+                cprint(f'** Total USD balance is {df["USD Value"].sum():.2f}', 'white', 'on_green')
+                print(df)
+            
+        return df
+        
+    except Exception as e:
+        cprint(f"Error fetching wallet holdings: {str(e)}", 'white', 'on_red')
+        return df
 
     return df
 
