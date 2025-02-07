@@ -5,20 +5,31 @@ Built with love by Moon Dev 🚀
 """
 
 from src.config import *
-from src import nice_funcs as n
 import pandas as pd
 from datetime import datetime
 import os
 from termcolor import colored, cprint
 import time
+from src.data.helius_client import HeliusClient
 
 def collect_token_data(token, days_back=DAYSBACK_4_DATA, timeframe=DATA_TIMEFRAME):
     """Collect OHLCV data for a single token"""
     cprint(f"\n🤖 Moon Dev's AI Agent fetching data for {token}...", "white", "on_blue")
     
     try:
-        # Get data from Birdeye
-        data = n.get_data(token, days_back, timeframe)
+        # Check temp data first
+        temp_file = f"temp_data/{token}_latest.csv"
+        if os.path.exists(temp_file):
+            print(f"📂 Moon Dev found cached data for {token[:4]}")
+            return pd.read_csv(temp_file)
+            
+        # Get data from Helius
+        try:
+            client = HeliusClient()
+            data = client.get_token_data(token, days_back, timeframe)
+        except Exception as e:
+            cprint(f"❌ Failed to initialize Helius client: {str(e)}", "white", "on_red")
+            return None
         
         if data is None or data.empty:
             cprint(f"❌ Moon Dev's AI Agent couldn't fetch data for {token}", "white", "on_red")
@@ -67,4 +78,4 @@ if __name__ == "__main__":
         print("\n👋 Moon Dev OHLCV Collector shutting down gracefully...")
     except Exception as e:
         print(f"❌ Error: {str(e)}")
-        print("🔧 Moon Dev suggests checking the logs and trying again!") 
+        print("🔧 Moon Dev suggests checking the logs and trying again!")    
