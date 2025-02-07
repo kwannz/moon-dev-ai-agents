@@ -67,7 +67,12 @@ from datetime import datetime, timedelta
 import time
 
 # Local imports
-from src.config import *
+from src.config import (
+    WALLET_ADDRESS, USDC_ADDRESS, SOL_ADDRESS, EXCLUDED_TOKENS, MONITORED_TOKENS,
+    MAX_POSITION_PERCENTAGE, CASH_PERCENTAGE, POSITION_SIZE_SOL, MAX_ORDER_SIZE_SOL,
+    TX_SLEEP, SLIPPAGE, PRIORITY_FEE, ORDERS_PER_OPEN, MAX_RETRIES, AI_TEMPERATURE,
+    SLEEP_BETWEEN_RUNS_MINUTES
+)
 from src import nice_funcs as n
 from src.data.ohlcv_collector import collect_all_tokens
 from src.agents.focus_agent import MODEL_TYPE, MODEL_NAME
@@ -184,8 +189,8 @@ Strategy Signals Available:
         """Get AI-recommended portfolio allocation"""
         try:
             cprint("\n💰 Calculating optimal portfolio allocation...", "cyan")
-            max_position_size = usd_size * (MAX_POSITION_PERCENTAGE / 100)
-            cprint(f"🎯 Maximum position size: ${max_position_size:.2f} ({MAX_POSITION_PERCENTAGE}% of ${usd_size:.2f})", "cyan")
+            max_position_size = POSITION_SIZE_SOL * (MAX_POSITION_PERCENTAGE / 100)
+            cprint(f"🎯 Maximum position size: {max_position_size:.3f} SOL ({MAX_POSITION_PERCENTAGE}% of {POSITION_SIZE_SOL:.3f} SOL)", "cyan")
             
             # Get allocation from AI
             if self.model is None:
@@ -199,9 +204,10 @@ Strategy Signals Available:
                         CASH_PERCENTAGE=CASH_PERCENTAGE,
                         USDC_ADDRESS=USDC_ADDRESS
                     ),
-                    user_content=f"""Portfolio size: ${usd_size}
-Maximum position size: ${max_position_size}
-Available tokens: {MONITORED_TOKENS}""",
+                    user_content=f"""Portfolio size: {POSITION_SIZE_SOL:.3f} SOL
+Maximum position size: {max_position_size:.3f} SOL
+Available tokens: {MONITORED_TOKENS}
+Wallet address: {WALLET_ADDRESS}""",
                     temperature=AI_TEMPERATURE
                 )
                 if not response:
@@ -225,8 +231,8 @@ Available tokens: {MONITORED_TOKENS}""",
                 
             # Validate allocation totals
             total_allocated = sum(allocations.values())
-            if total_allocated > usd_size:
-                cprint(f"❌ Total allocation ${total_allocated:.2f} exceeds portfolio size ${usd_size:.2f}", "red")
+            if total_allocated > POSITION_SIZE_SOL:
+                cprint(f"❌ Total allocation {total_allocated:.3f} SOL exceeds portfolio size {POSITION_SIZE_SOL:.3f} SOL", "red")
                 return None
                 
             # Print allocations
@@ -299,7 +305,7 @@ Available tokens: {MONITORED_TOKENS}""",
                 cprint(f"💰 Current position: ${current_position:.2f}", "white", "on_blue")
                 try:
                     cprint(f"📉 Closing position with chunk_kill...", "white", "on_cyan")
-                    n.chunk_kill(token, max_usd_order_size, slippage)
+                    n.chunk_kill(token, MAX_ORDER_SIZE_SOL, SLIPPAGE)
                     cprint(f"✅ Successfully closed position", "white", "on_green")
                 except Exception as e:
                     cprint(f"❌ Error closing position: {str(e)}", "white", "on_red")
@@ -485,4 +491,4 @@ def main():
             time.sleep(INTERVAL)
 
 if __name__ == "__main__":
-    main()                
+    main()                    

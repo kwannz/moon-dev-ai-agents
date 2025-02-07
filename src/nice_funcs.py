@@ -747,7 +747,7 @@ def kill_switch(token_mint_address):
 def close_all_positions():
 
     # get all positions
-    open_positions = fetch_wallet_holdings_og(address)
+    open_positions = fetch_wallet_holdings_og(WALLET_ADDRESS)
 
     # loop through all positions and close them getting the mint address from Mint Address column
     for index, row in open_positions.iterrows():
@@ -1087,10 +1087,10 @@ def ai_entry(symbol, amount):
     cprint("✨ AI Agent completed position entry", "white", "on_blue")
 
 def get_token_balance_usd(token_mint_address):
-    """Get the USD value of a token position for Moon Dev's wallet 🌙"""
+    """Get the USD value of a token position"""
     try:
         # Get the position data using existing function
-        df = fetch_wallet_token_single(address, token_mint_address)  # Using address from config
+        df = fetch_wallet_token_single(WALLET_ADDRESS, token_mint_address)
         
         if df.empty:
             print(f"🔍 No position found for {token_mint_address[:8]}")
