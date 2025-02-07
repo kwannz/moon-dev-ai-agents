@@ -1,5 +1,5 @@
 """
-🌙 Moon Dev's Strategy Agent
+Strategy Agent
 Handles all strategy-based trading decisions
 """
 
@@ -15,7 +15,7 @@ from src.models import model_factory
 
 # 🎯 Strategy Evaluation Prompt
 STRATEGY_EVAL_PROMPT = """
-You are Moon Dev's Strategy Validation Assistant 🌙
+You are the Strategy Validation Assistant
 
 Analyze the following strategy signals and validate their recommendations:
 
@@ -40,7 +40,7 @@ Respond in this format:
    - Confidence in each decision (0-100%)
 
 Remember:
-- Moon Dev prioritizes risk management! 🛡️
+- Risk management is the top priority! 🛡️
 - Multiple confirming signals increase confidence
 - Contradicting signals require deeper analysis
 - Better to reject a signal than risk a bad trade
@@ -90,7 +90,7 @@ class StrategyAgent:
         else:
             print("🤖 Strategy Agent is disabled in config.py")
         
-        print(f"🤖 Moon Dev's Strategy Agent initialized with {len(self.enabled_strategies)} strategies!")
+        print(f"🤖 Strategy Agent initialized with {len(self.enabled_strategies)} strategies!")
 
     def evaluate_signals(self, signals, market_data):
         """Have LLM evaluate strategy signals"""
@@ -107,7 +107,7 @@ class StrategyAgent:
                 
             try:
                 response = self.model.generate_response(
-                    system_prompt="You are Moon Dev's Strategy Validation Assistant. Analyze strategy signals and validate recommendations.",
+                    system_prompt="You are the Strategy Validation Assistant. Analyze strategy signals and validate recommendations.",
                     user_content=STRATEGY_EVAL_PROMPT.format(
                         strategy_signals=signals_str,
                         market_data=market_data
@@ -242,7 +242,7 @@ class StrategyAgent:
                 print("⚠️ No approved signals to execute")
                 return
 
-            print("\n🚀 Moon Dev executing strategy signals...")
+            print("\n🚀 Executing strategy signals...")
             print(f"📝 Received {len(approved_signals)} signals to execute")
             
             for signal in approved_signals:
@@ -301,4 +301,4 @@ class StrategyAgent:
                 
         except Exception as e:
             print(f"❌ Error executing strategy signals: {str(e)}")
-            print("🔧 Moon Dev suggests checking the logs and trying again!")        
+            print("🔧 Please check the logs and try again!")           

@@ -602,7 +602,7 @@ def pnl_close(token_mint_address):
 
 def chunk_kill(token_mint_address, max_usd_order_size, slippage):
     """Kill a position in chunks"""
-    cprint(f"\n🔪 Moon Dev's AI Agent initiating position exit...", "white", "on_cyan")
+    cprint(f"\n🔪 Lumix AI Agent initiating position exit...", "white", "on_cyan")
     
     try:
         # Get current position using address from config
@@ -808,7 +808,7 @@ def supply_demand_zones(token_address, timeframe, limit):
     sd_df[f'dz'] = [supp_lo, supp]
     sd_df[f'sz'] = [res_hi, resis]
 
-    print('here are moons supply and demand zones')
+    print('Supply and demand zones calculated')
     #print(sd_df)
 
     return sd_df
@@ -843,8 +843,8 @@ def elegant_entry(symbol, buy_under):
 
             for i in range(orders_per_open):
                 market_buy(symbol, chunk_size, slippage)
-                # cprint green background black text
-                cprint(f'chunk buy submitted of {symbol[:4]} sz: {chunk_size} you my dawg moon dev', 'white', 'on_blue')
+                # Print order status
+                cprint(f'chunk buy submitted of {symbol[:4]} sz: {chunk_size}', 'white', 'on_blue')
                 time.sleep(1)
 
             time.sleep(tx_sleep)
@@ -865,8 +865,8 @@ def elegant_entry(symbol, buy_under):
                 time.sleep(30)
                 for i in range(orders_per_open):
                     market_buy(symbol, chunk_size, slippage)
-                    # cprint green background black text
-                    cprint(f'chunk buy submitted of {symbol[:4]} sz: {chunk_size} you my dawg moon dev', 'white', 'on_blue')
+                    # Print order status
+                    cprint(f'chunk buy submitted of {symbol[:4]} sz: {chunk_size}', 'white', 'on_blue')
                     time.sleep(1)
 
                 time.sleep(tx_sleep)
@@ -983,8 +983,8 @@ def breakout_entry(symbol, BREAKOUT_PRICE):
 
 
 def ai_entry(symbol, amount):
-    """AI agent entry function for Moon Dev's trading system 🤖"""
-    cprint("🤖 Moon Dev's AI Trading Agent initiating position entry...", "white", "on_blue")
+    """AI agent entry function for Lumix trading system 🤖"""
+    cprint("🤖 Lumix AI Trading Agent initiating position entry...", "white", "on_blue")
     
     # amount passed in is the target allocation (up to 30% of usd_size)
     target_size = amount  # This could be up to $3 (30% of $10)

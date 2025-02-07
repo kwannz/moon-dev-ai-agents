@@ -1,7 +1,7 @@
 '''
 i run a local server with deepseek-r1, below is how to call it from your code
 
-the deepseek-r1 model is available free while moon dev is streaming: https://www.youtube.com/@moondevonyt 
+the deepseek-r1 model is available for local inference
 '''
 
 from openai import OpenAI
@@ -34,6 +34,6 @@ if __name__ == '__main__':
         stream=False
     )
 
-    print(f"🌙 MoonDev's DeepSeek Response:")
+    print(f"🌙 Lumix DeepSeek Response:")
     print(f"🤖 Prompt: {PROMPT}")
     print(f"✨ Response: {response.choices[0].message.content}")

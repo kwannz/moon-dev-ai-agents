@@ -6,7 +6,7 @@ from src.agents.tweet_agent import TweetAgent
 
 def test_twitter_functionality():
     agent = TweetAgent()
-    test_text = 'Testing Moon Dev trading system with real market data from Helius API. Market analysis and trading decisions are now powered by real-time data.'
+    test_text = 'Testing Lumix trading system with real market data from Helius API. Market analysis and trading decisions are now powered by real-time data.'
     tweets = agent.generate_tweets(test_text)
     
     if tweets:
