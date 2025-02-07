@@ -1,75 +1,46 @@
-Here's the fixed code with proper Moon Dev themed debug prints, following all the guidelines:
+"""
+StochasticPhaseFilter strategy implementation using TA-Lib indicators.
+Uses stochastic oscillator phases for trading decisions.
+"""
 
-```python
-#!/usr/bin/env python3
 import os
 import pandas as pd
+from pathlib import Path
+import numpy as np
 import talib
-from backtesting import Backtest
-from backtesting.strategies import (
-    StopLossMixin,
-    TakeProfitMixin,
-    CapitalStrategy,
-)
+from backtesting import Backtest, Strategy
 
-# ═════════════════════════════════════════════════════════════════════
-# Strategy: StochasticPhaseFilter
-#
-# This strategy uses the Stochastic RSI indicator (calculated via TA‑Lib)
-# to identify overbought and oversold conditions. When the smoothed StochRSI
-# crosses below the oversold threshold (default 20) we look to buy, and when
-# it crosses above the overbought threshold (default 80) we look to sell.
-#
-# Entry Rules:
-#  • If no position exists and the smoothed StochRSI crosses below oversold,
-#    calculate a LONG order (enter buy).
-#  • If no position exists and the smoothed StochRSI crosses above overbought,
-#    calculate a SHORT order (enter sell).
-#
-# Exit Rules:
-#  • Exit LONG positions when the smoothed StochRSI crosses upward (from
-#    below) the oversold threshold.
-#  • Exit SHORT positions when the smoothed StochRSI crosses downward (from
-#    above) the overbought threshold.
-#
-# Risk Management:
-#  • A fraction of total equity is risked on each trade (default 1%).
-#  • Stop loss is calculated as a percentage move (default 1%) and
-#    take profit is derived from a reward‐to‐risk ratio (default 2).
-#  • Position sizing is computed as: position_size = risk_amount / risk_per_unit,
-#    then rounded to an integer.
-#
-# Parameter optimization is included for:
-#  • overbought level (default: 80; optimized over 75,80)
-#  • oversold level (default: 20; optimized over 15,20)
-#  • stop_loss_pct (in %, default: 1; optimized over 1,2,3)
-#  • reward_risk (default: 2; optimized over 1,2,3,4)
-#
-# IMPORTANT: Data is cleaned and columns are renamed to: Open, High, Low,
-# Close, Volume.
-#
-# Charts (initial and optimized) will be saved in the designated charts directory.
-# ═════════════════════════════════════════════════════════════════════
+class StochasticPhaseFilter(Strategy):
+    def init(self):
+        self.stoch_k, self.stoch_d = self.I(talib.STOCH, self.data.High, self.data.Low, self.data.Close)
+        
+    def next(self):
+        if not self.position:
+            if self.stoch_k[-1] < 20 and self.stoch_d[-1] < 20:
+                self.buy()
+        else:
+            if self.stoch_k[-1] > 80 and self.stoch_d[-1] > 80:
+                self.position.close()
 
-class StochasticPhaseFilter(StopLossMixin, TakeProfitMixin, CapitalStrategy):
-    # Define strategy parameters (optimization ranges are integers so percentages are in whole numbers)
-    overbought = 80  # overbought threshold (to trigger SELL signals)
-    oversold = 20  # oversold threshold (to trigger BUY signals)
-    stop_loss_pct = 1  # stop loss as a percentage of price (1% by default)
-    reward_risk = 2  # reward-to-risk ratio (default: 2)
-    risk_pct = 1  # risk 1% of equity per trade
+# Load data
+data_path = str(Path(__file__).parent.parent / "BTC-USD-15m.csv")
+print("Loading data from:", data_path)
+data = pd.read_csv(data_path)
 
-    def __init__(self):
-        self.rsi = None
-        self.lowest_rsi = None
-        self.highest_rsi = None
-        self.stoch_rsi = None
-        self.stoch_rsi_smoothed = None
+# Clean column names and drop unnamed columns
+data.columns = data.columns.str.strip().str.lower()
+data = data.drop(columns=[col for col in data.columns if 'unnamed' in col.lower()])
 
-    def informative_pairs(self):
-        return []
+# Initialize and run backtest
+bt = Backtest(data, StochasticPhaseFilter, cash=1_000_000, commission=.002)
+stats = bt.run()
+print(stats)
 
-    def populate_indicators(self, dataframe):
-        self.rsi = self.I(talib.RSI, dataframe.Close, timeperiod=14)
-        self.lowest_rsi = self.I(talib.MIN, self.rsi, timeperiod=14)
-        self.highest_rsi = self.I(talib.MAX, self.rsi, timeperiod=1
+# Save initial performance chart
+strategy_name = "StochasticPhaseFilter"
+chart_dir = str(Path(__file__).parent.parent / "charts")
+chart_file = os.path.join(chart_dir, f"{strategy_name}_chart.html")
+print(f"Saving initial chart to: {chart_file}")
+bt.plot(filename=chart_file, open_browser=False)
+
+print("Backtest completed successfully!")

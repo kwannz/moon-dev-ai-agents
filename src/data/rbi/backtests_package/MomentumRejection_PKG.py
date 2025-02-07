@@ -94,7 +94,7 @@ class MomentumRejection(Strategy):
                 trade.tp = take_profit
 
 # Load and preprocess data
-data_path = "/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/rbi/BTC-USD-15m.csv"
+data_path = str(Path(__file__).parent.parent / "BTC-USD-15m.csv")
 data = preprocess_data(data_path)
 
 # Initialize and run backtest

@@ -22,6 +22,7 @@ Enjoy the ride, and may the Moon Dev vibes guide you! 🌙✨🚀
 
 import os
 import pandas as pd
+from pathlib import Path
 import numpy as np
 import talib
 from backtesting import Backtest, Strategy
@@ -162,8 +163,8 @@ class DynamicRetest(Strategy):
 # ----------------------------
 # Data Handling & Preparation
 # ----------------------------
-DATA_PATH = "/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/rbi/BTC-USD-15m.csv"
-print("🌙✨ Moon Dev: Loading data from CSV…")
+DATA_PATH = str(Path(__file__).parent.parent / "BTC-USD-15m.csv")
+print("Loading data from CSV...")
 data = pd.read_csv(DATA_PATH)
 
 # Clean column names: remove spaces and lowercase
@@ -208,9 +209,9 @@ print(stats._strategy)
 
 # Save initial performance plot to charts directory
 strategy_name = "Dynamic_Retest"
-chart_dir = "/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/rbi/charts"
+chart_dir = str(Path(__file__).parent.parent / "charts")
 chart_file = os.path.join(chart_dir, f"{strategy_name}_chart.html")
-print(f"🚀 Moon Dev: Saving initial performance plot to {chart_file}")
+print(f"Saving initial performance plot to {chart_file}")
 bt.plot(filename=chart_file, open_browser=False)
 
 # ----------------------------

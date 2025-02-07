@@ -1,4 +1,14 @@
-Below is the implementation of the **TrendVengeance** strategy in Python using the `backtesting.py` framework. This implementation includes all the necessary components, such as indicators, entry/exit logic, risk management, and parameter optimization. It also includes Moon Dev-themed debug prints and proper data handling.
+"""
+TrendVengeance strategy implementation using TA-Lib indicators.
+Uses trend following with ATR-based trailing stops.
+"""
+
+import os
+import pandas as pd
+from pathlib import Path
+import numpy as np
+import talib
+from backtesting import Backtest, Strategy
 
 ---
 
@@ -70,10 +80,10 @@ class TrendVengeance(Strategy):
             self.trailing_stop_short = min(self.trailing_stop_short, self.data.High[-1] + 2 * atr_value)
             if self.data.Close[-1] > self.trailing_stop_short:
                 self.position.close()
-                print(f"🌙 Short position closed! Price: {self.data.Close[-1]}, Trailing Stop: {self.trailing_stop_short}")
+                print(f"Short position closed! Price: {self.data.Close[-1]}, Trailing Stop: {self.trailing_stop_short}")
 
 # Load data
-data_path = "/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/rbi/BTC-USD-15m.csv"
+data_path = str(Path(__file__).parent.parent / "BTC-USD-15m.csv")
 data = pd.read_csv(data_path, parse_dates=['datetime'])
 data.columns = data.columns.str.strip().str.lower()
 data = data.drop(columns=[col for col in data.columns if 'unnamed' in col.lower()])
@@ -89,9 +99,9 @@ print(stats)
 print(stats._strategy)
 
 # Save initial plot
-chart_file = os.path.join("/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/rbi/charts", "TrendVengeance_initial_chart.html")
+chart_file = os.path.join(str(Path(__file__).parent.parent / "charts"), "TrendVengeance_initial_chart.html")
 bt.plot(filename=chart_file, open_browser=False)
-print(f"🌙 Initial plot saved to {chart_file}")
+print(f"Initial plot saved to {chart_file}")
 
 # Optimize parameters
 optimization_results = bt.optimize(
@@ -100,13 +110,13 @@ optimization_results = bt.optimize(
     risk_per_trade=[0.01, 0.02],
     maximize='Return [%]'
 )
-print("🌙 Optimization Results:")
+print("Optimization Results:")
 print(optimization_results)
 
 # Save optimized plot
-optimized_chart_file = os.path.join("/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/rbi/charts", "TrendVengeance_optimized_chart.html")
+optimized_chart_file = os.path.join(str(Path(__file__).parent.parent / "charts"), "TrendVengeance_optimized_chart.html")
 bt.plot(filename=optimized_chart_file, open_browser=False)
-print(f"🌙 Optimized plot saved to {optimized_chart_file}")
+print(f"Optimized plot saved to {optimized_chart_file}")
 ```
 
 ---
@@ -161,4 +171,4 @@ print(f"🌙 Optimized plot saved to {optimized_chart_file}")
 - Optimized parameters and results.
 - HTML plots for both initial and optimized backtests.
 
-Let me know if you need further adjustments! 🌙✨🚀
+print("Backtest completed successfully!")

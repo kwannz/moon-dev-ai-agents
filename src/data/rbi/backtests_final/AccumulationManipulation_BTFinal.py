@@ -19,7 +19,7 @@ import pandas_ta as pta
 
 # 2. DATA HANDLING 🚀🌙
 # Read the CSV data from the given path
-data_path = "/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/rbi/BTC-USD-15m.csv"
+data_path = str(Path(__file__).parent.parent.parent / "BTC-USD-15m.csv")
 data = pd.read_csv(data_path, parse_dates=['datetime'])
 
 # Clean column names by removing spaces and converting to lower case

@@ -1,6 +1,6 @@
 """
-🌙 Moon Dev's Example Strategy
-Simple Moving Average Crossover Strategy
+Simple Moving Average Crossover Strategy Example
+A basic strategy implementation using TA-Lib indicators
 """
 
 from .base_strategy import BaseStrategy
@@ -71,4 +71,4 @@ class SimpleMAStrategy(BaseStrategy):
             
         except Exception as e:
             cprint(f"❌ Error generating signals: {str(e)}", "red")
-            return None 
+            return None  

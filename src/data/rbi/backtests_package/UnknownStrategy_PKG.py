@@ -1,20 +1,23 @@
-Here is the fixed code with no usage of backtesting.lib and proper Moon Dev themed debug prints:
-
-```python
+"""
+Unknown Strategy implementation using TA-Lib indicators.
+All backtesting.lib references removed in favor of pure TA-Lib calculations.
+"""
 #!/usr/bin/env python3
 """
-Moon Dev's Backtest AI 🌙
+Unknown Strategy implementation using TA-Lib indicators.
+All backtesting.lib references removed in favor of pure TA-Lib calculations.
 ATR_MeanReversion Strategy Backtesting Implementation
 """
 
 import os
 import pandas as pd
+from pathlib import Path
 import numpy as np
 import talib
-from backtesting import Backtest
+from backtesting import Backtest, Strategy
 
 # ★★★ Data Loading & Cleaning ★★★
-DATA_PATH = "/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/rbi/BTC-USD-15m.csv"
+DATA_PATH = str(Path(__file__).parent.parent / "BTC-USD-15m.csv")
 
 def load_and_clean_data(filepath):
     print("🌙✨ Loading data from:", filepath)
@@ -69,4 +72,4 @@ class ATR_MeanReversion(Strategy):
         if len(self.data.Close) >= 2:
             # Index -2 is the previous completed candle
             prev_bar_open = self.data.Open[-2]
-            prev_bar_close = self.data.Close[-
+            prev_bar_close = self.data.Close[-1]

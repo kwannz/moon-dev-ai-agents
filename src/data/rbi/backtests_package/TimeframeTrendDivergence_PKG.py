@@ -12,8 +12,8 @@ from backtesting import Backtest, Strategy
 # *******************************************************************************
 # DATA PREPARATION
 # *******************************************************************************
-data_path = "/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/rbi/BTC-USD-15m.csv"
-print("🌙 Moon Dev: Loading data from:", data_path)
+data_path = str(Path(__file__).parent.parent / "BTC-USD-15m.csv")
+print("Loading data from:", data_path)
 df = pd.read_csv(data_path)
 
 # Clean up column names

@@ -126,7 +126,7 @@ def load_and_clean_data(filepath):
 
 if __name__ == '__main__':
     # Data path as specified
-    data_path = "/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/rbi/BTC-USD-15m.csv"
+    data_path = str(Path(__file__).parent.parent / "BTC-USD-15m.csv")
     data = load_and_clean_data(data_path)
     
     # Initialize Backtest with 1,000,000 cash size and a small commission (if desired)

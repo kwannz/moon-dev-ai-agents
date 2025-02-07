@@ -1,11 +1,10 @@
-Below is the implementation of the **VengeanceTrend** strategy in Python using the `backtesting.py` framework. This implementation includes all the necessary components: trend identification, entry/exit logic, risk management, and parameter optimization. The strategy uses TA-Lib for indicator calculations and follows the rules provided.
-
----
-
-### **Backtest Implementation**
-
-```python
+"""
+VengeanceTrend strategy implementation using backtesting.py framework.
+Includes trend identification, entry/exit logic, risk management, and parameter optimization.
+Uses TA-Lib for indicator calculations.
+"""
 import pandas as pd
+from pathlib import Path
 import talib
 from backtesting import Backtest, Strategy
 from backtesting.lib import crossover
@@ -73,7 +72,7 @@ class VengeanceTrend(Strategy):
                     print(f"🌙 Updated Trailing Stop for Long Position to {new_sl} 🚀")
 
 # Load and prepare data
-data_path = "/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/rbi/BTC-USD-15m.csv"
+data_path = str(Path(__file__).parent.parent / "BTC-USD-15m.csv")
 data = prepare_data(data_path)
 
 # Run initial backtest
@@ -144,4 +143,4 @@ bt.plot()
 - Risk management is a core component, with position sizing based on account equity and ATR.
 - The optimization process ensures the strategy is fine-tuned for the given dataset.
 
-Let me know if you need further adjustments or additional features! 🌙✨🚀
+print("Backtest completed successfully!")

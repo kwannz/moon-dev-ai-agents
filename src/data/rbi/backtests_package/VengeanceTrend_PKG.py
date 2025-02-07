@@ -62,10 +62,10 @@ class VengeanceTrend(Strategy):
                 new_sl = self.data.Close[-1] - self.trailing_stop_multiplier * current_atr
                 if new_sl > self.position.sl:
                     self.position.sl = new_sl
-                    print(f"🌙 Updated Trailing Stop for Long Position to {new_sl} 🚀")
+                    print(f"Updated Trailing Stop for Long Position to {new_sl}")
 
 # Load and prepare data
-data_path = "/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/rbi/BTC-USD-15m.csv"
+data_path = str(Path(__file__).parent.parent / "BTC-USD-15m.csv")
 data = prepare_data(data_path)
 
 # Run initial backtest

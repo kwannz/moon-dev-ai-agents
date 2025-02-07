@@ -1,18 +1,13 @@
-Below is an annotated, complete Python script that implements “GapAndGoProfiter” with TA‑Lib indicators, plenty of Moon Dev debug prints, proper data cleansing and mapping, rigorous risk/position size calculation (using int‐rounded sizes), and parameter optimization. Save this file (for example, as backtest_gapandgoprofiter.py) and run it to see the initial backtest and the optimized results with charts saved to your charts directory.
-
-────────────────────────────────────────────────────────────
-#!/usr/bin/env python3
 """
-Moon Dev’s Backtest AI 🌙 – Backtesting “GapAndGoProfiter”
-This strategy looks for a significant gap‐up from the previous day’s close and,
-after a pullback toward the 9‐period moving average or VWAP, goes long. 
-It sets a stop‐loss based on the recent low and a take‐profit target defined by a risk–reward ratio.
-Debug prints are sprinkled with Moon Dev themed messages!
+GapAndGoProfiter strategy implementation using TA-Lib indicators.
+Includes data cleansing, position sizing, and parameter optimization.
+Sets stop-loss based on recent low and take-profit target defined by risk-reward ratio.
 """
 
 import os
 import numpy as np
 import pandas as pd
+from pathlib import Path
 import talib
 from backtesting import Backtest, Strategy
 
@@ -131,7 +126,7 @@ def run_backtest():
     # ------------------------------
     # DATA HANDLING
     # ------------------------------
-    data_path = "/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/rbi/BTC-USD-15m.csv"
+    data_path = str(Path(__file__).parent.parent / "BTC-USD-15m.csv")
     print("🌙 Reading data from: {}".format(data_path))
     data = pd.read_csv(data_path)
     
@@ -162,7 +157,7 @@ def run_backtest():
     
     # Save initial chart to charts directory
     strategy_name = "GapAndGoProfiter"
-    chart_file = os.path.join("/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/rbi/charts",
+    chart_file = os.path.join(str(Path(__file__).parent.parent / "charts"),
                               f"{strategy_name}_initial_chart.html")
     print("🌙 Saving initial performance chart to: {}".format(chart_file))
     bt.plot(filename=chart_file, open_browser=False)
@@ -183,7 +178,7 @@ def run_backtest():
     print("🌙 Optimized Result:\n", optimized_stats)
     
     # Save optimized chart to charts directory (using best parameters)
-    chart_file_opt = os.path.join("/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/rbi/charts",
+    chart_file_opt = os.path.join(str(Path(__file__).parent.parent / "charts"),
                                   f"{strategy_name}_optimized_chart.html")
     print("🌙 Saving optimized performance chart to: {}".format(chart_file_opt))
     bt.plot(filename=chart_file_opt, open_browser=False)
@@ -191,17 +186,16 @@ def run_backtest():
 if __name__ == '__main__':
     run_backtest()
 
-────────────────────────────────────────────────────────────
-Notes:
-• We import os, pandas, numpy, talib, and backtesting (Backtest, Strategy).
-• Data columns are cleaned (spaces removed, lowercased) and then renamed to match required names.
-• Indicators are computed using the self.I() wrapper calling talib.SMA and a custom VWAP function.
-• Entry occurs if the current open gaps up ≥ gap_pct above the previous close and then “pulls back”
-  (tested by checking if the low touches near the SMA9 or VWAP) and the candle makes a new high.
-• The stop loss is set at the candle low and the take profit using the risk–reward ratio.
-• Position size is calculated as int(round(risk_amount/risk)).
-• Plenty of debug prints with Moon Dev emojis 🌙, 🚀, and ✨ ensure easier debugging.
-• Initial backtest is run, full stats printed, and the performance chart saved; then optimization is run,
-  and the optimized chart is saved.
-  
-Happy backtesting and Moon Dev profits! 🌙🚀✨
+print("Backtest completed successfully!")
+"""
+Implementation Notes:
+- Uses standard imports (os, pandas, numpy, talib, backtesting)
+- Cleans data columns (spaces removed, lowercased)
+- Computes indicators using self.I() wrapper with TA-Lib
+- Entry on gap up >= gap_pct with pullback to SMA9/VWAP
+- Stop loss at candle low, take profit based on risk-reward ratio
+- Position size calculated using risk amount and risk per unit
+- Saves initial and optimized performance charts
+"""
+
+print("Backtest completed successfully!")

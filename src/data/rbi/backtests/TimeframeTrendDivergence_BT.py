@@ -1,18 +1,19 @@
-Below is an example complete Python file that implements the TimeframeTrendDivergence strategy. Copy and run it as a standalone script. Note that we pre‐aggregate the 15‑minute data into weekly, daily, 4‑hour and 1‑hour bars (using pandas’ resample on the full dataset) and then “lookup” the current bar’s aggregated values inside next(). We also use TA‑lib wrapped in self.I() for any indicator calls (if needed in other strategies) and print plenty of Moon Dev debug messages. Enjoy the ride, and happy Moon Dev backtesting! 🚀🌙✨
+"""
+TimeframeTrendDivergence strategy implementation.
+Pre-aggregates 15-minute data into multiple timeframes and uses TA-Lib indicators.
+"""
 
-------------------------------------------------------------
 #!/usr/bin/env python3
 import os
 import pandas as pd
+from pathlib import Path
 import numpy as np
 import talib
 from backtesting import Backtest, Strategy
 
-# *******************************************************************************
-# DATA PREPARATION
-# *******************************************************************************
-data_path = "/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/rbi/BTC-USD-15m.csv"
-print("🌙 Moon Dev: Loading data from:", data_path)
+# Data preparation
+data_path = str(Path(__file__).parent.parent / "BTC-USD-15m.csv")
+print("🌙 Loading data from:", data_path)
 df = pd.read_csv(data_path)
 
 # Clean up column names
@@ -193,9 +194,9 @@ if __name__ == '__main__':
 
     # Save initial performance plot to chart directory
     strategy_name = "TimeframeTrendDivergence_initial"
-    chart_dir = "/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/rbi/charts"
+    chart_dir = str(Path(__file__).parent.parent / "charts")
     chart_file = os.path.join(chart_dir, f"{strategy_name}_chart.html")
-    print(f"🚀 Moon Dev: Saving initial chart to: {chart_file}")
+    print(f"Saving initial chart to: {chart_file}")
     bt.plot(filename=chart_file, open_browser=False)
 
     # *************************************************************************************
@@ -223,14 +224,11 @@ if __name__ == '__main__':
 
     print("🌙 Moon Dev: Backtesting and optimization complete! 🚀✨")
     
-------------------------------------------------------------
-
-Notes:
-• We use self.I() in init() to wrap the talib.SMA call even though the strategy mainly relies on multi-timeframe price action.
-• Aggregated bars (weekly, daily, 4H, 1H) are generated via pandas resample and reindexed onto the 15-minute timeline.
-• Entry orders execute only when the 15‑minute price breaks the 1‑hour range (above for long, below for short).
-• Position size is calculated by dividing the risk amount (a percentage of equity) by the risk per unit, then rounded to an integer.
-• Plenty of debug prints (with Moon Dev emojis) help track the flow of signals.
-• After running the initial backtest, full stats and plots are saved to the specified charts directory. Then an optimization is run.
-
-Happy backtesting with Moon Dev’s Backtest AI! 🌙🚀✨
+"""
+Strategy Notes:
+- Uses self.I() to wrap TA-Lib calls for indicator calculations
+- Aggregates bars (weekly, daily, 4H, 1H) via pandas resample
+- Entry orders execute on 15-minute price breaks of 1-hour range
+- Position size calculated using risk-based sizing
+- Saves stats and plots to charts directory after initial backtest
+"""

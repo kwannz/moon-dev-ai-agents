@@ -1,5 +1,5 @@
 """
-🌙 Moon Dev's Base Agent
+Base Agent
 Parent class for all trading agents
 """
 
@@ -17,4 +17,4 @@ class BaseAgent:
         
     def run(self):
         """Default run method - should be overridden by child classes"""
-        raise NotImplementedError("Each agent must implement its own run method") 
+        raise NotImplementedError("Each agent must implement its own run method")  

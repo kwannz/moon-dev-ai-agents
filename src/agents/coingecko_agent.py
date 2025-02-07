@@ -362,8 +362,8 @@ Remember to format your response like this:
 💰 Portfolio Impact:
 [How this helps reach our $10M goal]
 
-🌙 Moon Dev Wisdom:
-[Fun reference to Moon Dev's trading style]
+🌙 Lumix Trading Wisdom:
+[Trading insights and analysis]
 """
             
             # Get AI response using Ollama model
@@ -395,7 +395,7 @@ Remember to format your response like this:
                 .strip())
             
             # Add extra newlines between sections for readability
-            sections = ["Market Vibes:", "Opportunities I See:", "My Recommendations:", "Portfolio Impact:", "Moon Dev Wisdom:"]
+            sections = ["Market Vibes:", "Opportunities I See:", "My Recommendations:", "Portfolio Impact:", "Trading Wisdom:"]
             for section in sections:
                 response = response.replace(section, f"\n{section}\n")
             
@@ -426,7 +426,7 @@ class CoinGeckoAPI:
             "x-cg-pro-api-key": self.api_key,
             "Content-Type": "application/json"
         }
-        print("🦎 Moon Dev's CoinGecko API initialized!")
+        print("🦎 Lumix CoinGecko API initialized!")
         
     def _make_request(self, endpoint: str, params: Optional[Dict] = None) -> Dict:
         """Make API request with rate limiting and error handling"""
@@ -649,7 +649,7 @@ class MultiAgentSystem:
         self.token_extractor = TokenExtractorAgent()
         self.round_history = []  # Store round synopses
         self.max_history_rounds = 50  # Keep last 50 rounds of context
-        cprint("🎮 Moon Dev's Trading Game System Ready! 🎮", "white", "on_green", attrs=["bold"])
+        cprint("🎮 Lumix Trading Game System Ready! 🎮", "white", "on_green", attrs=["bold"])
         
     def generate_round_synopsis(self, agent_one_response: str, agent_two_response: str) -> str:
         """Generate a brief synopsis of the round's key points using Synopsis Agent"""
@@ -744,7 +744,7 @@ Create a brief synopsis of this trading round.
 def main():
     """Main function to run the multi-agent system"""
     print_banner()
-    cprint("🎮 Welcome to Moon Dev's Trading Game! 🎮", "white", "on_magenta", attrs=["bold"])
+    cprint("🎮 Welcome to Lumix Trading Game! 🎮", "white", "on_magenta", attrs=["bold"])
     cprint("Two AI agents will collaborate to turn $10,000 into $10,000,000!", "white", "on_blue")
     cprint("Let the trading begin! 🚀\n", "white", "on_green", attrs=["bold"])
     
@@ -762,7 +762,7 @@ def main():
             round_number += 1
             
     except KeyboardInterrupt:
-        cprint("\n👋 Thanks for playing Moon Dev's Trading Game! 🌙", "white", "on_magenta", attrs=["bold"])
+        cprint("\n👋 Thanks for playing Lumix Trading Game! 🌙", "white", "on_magenta", attrs=["bold"])
     except Exception as e:
         cprint(f"\n❌ Game Error: {str(e)}", "white", "on_red")
 

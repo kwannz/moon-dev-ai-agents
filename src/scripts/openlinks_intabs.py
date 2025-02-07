@@ -10,9 +10,10 @@ import time
 import psutil
 import os
 import sys
+from pathlib import Path
 
 # Configuration Constants
-FILE_PATH = "/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/private_data/bigfollow.csv"
+FILE_PATH = str(Path(__file__).parent.parent / "data" / "private_data" / "bigfollow.csv")
 OPENS_PER_BATCH = 30
 TARGET_COLUMN = "wallet_address"  # Column containing the wallet addresses
 BASE_URL = "https://gmgn.ai/sol/address/"  # Base URL for GMGN.ai
@@ -25,7 +26,7 @@ def count_browser_tabs():
     return 0
 
 def open_wallet_tabs(csv_path, batch_size=OPENS_PER_BATCH):
-    print("🌙 Moon Dev's Smart Tab Opener Starting Up! 🚀")
+    print("🌙 Lumix Smart Tab Opener Starting Up! 🚀")
     print(f"📂 Opening CSV file: {csv_path}")
     
     # Verify file exists
@@ -93,12 +94,12 @@ def open_wallet_tabs(csv_path, batch_size=OPENS_PER_BATCH):
                 print(f"❌ Error opening {url}: {str(e)}")
                 current_index += 1  # Skip problematic URLs
         else:
-            user_input = input("\n🌜 Moon Dev says: Press Enter after closing some tabs... " +
+            user_input = input("\n🌜 Lumix says: Press Enter after closing some tabs... " +
                              f"({len(urls) - current_index} links remaining)\n")
             opened_tabs = 0  # Reset the counter after user closes tabs
     
-    print("🎉 All done! Moon Dev's tab opener completed successfully!")
-    print("💫 Remember to smash that like button and follow for more tools!")
+    print("🎉 All done! Lumix tab opener completed successfully!")
+    print("💫 Remember to follow for more trading tools!")
 
 if __name__ == "__main__":
     open_wallet_tabs(FILE_PATH)
