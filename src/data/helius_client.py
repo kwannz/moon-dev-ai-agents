@@ -38,23 +38,14 @@ class HeliusClient:
         """Get current token price using DAS API"""
         self._rate_limit()
         try:
-            response = requests.post(
-                f"{self.base_url}",
-                headers={"Content-Type": "application/json"},
-                json={
-                    "jsonrpc": "2.0",
-                    "id": "get-token-data",
-                    "method": "searchAssets",
-                    "params": {
-                        "ownerAddress": token_address,
-                        "tokenType": "fungible"
-                    }
-                }
+            response = requests.get(
+                f"https://api.helius.xyz/v0/token-metadata?api-key={self.api_key}",
+                params={"mintAccounts": [token_address]}
             )
             response.raise_for_status()
             data = response.json()
-            if "result" in data and data["result"]:
-                return float(data["result"][0].get("price", 0))
+            if data and len(data) > 0:
+                return float(data[0].get("price", 0))
             return 0.0
         except Exception as e:
             cprint(f"❌ Failed to get token price: {str(e)}", "red")
@@ -64,26 +55,33 @@ class HeliusClient:
         """Get historical token data and format as OHLCV"""
         try:
             self._rate_limit()
-            # Get token data using getAssetBatch
-            response = requests.post(
-                f"{self.base_url}",
-                headers={"Content-Type": "application/json"},
-                json={
-                    "jsonrpc": "2.0",
-                    "id": "get-token-data",
-                    "method": "getAssetBatch",
-                    "params": {
-                        "ids": [token_address],
-                        "options": {
-                            "showRecentTrades": True,
-                            "showMetadata": True
-                        }
-                    }
-                }
+            # Get token data using Helius API
+            response = requests.get(
+                f"https://api.helius.xyz/v0/token-metadata?api-key={self.api_key}",
+                params={"mintAccounts": [token_address]}
             )
             response.raise_for_status()
             data = response.json()
             
+            if not data or len(data) == 0:
+                raise ValueError("No data returned from Helius API")
+                
+            token_data = data[0]
+            current_price = float(token_data.get("price", 0))
+            volume = float(token_data.get("volume24h", 0))
+            market_cap = float(token_data.get("marketCap", 0))
+            
+            # Create DataFrame with current data
+            now = datetime.now()
+            df = pd.DataFrame({
+                'Datetime (UTC)': [now.strftime('%Y-%m-%d %H:%M:%S')],
+                'Open': [current_price],
+                'High': [current_price],
+                'Low': [current_price],
+                'Close': [current_price],
+                'Volume': [volume],
+                'Market Cap': [market_cap]
+            })
             if not data.get("result"):
                 raise ValueError("No data returned from Helius API")
                 
