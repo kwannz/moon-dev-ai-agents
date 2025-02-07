@@ -43,14 +43,19 @@ class HeliusClient:
                 headers={"Content-Type": "application/json"},
                 json={
                     "jsonrpc": "2.0",
-                    "id": "get-asset",
-                    "method": "getAsset",
-                    "params": [token_address]
+                    "id": "get-token-data",
+                    "method": "searchAssets",
+                    "params": {
+                        "ownerAddress": token_address,
+                        "tokenType": "fungible"
+                    }
                 }
             )
             response.raise_for_status()
             data = response.json()
-            return float(data.get("result", {}).get("token", {}).get("price", 0))
+            if "result" in data and data["result"]:
+                return float(data["result"][0].get("price", 0))
+            return 0.0
         except Exception as e:
             cprint(f"❌ Failed to get token price: {str(e)}", "red")
             return 0.0
@@ -59,25 +64,32 @@ class HeliusClient:
         """Get historical token data and format as OHLCV"""
         try:
             self._rate_limit()
-            # Get current price
-            current_price = self.get_token_price(token_address)
-            if current_price == 0:
-                raise ValueError("Failed to get token price")
-            
-            # Get token metadata for volume
+            # Get token data using getAssetBatch
             response = requests.post(
                 f"{self.base_url}",
                 headers={"Content-Type": "application/json"},
                 json={
                     "jsonrpc": "2.0",
-                    "id": "get-asset",
-                    "method": "getAsset",
-                    "params": [token_address]
+                    "id": "get-token-data",
+                    "method": "getAssetBatch",
+                    "params": {
+                        "ids": [token_address],
+                        "options": {
+                            "showRecentTrades": True,
+                            "showMetadata": True
+                        }
+                    }
                 }
             )
             response.raise_for_status()
             data = response.json()
-            volume = float(data.get("result", {}).get("token", {}).get("volume24h", 0))
+            
+            if not data.get("result"):
+                raise ValueError("No data returned from Helius API")
+                
+            token_data = data["result"][0]
+            current_price = float(token_data.get("price", 0))
+            volume = float(token_data.get("volume24h", 0))
             
             # Create DataFrame with current data
             now = datetime.now()
