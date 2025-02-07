@@ -23,7 +23,9 @@ from src.data.ohlcv_collector import collect_all_tokens, collect_token_data
 from src.models import model_factory
 
 # Data path for current copybot portfolio
-COPYBOT_PORTFOLIO_PATH = '/Users/md/Dropbox/dev/github/solana-copy-trader/csvs/current_portfolio.csv'
+COPYBOT_PORTFOLIO_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    'data/portfolio/current_portfolio.csv')
 
 # LLM Prompts
 PORTFOLIO_ANALYSIS_PROMPT = """

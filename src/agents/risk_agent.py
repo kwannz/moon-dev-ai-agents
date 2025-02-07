@@ -152,8 +152,9 @@ class RiskAgent(BaseAgent):
             print("\n📝 Checking if we need to log daily balance...")
             
             # Create data directory if it doesn't exist
-            os.makedirs('src/data', exist_ok=True)
-            balance_file = 'src/data/portfolio_balance.csv'
+            balance_file = os.path.join(
+                os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                'data/portfolio/portfolio_balance.csv')
             print(f"📁 Using balance file: {balance_file}")
             
             # Check if we already have a recent log
