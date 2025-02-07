@@ -5,6 +5,7 @@ from src.data.helius_client import HeliusClient
 class MyStrategy(BaseAgent):
     def __init__(self):
         super().__init__(agent_type="strategy")
+        self.name = "Moon Dev Custom Strategy 🌙"
         self.model = model_factory.get_model("ollama", "deepseek-r1:1.5b")
         self.helius_client = HeliusClient()
         
