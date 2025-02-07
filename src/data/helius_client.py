@@ -141,6 +141,45 @@ class HeliusClient:
         rs = gain / loss
         return 100 - (100 / (1 + rs))
         
+    def _post_rpc(self, method: str, params: list) -> dict:
+        """Send RPC request to Helius API"""
+        self._rate_limit()
+        try:
+            response = requests.post(
+                self.base_url,
+                headers=self.headers,
+                json={
+                    "jsonrpc": "2.0",
+                    "id": method,
+                    "method": method,
+                    "params": params
+                }
+            )
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            cprint(f"✨ Failed RPC call to {method}: {str(e)}", "red")
+            return {}
+            
+    def get_token_metadata(self, address: str) -> dict:
+        """Get token metadata using getAccountInfo"""
+        response = self._post_rpc("getAccountInfo", [address, {"encoding": "jsonParsed"}])
+        return response.get("result", {}).get("value", {})
+        
+    def get_token_holders(self, address: str) -> list:
+        """Get token holder information using getTokenLargestAccounts"""
+        response = self._post_rpc("getTokenLargestAccounts", [address])
+        return response.get("result", {}).get("value", [])
+        
+    def get_token_supply(self, address: str) -> dict:
+        """Get token supply information using getTokenSupply"""
+        response = self._post_rpc("getTokenSupply", [address])
+        return response.get("result", {}).get("value", {})
+        
+    def get_signatures_for_address(self, address: str, limit: int = 1) -> list:
+        """Get transaction signatures for an address"""
+        response = self._post_rpc("getSignaturesForAddress", [address, {"limit": limit}])
+        return response.get("result", [])
     async def subscribe_token_updates(self, token_address: str, callback) -> None:
         """Subscribe to token updates using WebSocket"""
         while True:

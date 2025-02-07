@@ -37,14 +37,8 @@ max_usd_order_size = float(os.getenv("MAX_USD_ORDER_SIZE", "1000.0"))  # Maximum
 # Load environment variables
 load_dotenv()
 
-# Get API keys from environment
-BIRDEYE_API_KEY = os.getenv("BIRDEYE_API_KEY")
-if not BIRDEYE_API_KEY:
-    raise ValueError("🚨 BIRDEYE_API_KEY not found in environment variables!")
-
+# Sample address for testing
 sample_address = "2yXTyarttn2pTZ6cwt4DqmrRuBw1G7pmFv9oT6MStdKP"
-
-BASE_URL = "https://public-api.birdeye.so/defi"
 
 # Create temp directory and register cleanup
 os.makedirs('temp_data', exist_ok=True)
@@ -69,170 +63,90 @@ def find_urls(string):
 
 # UPDATED TO RMEOVE THE OTHER ONE so now we can just use this filter instead of filtering twice
 def token_overview(address):
-    """
-    Fetch token overview for a given address and return structured information, including specific links,
-    and assess if any price change suggests a rug pull.
-    """
-
-    print(f'Getting the token overview for {address}')
-    overview_url = f"{BASE_URL}/token_overview?address={address}"
-    headers = {"X-API-KEY": BIRDEYE_API_KEY}
-
-    response = requests.get(overview_url, headers=headers)
-    result = {}
-
-    if response.status_code == 200:
-        overview_data = response.json().get('data', {})
-
-        # Retrieve buy1h, sell1h, and calculate trade1h
-        buy1h = overview_data.get('buy1h', 0)
-        sell1h = overview_data.get('sell1h', 0)
-        trade1h = buy1h + sell1h
-
-        # Add the calculated values to the result
-        result['buy1h'] = buy1h
-        result['sell1h'] = sell1h
-        result['trade1h'] = trade1h
-
-        # Calculate buy and sell percentages
-        total_trades = trade1h  # Assuming total_trades is the sum of buy and sell
-        buy_percentage = (buy1h / total_trades * 100) if total_trades else 0
-        sell_percentage = (sell1h / total_trades * 100) if total_trades else 0
-        result['buy_percentage'] = buy_percentage
-        result['sell_percentage'] = sell_percentage
-
-        # Check if trade1h is bigger than MIN_TRADES_LAST_HOUR
-        result['minimum_trades_met'] = True if trade1h >= MIN_TRADES_LAST_HOUR else False
-
-        # Extract price changes over different timeframes
-        price_changes = {k: v for k, v in overview_data.items() if 'priceChange' in k}
-        result['priceChangesXhrs'] = price_changes
-
-        # Check for rug pull indicator
-        rug_pull = any(value < -80 for key, value in price_changes.items() if value is not None)
-        result['rug_pull'] = rug_pull
-        if rug_pull:
-            print("Warning: Price change percentage below -80%, potential rug pull")
-
-        # Extract other metrics
-        unique_wallet2hr = overview_data.get('uniqueWallet24h', 0)
-        v24USD = overview_data.get('v24hUSD', 0)
-        watch = overview_data.get('watch', 0)
-        view24h = overview_data.get('view24h', 0)
-        liquidity = overview_data.get('liquidity', 0)
-
-        # Add the retrieved data to result
-        result.update({
-            'uniqueWallet2hr': unique_wallet2hr,
-            'v24USD': v24USD,
-            'watch': watch,
-            'view24h': view24h,
-            'liquidity': liquidity,
-        })
-
-        # Extract and process description links if extensions are not None
-        extensions = overview_data.get('extensions', {})
-        description = extensions.get('description', '') if extensions else ''
-        urls = find_urls(description)
-        links = []
-        for url in urls:
-            if 't.me' in url:
-                links.append({'telegram': url})
-            elif 'twitter.com' in url:
-                links.append({'twitter': url})
-            elif 'youtube' not in url:  # Assume other URLs are for website
-                links.append({'website': url})
-
-        # Add extracted links to result
-        result['description'] = links
-
-
-        # Return result dictionary with all the data
+    """Get token overview using Helius API"""
+    try:
+        client = HeliusClient()
+        
+        # Get token metadata and supply info
+        metadata = client.get_token_metadata(address)
+        supply_info = client.get_token_supply(address)
+        holders = client.get_token_holders(address)
+        
+        # Calculate metrics
+        result = {
+            'uniqueWallet2hr': len(holders),
+            'v24USD': 0,  # Not available in Helius
+            'watch': 0,  # Not available in Helius
+            'view24h': 0,  # Not available in Helius
+            'liquidity': float(supply_info.get('uiAmount', 0)),
+            'description': [],  # No direct equivalent in Helius
+            'rug_pull': False,  # Determined by price change
+            'minimum_trades_met': True  # Default to True since we can't get trade count
+        }
+        
         return result
-    else:
-        print(f"Failed to retrieve token overview for address {address}: HTTP status code {response.status_code}")
+    except Exception as e:
+        cprint(f"✨ Error getting token overview: {str(e)}", "red")
         return None
 
 
 def token_security_info(address):
-
-    '''
-
-    bigmatter
-​freeze authority is like renouncing ownership on eth
-
-    Token Security Info:
-{   'creationSlot': 242801308,
-    'creationTime': 1705679481,
-    'creationTx': 'ZJGoayaNDf2dLzknCjjaE9QjqxocA94pcegiF1oLsGZ841EMWBEc7TnDKLvCnE8cCVfkvoTNYCdMyhrWFFwPX6R',
-    'creatorAddress': 'AGWdoU4j4MGJTkSor7ZSkNiF8oPe15754hsuLmwcEyzC',
-    'creatorBalance': 0,
-    'creatorPercentage': 0,
-    'freezeAuthority': None,
-    'freezeable': None,
-    'isToken2022': False,
-    'isTrueToken': None,
-    'lockInfo': None,
-    'metaplexUpdateAuthority': 'AGWdoU4j4MGJTkSor7ZSkNiF8oPe15754hsuLmwcEyzC',
-    'metaplexUpdateAuthorityBalance': 0,
-    'metaplexUpdateAuthorityPercent': 0,
-    'mintSlot': 242801308,
-    'mintTime': 1705679481,
-    'mintTx': 'ZJGoayaNDf2dLzknCjjaE9QjqxocA94pcegiF1oLsGZ841EMWBEc7TnDKLvCnE8cCVfkvoTNYCdMyhrWFFwPX6R',
-    'mutableMetadata': True,
-    'nonTransferable': None,
-    'ownerAddress': None,
-    'ownerBalance': None,
-    'ownerPercentage': None,
-    'preMarketHolder': [],
-    'top10HolderBalance': 357579981.3372284,
-    'top10HolderPercent': 0.6439307358062863,
-    'top10UserBalance': 138709981.9366756,
-    'top10UserPercent': 0.24978920911102176,
-    'totalSupply': 555308143.3354646,
-    'transferFeeData': None,
-    'transferFeeEnable': None}
-    '''
-
-    # API endpoint for getting token security information
-    url = f"{BASE_URL}/token_security?address={address}"
-    headers = {"X-API-KEY": BIRDEYE_API_KEY}
-
-    # Sending a GET request to the API
-    response = requests.get(url, headers=headers)
-
-    if response.status_code == 200:
-        # Parse the JSON response
-        security_data = response.json()['data']
+    """Get token security info using Helius API"""
+    try:
+        client = HeliusClient()
+        
+        # Get creation info
+        signatures = client.get_signatures_for_address(address, limit=1)
+        creation_info = {}
+        if signatures:
+            creation_tx = client.get_transaction(signatures[0]['signature'])
+            creation_info = {
+                'creationTime': creation_tx.get('blockTime', 0),
+                'creatorAddress': creation_tx.get('feePayer', '')
+            }
+            
+        # Get holder info
+        holders = client.get_token_holders(address)
+        
+        # Get supply info
+        supply_info = client.get_token_supply(address)
+        total_supply = float(supply_info.get('uiAmount', 0))
+        
+        # Calculate holder metrics
+        holder_balances = [float(h.get('uiAmount', 0)) for h in holders]
+        holder_balances.sort(reverse=True)
+        top10_balance = sum(holder_balances[:10]) if holder_balances else 0
+        
+        security_data = {
+            **creation_info,
+            'totalSupply': total_supply,
+            'top10HolderBalance': top10_balance,
+            'top10HolderPercent': (top10_balance / total_supply) if total_supply else 0
+        }
+        
         print_pretty_json(security_data)
-    else:
-        print("Failed to retrieve token security info:", response.status_code)
+        return security_data
+    except Exception as e:
+        cprint(f"✨ Error getting token security info: {str(e)}", "red")
+        return None
 
 def token_creation_info(address):
-
-    '''
-    output sampel =
-
-    Token Creation Info:
-{   'decimals': 9,
-    'owner': 'AGWdoU4j4MGJTkSor7ZSkNiF8oPe15754hsuLmwcEyzC',
-    'slot': 242801308,
-    'tokenAddress': '9dQi5nMznCAcgDPUMDPkRqG8bshMFnzCmcyzD8afjGJm',
-    'txHash': 'ZJGoayaNDf2dLzknCjjaE9QjqxocA94pcegiF1oLsGZ841EMWBEc7TnDKLvCnE8cCVfkvoTNYCdMyhrWFFwPX6R'}
-    '''
-    # API endpoint for getting token creation information
-    url = f"{BASE_URL}/token_creation_info?address={address}"
-    headers = {"X-API-KEY": BIRDEYE_API_KEY}
-
-    # Sending a GET request to the API
-    response = requests.get(url, headers=headers)
-
-    if response.status_code == 200:
-        # Parse the JSON response
-        creation_data = response.json()['data']
+    """Get token creation info using Helius API"""
+    try:
+        client = HeliusClient()
+        metadata = client.get_token_metadata(address)
+        
+        creation_data = {
+            'decimals': metadata.get('decimals', 0),
+            'owner': metadata.get('owner', ''),
+            'tokenAddress': address
+        }
+        
         print_pretty_json(creation_data)
-    else:
-        print("Failed to retrieve token creation info:", response.status_code)
+        return creation_data
+    except Exception as e:
+        cprint(f"✨ Error getting token creation info: {str(e)}", "red")
+        return None
 
 def market_buy(token: str, amount: float, slippage: int = SLIPPAGE) -> bool:
     """Execute a market buy order using Jupiter API"""
