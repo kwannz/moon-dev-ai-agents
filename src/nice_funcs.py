@@ -265,39 +265,6 @@ def market_buy(token: str, amount: float, slippage: int = SLIPPAGE) -> bool:
         cprint(f"❌ Market buy failed: {str(e)}", "red")
         return False
 
-    KEY = Keypair.from_base58_string(os.getenv("SOLANA_PRIVATE_KEY"))
-    if not KEY:
-        raise ValueError("🚨 SOLANA_PRIVATE_KEY not found in environment variables!")
-    #print('key success')
-    SLIPPAGE = slippage # 5000 is 50%, 500 is 5% and 50 is .5%
-
-    QUOTE_TOKEN = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v" # usdc
-
-    http_client = Client(os.getenv("RPC_ENDPOINT"))
-    #print('http client success')
-    if not http_client:
-        raise ValueError("🚨 RPC_ENDPOINT not found in environment variables!")
-
-    quote = requests.get(f'https://quote-api.jup.ag/v6/quote?inputMint={QUOTE_TOKEN}&outputMint={token}&amount={amount}&slippageBps={SLIPPAGE}').json()
-    #print(quote)
-
-    txRes = requests.post('https://quote-api.jup.ag/v6/swap',
-                          headers={"Content-Type": "application/json"},
-                          data=json.dumps({
-                              "quoteResponse": quote,
-                              "userPublicKey": str(KEY.pubkey()),
-                              "prioritizationFeeLamports": PRIORITY_FEE  # or replace 'auto' with your specific lamport value
-                          })).json()
-    #print(txRes)
-    swapTx = base64.b64decode(txRes['swapTransaction'])
-    #print(swapTx)
-    tx1 = VersionedTransaction.from_bytes(swapTx)
-    tx = VersionedTransaction(tx1.message, [KEY])
-    txId = http_client.send_raw_transaction(bytes(tx), TxOpts(skip_preflight=True)).value
-    print(f"https://solscan.io/tx/{str(txId)}")
-
-
-
 def market_sell(token: str, amount: float, slippage: int = SLIPPAGE) -> bool:
     """Execute a market sell order using Jupiter API"""
     try:
@@ -329,71 +296,28 @@ def market_sell(token: str, amount: float, slippage: int = SLIPPAGE) -> bool:
         cprint(f"❌ Market sell failed: {str(e)}", "red")
         return False
 
-    KEY = Keypair.from_base58_string(os.getenv("SOLANA_PRIVATE_KEY"))
-    if not KEY:
-        raise ValueError("🚨 SOLANA_PRIVATE_KEY not found in environment variables!")
-    #print('key success')
-    SLIPPAGE = slippage  # 5000 is 50%, 500 is 5% and 50 is .5%
-
-    # token would be usdc for sell orders cause we are selling
-    token = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"  # USDC
-
-    http_client = Client(os.getenv("RPC_ENDPOINT"))
-    if not http_client:
-        raise ValueError("🚨 RPC_ENDPOINT not found in environment variables!")
-    print('http client success')
-
-    quote = requests.get(f'https://quote-api.jup.ag/v6/quote?inputMint={QUOTE_TOKEN}&outputMint={token}&amount={amount}&slippageBps={SLIPPAGE}').json()
-    #print(quote)
-    txRes = requests.post('https://quote-api.jup.ag/v6/swap',
-                          headers={"Content-Type": "application/json"},
-                          data=json.dumps({
-                              "quoteResponse": quote,
-                              "userPublicKey": str(KEY.pubkey()),
-                              "prioritizationFeeLamports": PRIORITY_FEE
-                          })).json()
-    #print(txRes)
-    swapTx = base64.b64decode(txRes['swapTransaction'])
-    #print(swapTx)
-    tx1 = VersionedTransaction.from_bytes(swapTx)
-    #print(tx1)
-    tx = VersionedTransaction(tx1.message, [KEY])
-    #print(tx)
-    txId = http_client.send_raw_transaction(bytes(tx), TxOpts(skip_preflight=True)).value
-    print(f"https://solscan.io/tx/{str(txId)}")
 
 
 
-def get_time_range():
 
-    now = datetime.now()
-    ten_days_earlier = now - timedelta(days=10)
-    time_to = int(now.timestamp())
-    time_from = int(ten_days_earlier.timestamp())
-    #print(time_from, time_to)
 
-    return time_from, time_to
 
-import math
-def round_down(value, decimals):
+def round_down(value: float, decimals: int) -> float:
+    """Round down a float value to specified number of decimal places"""
     factor = 10 ** decimals
     return math.floor(value * factor) / factor
 
-
-def get_time_range(days_back):
-
+def get_time_range(days_back: int) -> tuple[int, int]:
+    """Get time range with specified days lookback"""
     now = datetime.now()
-    ten_days_earlier = now - timedelta(days=days_back)
+    earlier = now - timedelta(days=days_back)
     time_to = int(now.timestamp())
-    time_from = int(ten_days_earlier.timestamp())
-    #print(time_from, time_to)
-
+    time_from = int(earlier.timestamp())
     return time_from, time_to
 
-def get_data(address, days_back_4_data, timeframe):
+def get_data(address: str, days_back_4_data: int, timeframe: str) -> pd.DataFrame:
     """Get market data using Helius API"""
     try:
-        # Use HeliusClient for data collection
         client = HeliusClient()
         return client.get_token_data(address, days_back_4_data, timeframe)
     except Exception as e:
