@@ -296,12 +296,6 @@ def market_sell(token: str, amount: float, slippage: int = SLIPPAGE) -> bool:
         cprint(f"❌ Market sell failed: {str(e)}", "red")
         return False
 
-
-
-
-
-
-
 def round_down(value: float, decimals: int) -> float:
     """Round down a float value to specified number of decimal places"""
     factor = 10 ** decimals
