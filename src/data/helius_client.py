@@ -35,17 +35,16 @@ class HeliusClient:
         self.last_request_time = time.time()
         
     def get_token_price(self, token_address: str) -> float:
-        """Get current token price using DAS API"""
+        """Get current token price using Jupiter API"""
         self._rate_limit()
         try:
             response = requests.get(
-                f"https://api.helius.xyz/v0/token-metadata?api-key={self.api_key}",
-                params={"mintAccounts": [token_address]}
+                f"https://price.jup.ag/v4/price?ids={token_address}"
             )
             response.raise_for_status()
             data = response.json()
-            if data and len(data) > 0:
-                return float(data[0].get("price", 0))
+            if "data" in data and token_address in data["data"]:
+                return float(data["data"][token_address].get("price", 0))
             return 0.0
         except Exception as e:
             cprint(f"❌ Failed to get token price: {str(e)}", "red")
@@ -55,21 +54,20 @@ class HeliusClient:
         """Get historical token data and format as OHLCV"""
         try:
             self._rate_limit()
-            # Get token data using Helius API
+            # Get token data using Jupiter API
             response = requests.get(
-                f"https://api.helius.xyz/v0/token-metadata?api-key={self.api_key}",
-                params={"mintAccounts": [token_address]}
+                f"https://price.jup.ag/v4/price?ids={token_address}"
             )
             response.raise_for_status()
             data = response.json()
             
-            if not data or len(data) == 0:
-                raise ValueError("No data returned from Helius API")
+            if "data" not in data or token_address not in data["data"]:
+                raise ValueError("No data returned from Jupiter API")
                 
-            token_data = data[0]
+            token_data = data["data"][token_address]
             current_price = float(token_data.get("price", 0))
-            volume = float(token_data.get("volume24h", 0))
-            market_cap = float(token_data.get("marketCap", 0))
+            volume = float(token_data.get("volume", 0))
+            market_cap = float(token_data.get("market_cap", 0))
             
             # Create DataFrame with current data
             now = datetime.now()
