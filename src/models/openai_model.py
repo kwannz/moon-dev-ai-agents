@@ -1,6 +1,5 @@
 """
-🌙 Moon Dev's OpenAI Model Implementation
-Built with love by Moon Dev 🚀
+Lumix OpenAI Model Implementation
 """
 
 from openai import OpenAI
@@ -52,7 +51,7 @@ class OpenAIModel(BaseModel):
         """Initialize the OpenAI client"""
         try:
             self.client = OpenAI(api_key=self.api_key)
-            cprint(f"✨ Moon Dev's magic initialized OpenAI model: {self.model_name} 🌟", "green")
+            cprint(f"✨ Initialized OpenAI model: {self.model_name} 🌟", "green")
             if self._supports_reasoning_effort():
                 cprint(f"🧠 Reasoning effort set to: {self.reasoning_effort}", "cyan")
         except Exception as e:
@@ -69,7 +68,7 @@ class OpenAIModel(BaseModel):
         model_kwargs = kwargs.copy()
         
         if self._supports_reasoning_effort():
-            cprint("🚀 Moon Dev's O3 model powering up with reasoning capabilities! 🌙", "cyan")
+            cprint("🚀 O3 model powering up with reasoning capabilities!", "cyan")
             model_kwargs["reasoning_effort"] = self.reasoning_effort
             # Remove unsupported parameters for O3
             model_kwargs.pop('max_tokens', None)
@@ -91,7 +90,7 @@ class OpenAIModel(BaseModel):
         try:
             # Special handling for O3 models
             if self.model_name.startswith('o3'):
-                cprint("🧠 Using Moon Dev's O3 model with reasoning capabilities...", "cyan")
+                cprint("🧠 Using O3 model with reasoning capabilities...", "cyan")
                 messages = [
                     {
                         "role": "user",
@@ -119,7 +118,7 @@ class OpenAIModel(BaseModel):
                     }
                 ]
             
-            cprint(f"🤔 Moon Dev's {self.model_name} is thinking...", "yellow")
+            cprint(f"🤔 {self.model_name} is thinking...", "yellow")
             
             # Prepare model-specific kwargs
             model_kwargs = self._prepare_model_kwargs(**kwargs)
@@ -143,4 +142,4 @@ class OpenAIModel(BaseModel):
     
     @property
     def model_type(self) -> str:
-        return "openai" 
+        return "openai"    

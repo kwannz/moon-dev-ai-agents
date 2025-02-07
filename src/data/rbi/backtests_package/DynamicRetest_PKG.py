@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Moon Dev's Backtest AI 🌙 – Dynamic Retest Strategy Backtesting & Optimization
+Lumix Backtest AI – Dynamic Retest Strategy Backtesting & Optimization
 ---------------------------------------------------------------------
 This script implements the “Dynamic Retest” strategy using backtesting.py.
 It includes:
@@ -16,12 +16,13 @@ Data cleaning details:
   ‣ Drops any columns with “unnamed” in the name.
   ‣ Renames columns to “Open”, “High”, “Low”, “Close”, “Volume”
   
-Charts are saved to the specified “charts” directory with Moon Dev themed file names.
-Enjoy the ride, and may the Moon Dev vibes guide you! 🌙✨🚀
+Charts are saved to the specified "charts" directory.
+Enjoy backtesting! ✨
 """
 
 import os
 import pandas as pd
+from pathlib import Path
 import numpy as np
 import talib
 from backtesting import Backtest, Strategy
@@ -45,12 +46,12 @@ class DynamicRetest(Strategy):
         self.zone_bottom = self.I(talib.MIN, self.data.Low, timeperiod=self.consolidation_span)
         # Although our strategy is pure price action, we initialize a 20‐period SMA for optional context.
         self.sma20 = self.I(talib.SMA, self.data.Close, timeperiod=20)
-        print("🌙✨ Moon Dev: INIT complete – indicators (zone_top, zone_bottom, sma20) are online! 🚀")
+        print("✨ INIT complete – indicators (zone_top, zone_bottom, sma20) are online!")
 
     def next(self):
         # Ensure we have enough data before processing
         if len(self.data) < 3:
-            print("🌙🔍 Moon Dev: Not enough data for processing. Awaiting more bars…")
+            print("✨ Not enough data for processing. Awaiting more bars…")
             return
 
         # Retrieve current bar details
@@ -67,9 +68,9 @@ class DynamicRetest(Strategy):
         eff_risk_reward = self.risk_reward / 10.0  # e.g., 25 becomes 2.5:1 requirement
         eff_risk_percent = self.risk_percent / 100.0  # e.g., 1 becomes 1% risk per trade
 
-        # Debug print – current bar info with Moon Dev flair
-        print(f"🌙✨ Moon Dev: Processing bar {self.data.index[-1]} → Open: {current_open:.2f}, High: {current_high:.2f}, Low: {current_low:.2f}, Close: {current_close:.2f}")
-        print(f"🌙 Debug: Consolidation zone [Top: {curr_zone_top:.2f} | Bottom: {curr_zone_bottom:.2f}] over last {self.consolidation_span} bars.")
+        # Debug print – current bar info
+        print(f"✨ Processing bar {self.data.index[-1]} → Open: {current_open:.2f}, High: {current_high:.2f}, Low: {current_low:.2f}, Close: {current_close:.2f}")
+        print(f"✨ Debug: Consolidation zone [Top: {curr_zone_top:.2f} | Bottom: {curr_zone_bottom:.2f}] over last {self.consolidation_span} bars.")
 
         # Determine market structure: Basic trend identification using last 3 bars
         try:
@@ -81,11 +82,11 @@ class DynamicRetest(Strategy):
                 trend = 'none'
         except Exception as e:
             trend = 'none'
-        print(f"🚀 Moon Dev: Trend identified as {trend.upper()}!")
+        print(f"✨ Trend identified as {trend.upper()}!")
 
         # Only consider new trades if not already in a position
         if self.position:
-            print("🌙✨ Moon Dev: Currently in a trade – holding position with lunar patience!")
+            print("✨ Currently in a trade – holding position!")
             return
 
         # ===============================
@@ -96,10 +97,10 @@ class DynamicRetest(Strategy):
             if curr_zone_bottom < current_close <= curr_zone_top:
                 risk = current_close - curr_zone_bottom  # Risk per unit for a long trade
                 if risk <= 0:
-                    print("🚀 Moon Dev: Calculated risk for LONG trade is non-positive. Skipping... ")
+                    print("✨ Calculated risk for LONG trade is non-positive. Skipping... ")
                     return
                 if eff_risk_reward < 2.5:
-                    print("✨ Moon Dev: Effective risk/reward ratio below 2.5:1 for LONG. Aborting trade!")
+                    print("✨ Effective risk/reward ratio below 2.5:1 for LONG. Aborting trade!")
                     return
                 potential_reward = risk * eff_risk_reward
                 take_profit = current_close + potential_reward
@@ -107,7 +108,7 @@ class DynamicRetest(Strategy):
                 # Validate that the recent high (over the consolidation span) is high enough to reach our TP target.
                 recent_high = self.data.High[-self.consolidation_span:].max()
                 if recent_high < take_profit:
-                    print(f"🚀 Moon Dev: Recent high ({recent_high:.2f}) is below desired TP ({take_profit:.2f}). LONG trade skipped!")
+                    print(f"✨ Recent high ({recent_high:.2f}) is below desired TP ({take_profit:.2f}). LONG trade skipped!")
                     return
 
                 # Calculate dynamic position size based on risk percentage
@@ -116,7 +117,7 @@ class DynamicRetest(Strategy):
                 # Set stop loss just below the demand zone (a slight buffer)
                 stop_loss = curr_zone_bottom * 0.999
 
-                print(f"🌙🚀 Moon Dev: LONG signal detected! Entry = {current_close:.2f}, Stop Loss = {stop_loss:.2f}, Take Profit = {take_profit:.2f}, Size = {position_size:.4f}")
+                print(f"✨ LONG signal detected! Entry = {current_close:.2f}, Stop Loss = {stop_loss:.2f}, Take Profit = {take_profit:.2f}, Size = {position_size:.4f}")
                 self.buy(size=position_size, sl=stop_loss, tp=take_profit)
                 return
 
@@ -128,10 +129,10 @@ class DynamicRetest(Strategy):
             if curr_zone_bottom <= current_close < curr_zone_top:
                 risk = curr_zone_top - current_close  # Risk per unit for a short trade
                 if risk <= 0:
-                    print("🚀 Moon Dev: Calculated risk for SHORT trade is non-positive. Skipping... ")
+                    print("✨ Calculated risk for SHORT trade is non-positive. Skipping... ")
                     return
                 if eff_risk_reward < 2.5:
-                    print("✨ Moon Dev: Effective risk/reward ratio below 2.5:1 for SHORT. Aborting trade!")
+                    print("✨ Effective risk/reward ratio below 2.5:1 for SHORT. Aborting trade!")
                     return
                 potential_reward = risk * eff_risk_reward
                 take_profit = current_close - potential_reward
@@ -139,7 +140,7 @@ class DynamicRetest(Strategy):
                 # Ensure that the recent low is low enough to allow our target hit
                 recent_low = self.data.Low[-self.consolidation_span:].min()
                 if recent_low > take_profit:
-                    print(f"🚀 Moon Dev: Recent low ({recent_low:.2f}) is above desired TP ({take_profit:.2f}). SHORT trade skipped!")
+                    print(f"✨ Recent low ({recent_low:.2f}) is above desired TP ({take_profit:.2f}). SHORT trade skipped!")
                     return
 
                 risk_amount = self.equity * eff_risk_percent
@@ -147,23 +148,23 @@ class DynamicRetest(Strategy):
                 # Place stop loss just above the supply zone, with a small buffer
                 stop_loss = curr_zone_top * 1.001
 
-                print(f"🌙🚀 Moon Dev: SHORT signal detected! Entry = {current_close:.2f}, Stop Loss = {stop_loss:.2f}, Take Profit = {take_profit:.2f}, Size = {position_size:.4f}")
+                print(f"✨ SHORT signal detected! Entry = {current_close:.2f}, Stop Loss = {stop_loss:.2f}, Take Profit = {take_profit:.2f}, Size = {position_size:.4f}")
                 self.sell(size=position_size, sl=stop_loss, tp=take_profit)
                 return
 
         # If no signal was generated, log it!
-        print("🌙🔍 Moon Dev: No valid trade signal on this bar. Scanning the cosmos for the perfect setup…")
+        print("✨ No valid trade signal on this bar. Scanning for the perfect setup…")
 
     def onexit(self, trade):
-        # Called when a trade closes – print out Moon Dev themed messages!
-        print("🚀🌙 Moon Dev: Exiting trade!")
+        # Called when a trade closes
+        print("✨ Exiting trade!")
         print(f"✨ Trade Details → Entry: {trade.entry:.2f}, Exit: {trade.exit:.2f}, PnL: {trade.pl:.2f}, Bars held: {trade.barssince}")
 
 # ----------------------------
 # Data Handling & Preparation
 # ----------------------------
-DATA_PATH = "/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/rbi/BTC-USD-15m.csv"
-print("🌙✨ Moon Dev: Loading data from CSV…")
+DATA_PATH = str(Path(__file__).parent.parent / "BTC-USD-15m.csv")
+print("Loading data from CSV...")
 data = pd.read_csv(DATA_PATH)
 
 # Clean column names: remove spaces and lowercase
@@ -172,7 +173,7 @@ data.columns = data.columns.str.strip().str.lower()
 unnamed_cols = [col for col in data.columns if 'unnamed' in col.lower()]
 if unnamed_cols:
     data = data.drop(columns=unnamed_cols)
-    print("🚀 Moon Dev: Dropped unnamed columns:", unnamed_cols)
+    print("✨ Dropped unnamed columns:", unnamed_cols)
 
 # Map required columns to proper case for backtesting.py: 'Open', 'High', 'Low', 'Close', 'Volume'
 required_rename = {
@@ -188,12 +189,12 @@ data.rename(columns=required_rename, inplace=True)
 if 'datetime' in data.columns:
     data['datetime'] = pd.to_datetime(data['datetime'])
     data.set_index('datetime', inplace=True)
-print("🌙✨ Moon Dev: Data cleaning complete. Columns available:", list(data.columns))
+print("✨ Data cleaning complete. Columns available:", list(data.columns))
 
 # ----------------------------
 # Initialize and Run Initial Backtest
 # ----------------------------
-print("🚀🌙 Moon Dev: Initial backtest starting with Dynamic Retest strategy!")
+print("✨ Initial backtest starting with Dynamic Retest strategy!")
 bt = Backtest(data, 
               DynamicRetest,
               cash=1000000,      # Your size should be 1,000,000!
@@ -201,35 +202,35 @@ bt = Backtest(data,
               exclusive_orders=True)
 
 stats = bt.run()
-print("🌙✨ Moon Dev: Initial Backtest Stats:")
+print("✨ Initial Backtest Stats:")
 print(stats)
-print("🌙✨ Moon Dev: Strategy Parameters:")
+print("✨ Strategy Parameters:")
 print(stats._strategy)
 
 # Save initial performance plot to charts directory
 strategy_name = "Dynamic_Retest"
-chart_dir = "/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/rbi/charts"
+chart_dir = str(Path(__file__).parent.parent / "charts")
 chart_file = os.path.join(chart_dir, f"{strategy_name}_chart.html")
-print(f"🚀 Moon Dev: Saving initial performance plot to {chart_file}")
+print(f"Saving initial performance plot to {chart_file}")
 bt.plot(filename=chart_file, open_browser=False)
 
 # ----------------------------
 # Run Parameter Optimization
 # ----------------------------
-print("🌙✨ Moon Dev: Starting parameter optimization…")
+print("✨ Starting parameter optimization...")
 optimized_stats = bt.optimize(risk_reward=range(25, 31, 1),          # Effective risk_reward: 2.5:1 to 3.0:1
                               risk_percent=range(1, 3, 1),            # 1% to 2% risk per trade
                               consolidation_span=range(2, 6),         # Consolidation span from 2 to 5 bars
                               maximize='Equity Final [$]',
                               return_heatmap=False)
 
-print("🌙🚀 Moon Dev: Optimization complete!")
-print("🌙✨ Moon Dev: Optimized Stats:")
+print("✨ Optimization complete!")
+print("✨ Optimized Stats:")
 print(optimized_stats)
 
 # Save optimized performance plot
 opt_chart_file = os.path.join(chart_dir, f"{strategy_name}_optimized_chart.html")
-print(f"🚀 Moon Dev: Saving optimized performance plot to {opt_chart_file}")
+print(f"✨ Saving optimized performance plot to {opt_chart_file}")
 bt.plot(filename=opt_chart_file, open_browser=False)
 
-print("🌙✨ Moon Dev: All done! May the lunar gains be with you! 🚀")
+print("✨ All done! Happy backtesting!")

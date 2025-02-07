@@ -1,3 +1,5 @@
+from pathlib import Path
+
 def remove_vowels(text):
     vowels = "AEIOUaeiou"
     result = ''.join([char for char in text if char not in vowels])
@@ -23,8 +25,8 @@ def process_files(input_file, output_file):
         print(f"An error occurred: {e}")
 
 # Define the input and output file paths
-input_file_path = '/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/chat_agent/knowledge_base.txt'
-output_file_path = '/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/chat_agent/knowledge_base.txt'
+input_file_path = str(Path(__file__).parent.parent / "data" / "chat_agent" / "knowledge_base.txt")
+output_file_path = str(Path(__file__).parent.parent / "data" / "chat_agent" / "knowledge_base.txt")
 
 # Call the function to process the files
 process_files(input_file_path, output_file_path)

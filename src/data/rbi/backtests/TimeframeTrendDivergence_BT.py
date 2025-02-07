@@ -1,18 +1,19 @@
-Below is an example complete Python file that implements the TimeframeTrendDivergence strategy. Copy and run it as a standalone script. Note that we pre‐aggregate the 15‑minute data into weekly, daily, 4‑hour and 1‑hour bars (using pandas’ resample on the full dataset) and then “lookup” the current bar’s aggregated values inside next(). We also use TA‑lib wrapped in self.I() for any indicator calls (if needed in other strategies) and print plenty of Moon Dev debug messages. Enjoy the ride, and happy Moon Dev backtesting! 🚀🌙✨
+"""
+TimeframeTrendDivergence strategy implementation.
+Pre-aggregates 15-minute data into multiple timeframes and uses TA-Lib indicators.
+"""
 
-------------------------------------------------------------
 #!/usr/bin/env python3
 import os
 import pandas as pd
+from pathlib import Path
 import numpy as np
 import talib
 from backtesting import Backtest, Strategy
 
-# *******************************************************************************
-# DATA PREPARATION
-# *******************************************************************************
-data_path = "/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/rbi/BTC-USD-15m.csv"
-print("🌙 Moon Dev: Loading data from:", data_path)
+# Data preparation
+data_path = str(Path(__file__).parent.parent / "BTC-USD-15m.csv")
+print("🌙 Loading data from:", data_path)
 df = pd.read_csv(data_path)
 
 # Clean up column names
@@ -28,7 +29,7 @@ if 'datetime' in df.columns:
     df['datetime'] = pd.to_datetime(df['datetime'])
     df.set_index('datetime', inplace=True)
 
-print("🌙 Moon Dev: Data loaded and cleaned! Total rows:", len(df))
+print("✨ Data loaded and cleaned! Total rows:", len(df))
   
 # *******************************************************************************
 # STRATEGY DEFINITION
@@ -43,9 +44,9 @@ class TimeframeTrendDivergence(Strategy):
     pending_signal = None
 
     def init(self):
-        # Moon Dev: Build aggregated series for multi-timeframe analysis.
+        # Build aggregated series for multi-timeframe analysis.
         # Data is 15-minute candles. We now create weekly, daily, 4hour, 1hour resampled bars.
-        print("🚀🌙✨ Moon Dev: Initializing aggregated timeframes…")
+        print("✨ Initializing aggregated timeframes…")
         df = self.data.df.copy()  # full data; backtesting.py provides .df on self.data
         # Create weekly bars
         self.weekly = df.resample('W').agg({'Open':'first','High':'max','Low':'min','Close':'last'})
@@ -59,7 +60,7 @@ class TimeframeTrendDivergence(Strategy):
         # Create 1-hour bars
         self.h1 = df.resample('1H').agg({'Open':'first','High':'max','Low':'min','Close':'last'})
         self.h1 = self.h1.reindex(df.index, method='ffill')
-        print("🌙 Moon Dev: Aggregated timeframes ready.")
+        print("✨ Aggregated timeframes ready.")
 
         # (Any TA-lib indicator using self.I must be wrapped here, even if not strictly needed.)
         # For illustration, suppose we wanted to compute a SMA on the 15-minute close.
@@ -77,8 +78,8 @@ class TimeframeTrendDivergence(Strategy):
         current_price = self.data.Close[i]
         time_now = self.data.index[i]
         
-        # Moon Dev themed debug prints
-        print(f"🌙 [{time_now}] Bar {i}: Price = {current_price:.2f}")
+        # Debug prints
+        print(f"✨ [{time_now}] Bar {i}: Price = {current_price:.2f}")
 
         # CONDITION CHECK: Only look for new signals if not already in a trade and no pending signal.
         if not self.position and self.pending_signal is None:
@@ -86,7 +87,7 @@ class TimeframeTrendDivergence(Strategy):
             bullish_weekly = weekly_bar['Close'] > weekly_bar['Open']
             bullish_daily  = daily_bar['Close']  > daily_bar['Open']
             if bullish_weekly and bullish_daily:
-                print("🚀 Moon Dev: Weekly & Daily are bullish! (🌞)")
+                print("✨ Weekly & Daily are bullish! (🌞)")
                 
                 # Check for 4-hour consolidation: we define consolidation as 4H range being less
                 # than (conso_factor * median range over the last 10 4H bars)
@@ -96,7 +97,7 @@ class TimeframeTrendDivergence(Strategy):
                 recent_ranges = self.h4.iloc[max(0, i-9):i+1]
                 median_range = recent_ranges.apply(lambda row: row['High'] - row['Low'], axis=1).median()
                 consolidation = current_range < (self.conso_factor * median_range)
-                print(f"🌙 Moon Dev: 4H consolidation check: current_range = {current_range:.2f}, median_range = {median_range:.2f}, consolidation = {consolidation}")
+                print(f"✨ 4H consolidation check: current_range = {current_range:.2f}, median_range = {median_range:.2f}, consolidation = {consolidation}")
 
                 # Check the 1-hour trend direction (clear trend; not consolidation)
                 bullish_h1 = h1_bar['Close'] > h1_bar['Open']
@@ -105,18 +106,18 @@ class TimeframeTrendDivergence(Strategy):
                     # Set pending signal based on 1-hour trend
                     self.pending_signal = 'pending_long' if bullish_h1 else 'pending_short'
                     direction = "LONG" if bullish_h1 else "SHORT"
-                    print(f"🚀 Moon Dev: 1H indicates a {direction} trend. Setting pending signal: {self.pending_signal} (👀)")
+                    print(f"✨ 1H indicates a {direction} trend. Setting pending signal: {self.pending_signal} (👀)")
         
         # If we have a pending signal, check for breakout in the 15-minute price
         if self.pending_signal is not None and not self.position:
             # For long: wait until price breaks above the current 1H high
             # For short: wait until price breaks below the current 1H low
             if self.pending_signal == 'pending_long' and current_price > h1_bar['High']:
-                print(f"🌙 Moon Dev: LONG entry trigger! Price broke above 1H High {h1_bar['High']:.2f} 🚀")
+                print(f"✨ LONG entry trigger! Price broke above 1H High {h1_bar['High']:.2f} 🚀")
                 self.enter_trade('long', current_price, h1_bar)
                 self.pending_signal = None  # reset signal after entry
             elif self.pending_signal == 'pending_short' and current_price < h1_bar['Low']:
-                print(f"🌙 Moon Dev: SHORT entry trigger! Price broke below 1H Low {h1_bar['Low']:.2f} 🚀")
+                print(f"✨ SHORT entry trigger! Price broke below 1H Low {h1_bar['Low']:.2f} 🚀")
                 self.enter_trade('short', current_price, h1_bar)
                 self.pending_signal = None  # reset signal after entry
             # If the pending signal conditions are no longer met, you might cancel the signal.
@@ -124,7 +125,7 @@ class TimeframeTrendDivergence(Strategy):
         
         # Optional: You can add additional debug prints on position updates.
         if self.position:
-            print(f"✨ Moon Dev: In trade: {self.position} with entry price {self.position.entry_price:.2f}")
+            print(f"✨ In trade: {self.position} with entry price {self.position.entry_price:.2f}")
     
     def enter_trade(self, trade_dir, entry_price, h1_bar):
         """
@@ -142,7 +143,7 @@ class TimeframeTrendDivergence(Strategy):
             risk_per_unit = entry_price - stop_loss
             # Avoid division by zero.
             if risk_per_unit <= 0:
-                print("🌙 Moon Dev: Risk per unit <= 0. Trade skipped. 😱")
+                print("✨ Risk per unit <= 0. Trade skipped. 😱")
                 return
             take_profit = entry_price + risk_per_unit * self.risk_reward_ratio
             direction_text = "LONG"
@@ -150,7 +151,7 @@ class TimeframeTrendDivergence(Strategy):
             stop_loss = h1_bar['High']
             risk_per_unit = stop_loss - entry_price
             if risk_per_unit <= 0:
-                print("🌙 Moon Dev: Risk per unit <= 0. Trade skipped. 😱")
+                print("✨ Risk per unit <= 0. Trade skipped. 😱")
                 return
             take_profit = entry_price - risk_per_unit * self.risk_reward_ratio
             direction_text = "SHORT"
@@ -159,8 +160,8 @@ class TimeframeTrendDivergence(Strategy):
         position_size = risk_amount / risk_per_unit
         position_size = int(round(position_size))
         
-        print(f"🚀 Moon Dev: Entering {direction_text} trade at {entry_price:.2f} with stop loss {stop_loss:.2f} and take profit {take_profit:.2f}.")
-        print(f"🌙 Moon Dev: Equity = {equity:.2f}, Risk amount = {risk_amount:.2f}, Risk per unit = {risk_per_unit:.2f}, Calculated size = {position_size} units.")
+        print(f"✨ Entering {direction_text} trade at {entry_price:.2f} with stop loss {stop_loss:.2f} and take profit {take_profit:.2f}.")
+        print(f"✨ Equity = {equity:.2f}, Risk amount = {risk_amount:.2f}, Risk per unit = {risk_per_unit:.2f}, Calculated size = {position_size} units.")
         
         # Enter trade using backtesting.py's order method.
         if trade_dir == 'long':
@@ -170,8 +171,8 @@ class TimeframeTrendDivergence(Strategy):
             # For short trade, the sell order is placed (backtesting.py uses sell to short).
             self.sell(size=position_size, sl=stop_loss, tp=take_profit)
         
-        # Moon Dev debug message after entering
-        print(f"✨ Moon Dev: {direction_text} trade executed! 🚀🌙")
+        # Debug message after entering
+        print(f"✨ {direction_text} trade executed! 🚀")
 
 # *******************************************************************************
 # RUN INITIAL BACKTEST & OPTIMIZATION
@@ -184,25 +185,25 @@ if __name__ == '__main__':
     bt = Backtest(df, TimeframeTrendDivergence, cash=initial_cash, commission=.002,
                   exclusive_orders=True)
 
-    print("🚀🌙✨ Moon Dev: Running initial backtest...")
+    print("✨ Running initial backtest...")
     stats = bt.run()
-    print("\n🌙 Moon Dev: Initial Backtest Results:")
+    print("\n✨ Initial Backtest Results:")
     print(stats)
-    print("\n🌙 Moon Dev: Strategy details:")
+    print("\n✨ Strategy details:")
     print(stats._strategy)
 
     # Save initial performance plot to chart directory
     strategy_name = "TimeframeTrendDivergence_initial"
-    chart_dir = "/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/rbi/charts"
+    chart_dir = str(Path(__file__).parent.parent / "charts")
     chart_file = os.path.join(chart_dir, f"{strategy_name}_chart.html")
-    print(f"🚀 Moon Dev: Saving initial chart to: {chart_file}")
+    print(f"Saving initial chart to: {chart_file}")
     bt.plot(filename=chart_file, open_browser=False)
 
     # *************************************************************************************
     # Optimization: vary risk_pct, risk_reward_ratio, and 4H consolidation factor parameters.
     # Note: Ranges are defined per requirements; always break down list parameters.
     # *************************************************************************************
-    print("\n🚀🌙✨ Moon Dev: Running optimization…")
+    print("\n✨ Running optimization…")
     optimized_stats = bt.optimize(risk_pct=round, risk_reward_ratio=round, conso_factor=round,
                                   # Ranges for optimization:
                                   risk_pct = (0.005, 0.02, 0.005),              # 0.005 to 0.02 with step 0.005
@@ -210,27 +211,24 @@ if __name__ == '__main__':
                                   conso_factor = (0.8, 1.2, 0.2),                 # 0.8, 1.0, 1.2
                                   maximize='Equity Final [$]')
     
-    print("\n🌙 Moon Dev: Optimized Backtest Results:")
+    print("\n✨ Optimized Backtest Results:")
     print(optimized_stats)
-    print("\n🌙 Moon Dev: Optimized Strategy parameters:")
+    print("\n✨ Optimized Strategy parameters:")
     print(optimized_stats._strategy)
 
     # Save optimized performance plot to chart directory
     strategy_name = "TimeframeTrendDivergence_optimized"
     chart_file = os.path.join(chart_dir, f"{strategy_name}_chart.html")
-    print(f"🚀 Moon Dev: Saving optimized chart to: {chart_file}")
+    print(f"✨ Saving optimized chart to: {chart_file}")
     bt.plot(filename=chart_file, open_browser=False)
 
-    print("🌙 Moon Dev: Backtesting and optimization complete! 🚀✨")
+    print("✨ Backtesting and optimization complete!")
     
-------------------------------------------------------------
-
-Notes:
-• We use self.I() in init() to wrap the talib.SMA call even though the strategy mainly relies on multi-timeframe price action.
-• Aggregated bars (weekly, daily, 4H, 1H) are generated via pandas resample and reindexed onto the 15-minute timeline.
-• Entry orders execute only when the 15‑minute price breaks the 1‑hour range (above for long, below for short).
-• Position size is calculated by dividing the risk amount (a percentage of equity) by the risk per unit, then rounded to an integer.
-• Plenty of debug prints (with Moon Dev emojis) help track the flow of signals.
-• After running the initial backtest, full stats and plots are saved to the specified charts directory. Then an optimization is run.
-
-Happy backtesting with Moon Dev’s Backtest AI! 🌙🚀✨
+"""
+Strategy Notes:
+- Uses self.I() to wrap TA-Lib calls for indicator calculations
+- Aggregates bars (weekly, daily, 4H, 1H) via pandas resample
+- Entry orders execute on 15-minute price breaks of 1-hour range
+- Position size calculated using risk-based sizing
+- Saves stats and plots to charts directory after initial backtest
+"""

@@ -1,8 +1,6 @@
 """
-🐳 Moon Dev's Whale Watcher
-Built with love by Moon Dev 🚀
-
-Dez the Whale Agent tracks open interest changes across different timeframes and announces market moves if she sees anomalies 
+Lumix Whale Watcher
+Tracks open interest changes across different timeframes and announces market moves when anomalies are detected.
 """
 
 # Model override settings
@@ -24,7 +22,7 @@ import openai
 from pathlib import Path
 from src import nice_funcs as n
 from src import nice_funcs_hl as hl  # Add import for hyperliquid functions
-from src.agents.api import MoonDevAPI
+from src.agents.api import LumixAPI
 from collections import deque
 from src.agents.base_agent import BaseAgent
 import traceback
@@ -72,10 +70,10 @@ Large OI decreases with price down may indicate capitulation which can be a good
 """
 
 class WhaleAgent(BaseAgent):
-    """Dez the Whale Watcher 🐋"""
+    """Lumix Whale Watcher"""
     
     def __init__(self):
-        """Initialize Dez the Whale Agent"""
+        """Initialize Lumix Whale Watcher"""
         super().__init__('whale')  # Initialize base agent with type
         
         # Set AI parameters - use config values unless overridden
@@ -121,8 +119,8 @@ class WhaleAgent(BaseAgent):
                 else:
                     raise ValueError(f"Failed to initialize model after {max_retries} attempts")
         
-        # Initialize Moon Dev API with correct base URL
-        self.api = MoonDevAPI(base_url="http://api.moondev.com:8000")
+        # Initialize API client
+        self.api = LumixAPI()
         
         # Create data directories if they don't exist
         self.audio_dir = PROJECT_ROOT / "src" / "audio"
@@ -134,7 +132,7 @@ class WhaleAgent(BaseAgent):
         self.history_file = self.data_dir / "oi_history.csv"
         self.load_history()
         
-        print("🐋 Dez the Whale Agent initialized!")
+        print("🐋 Lumix Whale Watcher initialized!")
         
     def load_history(self):
         """Load or initialize historical OI data with change tracking"""
@@ -491,7 +489,7 @@ class WhaleAgent(BaseAgent):
                 )
             
             # Build base message
-            message = f"ayo moon dev 777! BTC OI {btc_direction} {abs(btc_change):.3f}% in {interval}m, "
+            message = f"Alert! BTC OI {btc_direction} {abs(btc_change):.3f}% in {interval}m, "
             message += f"from {self._format_number_for_speech(changes['start_btc'])} "
             message += f"to {self._format_number_for_speech(changes['current_btc'])}"
             
@@ -532,7 +530,7 @@ class WhaleAgent(BaseAgent):
         except Exception as e:
             print(f"❌ Error in monitoring cycle: {str(e)}")
             print(f"Stack trace: {traceback.format_exc()}")
-            print("🔧 Moon Dev suggests checking the logs and trying again!")
+            print("🔧 Please check the logs and try again")
             time.sleep(60)  # Sleep for 1 minute on error
             
     def _announce(self, message, is_whale=False):
@@ -576,7 +574,7 @@ class WhaleAgent(BaseAgent):
                     eth_oi = latest_data['eth_oi']
                     total_oi = latest_data['total_oi']
                     
-                    message = "🌙 Moon Dev's Whale Watcher starting fresh! I'll compare changes once I have more data. "
+                    message = "Lumix Whale Watcher starting fresh! Will compare changes once more data is available. "
                     message += f"Current total open interest is {self._format_number_for_speech(total_oi)} with Bitcoin at "
                     message += f"{(btc_oi/total_oi)*100:.1f}% and Ethereum at {(eth_oi/total_oi)*100:.1f}% of the market."
                     self._announce(message)
@@ -649,7 +647,7 @@ if __name__ == "__main__":
     agent = WhaleAgent()
     
     # Run the agent continuously
-    print("\n🐋 Moon Dev's Whale Agent starting monitoring cycle...")
+    print("\n🐋 Lumix Whale Watcher starting monitoring cycle...")
     while True:
         try:
             agent.run_monitoring_cycle()
@@ -659,5 +657,5 @@ if __name__ == "__main__":
             break
         except Exception as e:
             print(f"❌ Error in main loop: {str(e)}")
-            print("🔧 Moon Dev suggests checking the logs and trying again!")
-            time.sleep(60)  # Sleep for 1 minute on error            
+            print("🔧 Please check the logs and try again")
+            time.sleep(60)  # Sleep for 1 minute on error                        

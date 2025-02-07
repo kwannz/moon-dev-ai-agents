@@ -1,9 +1,11 @@
-Below is the complete fixed code. Note that ALL forbidden backtesting.lib references have been removed and indicator and crossover logic now use talib and pure array indexing with self.I() wrappers as required. Enjoy the Moon Dev magic! 🌙✨
+"""
+StoicReversal strategy implementation using TA-Lib indicators.
+All backtesting.lib references removed in favor of pure TA-Lib calculations.
+"""
 
-------------------------------------------------------------
 #!/usr/bin/env python3
 """
-Moon Dev's Backtest AI 🌙
+Lumix Backtest AI
 Backtesting implementation for the "Stoic Reversal" strategy.
 This strategy uses a Stochastic RSI indicator from TA–Lib to spot
 oversold and overbought conditions, and it applies a disciplined, emotion–free
@@ -16,6 +18,7 @@ trading approach with risk management and parameter optimization.
 import os
 import numpy as np
 import pandas as pd
+from pathlib import Path
 import talib
 from backtesting import Backtest, Strategy
 
@@ -114,7 +117,7 @@ if __name__ == '__main__':
     # Data path is provided:
     # /Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/rbi/BTC-USD-15m.csv
     # ─────────────────────────────────────────────────────────────
-    data_path = "/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/rbi/BTC-USD-15m.csv"
+    data_path = str(Path(__file__).parent.parent / "BTC-USD-15m.csv")
     try:
         data = pd.read_csv(data_path)
         print("🌙✨ [DATA] CSV loaded successfully!")
@@ -158,7 +161,7 @@ if __name__ == '__main__':
     print(stats._strategy)
 
     # Save the initial performance plot to the charts directory.
-    chart_dir = "/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/rbi/charts"
+    chart_dir = str(Path(__file__).parent.parent / "charts")
     strategy_name = "StoicReversal"
     chart_file = os.path.join(chart_dir, f"{strategy_name}_chart.html")
     print(f"🌙🚀 [PLOT] Saving initial performance chart to: {chart_file}")
@@ -180,10 +183,10 @@ if __name__ == '__main__':
     
     # Save the optimized performance plot.
     chart_file_opt = os.path.join(chart_dir, f"{strategy_name}_optimized_chart.html")
-    print(f"🌙🚀 [PLOT] Saving optimized performance chart to: {chart_file_opt}")
+    print(f"Saving optimized performance chart to: {chart_file_opt}")
     bt.plot(opt_stats, filename=chart_file_opt, open_browser=False)
     
-    print("🌙🚀 [DONE] Stoic Reversal backtest and optimization complete!")
-------------------------------------------------------------
+    print("Backtest completed successfully!")
+print("Backtest completed successfully!")
 
-This version of the code ensures that there is NO usage of backtesting.lib and that all indicator and crossover logic comply with Moon Dev’s package standards. Happy backtesting! 🌙✨
+print("Backtest completed successfully!")

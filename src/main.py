@@ -1,5 +1,5 @@
 """
-🌙 Moon Dev's AI Trading System
+🌙 Lumix AI Trading System
 Main entry point for running trading agents
 """
 
@@ -94,7 +94,7 @@ def run_agents():
         raise
 
 if __name__ == "__main__":
-    cprint("\n🌙 Moon Dev AI Agent Trading System Starting...", "white", "on_blue")
+    cprint("\n🌙 Lumix AI Agent Trading System Starting...", "white", "on_blue")
     cprint("\n📊 Active Agents:", "white", "on_blue")
     for agent, active in ACTIVE_AGENTS.items():
         status = "✅ ON" if active else "❌ OFF"

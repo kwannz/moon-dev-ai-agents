@@ -4,7 +4,7 @@ Bollinger Bands Strategy 🎯
 A mean reversion strategy that uses Bollinger Bands to identify overbought and oversold conditions.
 When price touches the lower band and shows reversal, we go long.
 When price touches the upper band and shows reversal, we go short.
-Created by Moon Dev with 🌙✨
+Created by Lumix ✨
 """
 
 import os
@@ -21,7 +21,7 @@ CHARTS_DIR = os.path.join(BASE_DIR, "backtests/charts")
 
 def load_and_clean_data():
     """Load and clean the OHLCV data"""
-    print("🌙 Moon Dev is loading the data...")
+    print("✨ Loading the data...")
     df = pd.read_csv(DATA_PATH)
     
     # Drop unnamed columns
@@ -70,7 +70,7 @@ class BollingerBandsStrategy(Strategy):
     
     def init(self):
         """Initialize indicators"""
-        print("🌙 Moon Dev is calculating indicators...")
+        print("✨ Calculating indicators...")
         
         # Calculate Bollinger Bands
         self.sma = self.I(talib.SMA, self.data.Close, timeperiod=self.n_sma)
@@ -125,7 +125,7 @@ class BollingerBandsStrategy(Strategy):
             pos_size = int(risk_amount / risk_per_unit) if risk_per_unit > 0 else 0
             
             if pos_size > 0 and not self.position:  # Check we're not already in a position
-                print(f"🌙🚀 [LONG ENTRY] Moon Dev spotted a Bullish BB Signal! Entry: {entry:.2f}")
+                print(f"✨ [LONG ENTRY] Spotted a Bullish BB Signal! Entry: {entry:.2f}")
                 print(f"   ➡ Stop Loss: {stop_loss:.2f}, Take Profit: {take_profit:.2f}")
                 print(f"   ➡ Position Size: {pos_size} units")
                 print(f"   ➡ Risk Amount: ${risk_amount:.2f}, Risk per unit: ${risk_per_unit:.2f}")
@@ -143,7 +143,7 @@ class BollingerBandsStrategy(Strategy):
             pos_size = int(risk_amount / risk_per_unit) if risk_per_unit > 0 else 0
             
             if pos_size > 0 and not self.position:  # Check we're not already in a position
-                print(f"🌙🚀 [SHORT ENTRY] Moon Dev spotted a Bearish BB Signal! Entry: {entry:.2f}")
+                print(f"✨ [SHORT ENTRY] Spotted a Bearish BB Signal! Entry: {entry:.2f}")
                 print(f"   ➡ Stop Loss: {stop_loss:.2f}, Take Profit: {take_profit:.2f}")
                 print(f"   ➡ Position Size: {pos_size} units")
                 print(f"   ➡ Risk Amount: ${risk_amount:.2f}, Risk per unit: ${risk_per_unit:.2f}")
@@ -179,4 +179,4 @@ if __name__ == "__main__":
     # Save chart
     chart_file = os.path.join(CHARTS_DIR, f"BollingerBands_chart_{timestamp}.html")
     bt.plot(filename=chart_file, open_browser=False)
-    print(f"📈 Chart saved to: {chart_file}") 
+    print(f"📈 Chart saved to: {chart_file}")  

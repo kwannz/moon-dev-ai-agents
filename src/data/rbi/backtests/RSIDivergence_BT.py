@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Moon Dev's RSI Divergence Strategy Backtest 🌙✨
+Lumix RSI Divergence Strategy Backtest
 This strategy looks for divergences between price action and RSI indicator.
 Bullish divergence: Lower lows in price but higher lows in RSI
 Bearish divergence: Higher highs in price but lower highs in RSI
@@ -88,7 +88,7 @@ def find_divergences(price_data, rsi_data, window=5):
     return np.array(bullish_div), np.array(bearish_div)
 
 class RSIDivergence(Strategy):
-    """RSI Divergence Strategy by Moon Dev 🌙"""
+    """RSI Divergence Strategy"""
     
     # Strategy parameters
     rsi_period = 14
@@ -101,7 +101,7 @@ class RSIDivergence(Strategy):
     
     def init(self):
         """Initialize strategy indicators"""
-        print("🌙✨ Initializing Moon Dev's RSI Divergence Strategy")
+        print("✨ Initializing RSI Divergence Strategy")
         
         # Calculate RSI
         close_values = np.array(self.data.Close)
@@ -146,7 +146,7 @@ class RSIDivergence(Strategy):
                 risk_per_unit = abs(entry_price - stop_loss)
                 position_size = max(int(risk_amount / risk_per_unit), 1)
                 
-                print(f"🌙🚀 [LONG ENTRY] Moon Dev spotted a Bullish Divergence! Entry: {entry_price:.2f}")
+                print(f"✨ [LONG ENTRY] Spotted a Bullish Divergence! Entry: {entry_price:.2f}")
                 print(f"   ➡ Stop Loss: {stop_loss:.2f}, Take Profit: {take_profit:.2f}")
                 print(f"   ➡ Position Size: {position_size} units")
                 print(f"   ➡ Risk Amount: ${risk_amount:.2f}, Risk per unit: ${risk_per_unit:.2f}")
@@ -163,7 +163,7 @@ class RSIDivergence(Strategy):
                 risk_per_unit = abs(stop_loss - entry_price)
                 position_size = max(int(risk_amount / risk_per_unit), 1)
                 
-                print(f"🌙🚀 [SHORT ENTRY] Moon Dev spotted a Bearish Divergence! Entry: {entry_price:.2f}")
+                print(f"✨ [SHORT ENTRY] Spotted a Bearish Divergence! Entry: {entry_price:.2f}")
                 print(f"   ➡ Stop Loss: {stop_loss:.2f}, Take Profit: {take_profit:.2f}")
                 print(f"   ➡ Position Size: {position_size} units")
                 print(f"   ➡ Risk Amount: ${risk_amount:.2f}, Risk per unit: ${risk_per_unit:.2f}")
@@ -199,4 +199,4 @@ if __name__ == "__main__":
         print(f"📈 Chart saved to: {chart_file}")
         
     except Exception as e:
-        print(f"⚠️ Error running backtest: {str(e)}") 
+        print(f"⚠️ Error running backtest: {str(e)}")  

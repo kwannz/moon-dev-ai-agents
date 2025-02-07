@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Moon Dev's Backtest AI 🌙 - GapAdvantage Strategy Backtesting Implementation
+Lumix Backtest AI - GapAdvantage Strategy Backtesting Implementation
 This strategy focuses on volatile stocks (or assets) with a gap‐and‐go setup.
 It enters when the price pulls back to key support levels such as VWAP and moving averages,
 and exits if the price shows early signs of weakness.
-Enjoy the Moon Dev debug vibes! 🌙✨🚀
+Enjoy backtesting!
 """
 
 # 1. Imports
@@ -51,7 +51,7 @@ class GapAdvantage(Strategy):
         self.vwap = self.I(custom_vwap, self.data.High, self.data.Low, self.data.Close, self.data.Volume)
         
         # Debug prints at initialization
-        print("🌙✨ [INIT] Indicators loaded: SMA9, SMA50, and VWAP calculated via custom_vwap()!")
+        print("✨ [INIT] Indicators loaded: SMA9, SMA50, and VWAP calculated via custom_vwap()!")
         
         # To store trade-dependent levels
         self.entry_price = None
@@ -64,7 +64,7 @@ class GapAdvantage(Strategy):
         current_sma9 = self.sma9[-1]
         
         # Debug: Print current price and indicator values
-        print(f"🌙🚀 [NEXT] Price: {price:.2f}, VWAP: {current_vwap:.2f}, SMA9: {current_sma9:.2f}")
+        print(f"✨ [NEXT] Price: {price:.2f}, VWAP: {current_vwap:.2f}, SMA9: {current_sma9:.2f}")
         
         # Check if we have an open position
         if not self.position:
@@ -84,8 +84,8 @@ class GapAdvantage(Strategy):
                 position_size = int(round(raw_size))
                 
                 # Debug prints for entry signal and risk management calculation
-                print(f"🌙✨ [ENTRY SIGNAL] Price crossed above VWAP! Entry Price: {self.entry_price:.2f}")
-                print(f"🌙✨ [RISK MGMT] SL set at: {self.sl:.2f}, TP set at: {self.tp:.2f}, Position Size: {position_size}")
+                print(f"✨ [ENTRY SIGNAL] Price crossed above VWAP! Entry Price: {self.entry_price:.2f}")
+                print(f"✨ [RISK MGMT] SL set at: {self.sl:.2f}, TP set at: {self.tp:.2f}, Position Size: {position_size}")
                 
                 # Submit buy order with proper position sizing
                 self.buy(size=position_size)
@@ -94,13 +94,13 @@ class GapAdvantage(Strategy):
             # a) If price falls below the stop loss level, exit immediately.
             # b) Alternatively, if close falls below SMA9, consider it a sign of weakness.
             if price <= self.sl:
-                print(f"🌙🚀 [EXIT SIGNAL] Price hit stop loss! Current Price: {price:.2f}, SL: {self.sl:.2f}")
+                print(f"✨ [EXIT SIGNAL] Price hit stop loss! Current Price: {price:.2f}, SL: {self.sl:.2f}")
                 self.position.close()
             elif price >= self.tp:
-                print(f"🌙🚀 [EXIT SIGNAL] Price hit take profit! Current Price: {price:.2f}, TP: {self.tp:.2f}")
+                print(f"✨ [EXIT SIGNAL] Price hit take profit! Current Price: {price:.2f}, TP: {self.tp:.2f}")
                 self.position.close()
             elif price < current_sma9:
-                print(f"🌙🚀 [EXIT SIGNAL] Price dropped below SMA9! Current Price: {price:.2f}, SMA9: {current_sma9:.2f}")
+                print(f"✨ [EXIT SIGNAL] Price dropped below SMA9! Current Price: {price:.2f}, SMA9: {current_sma9:.2f}")
                 self.position.close()
             # Else: hold the position.
             
@@ -109,7 +109,7 @@ class GapAdvantage(Strategy):
 # --------------
 
 def load_and_clean_data(filepath):
-    print("🌙✨ [DATA] Loading data from file:", filepath)
+    print("✨ [DATA] Loading data from file:", filepath)
     data = pd.read_csv(filepath, parse_dates=['datetime'])
     # Clean column names by removing spaces and converting to lower case
     data.columns = data.columns.str.strip().str.lower()
@@ -121,12 +121,12 @@ def load_and_clean_data(filepath):
     # Ensure data is sorted
     data.sort_values('datetime', inplace=True)
     data.reset_index(drop=True, inplace=True)
-    print("🌙✨ [DATA] Data cleaning completed! Columns available:", list(data.columns))
+    print("✨ [DATA] Data cleaning completed! Columns available:", list(data.columns))
     return data
 
 if __name__ == '__main__':
     # Data path as specified
-    data_path = "/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/rbi/BTC-USD-15m.csv"
+    data_path = str(Path(__file__).parent.parent / "BTC-USD-15m.csv")
     data = load_and_clean_data(data_path)
     
     # Initialize Backtest with 1,000,000 cash size and a small commission (if desired)
@@ -139,12 +139,12 @@ if __name__ == '__main__':
     )
     
     # Run the backtest with default parameters
-    print("🌙🚀 [BACKTEST] Starting backtest with GapAdvantage strategy!")
+    print("✨ [BACKTEST] Starting backtest with GapAdvantage strategy!")
     stats = bt.run()
     
     # Print full stats and strategy details (no plotting as requested)
-    print("\n🌙🚀 [STATS] Full Backtest Stats:\n", stats)
-    print("\n🌙🚀 [STATS] Strategy Details:\n", stats._strategy)
+    print("\n✨ [STATS] Full Backtest Stats:\n", stats)
+    print("\n✨ [STATS] Strategy Details:\n", stats._strategy)
     
     # End of script
-    print("🌙✨ [DONE] Backtesting complete. Moon Dev out! 🚀")
+    print("✨ [DONE] Backtesting complete!")

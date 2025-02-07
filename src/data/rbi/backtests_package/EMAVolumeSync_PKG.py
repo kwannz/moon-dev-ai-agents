@@ -1,9 +1,10 @@
 import pandas as pd
 import talib
+from pathlib import Path
 from backtesting import Backtest, Strategy
 
 # Clean and prepare the data
-data = pd.read_csv("/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/rbi/BTC-USD-15m.csv")
+data = pd.read_csv(str(Path(__file__).parent.parent / "BTC-USD-15m.csv"))
 
 # Clean column names and drop unnamed columns
 data.columns = data.columns.str.strip().str.lower()

@@ -1,132 +1,67 @@
 """
-🌙 Moon Dev's Ollama Model Integration
-Built with love by Moon Dev 🚀
-
-This module provides integration with locally running Ollama models.
+Ollama Model Integration
+Handles interaction with local Ollama API
 """
 
-import requests
+import os
 import json
-from termcolor import cprint
-from .base_model import BaseModel
+import requests
+from .base_model import BaseModel, ModelResponse
 
 class OllamaModel(BaseModel):
-    """Implementation for local Ollama models"""
+    AVAILABLE_MODELS = ['deepseek-r1:1.5b']
     
-    @property
-    def AVAILABLE_MODELS(self):
-        """Get available Ollama models"""
-        try:
-            response = requests.get(f"{self.base_url}/tags")
-            if response.status_code == 200:
-                models = response.json().get("models", [])
-                return [model["name"] for model in models]
-            return []
-        except:
-            return []
-    
-    def __init__(self, api_key=None, model_name="deepseek-r1:1.5b"):
-        """Initialize Ollama model
-        
-        Args:
-            api_key: Not used for Ollama but kept for compatibility
-            model_name: Name of the Ollama model to use
-        """
-        self.base_url = "http://localhost:11434/api"  # Default Ollama API endpoint
-        super().__init__(api_key="LOCAL_OLLAMA", model_name=model_name)
+    def __init__(self, model_name="deepseek-r1:1.5b"):
+        super().__init__()
+        self.model_name = model_name
+        self.api_url = "http://localhost:11434/api/generate"
+        self.headers = {"Content-Type": "application/json"}
+        self.client = None
         self.initialize_client()
         
     def initialize_client(self):
-        """Initialize the Ollama client connection"""
-        if not self.model_name:
-            raise ValueError("Model name cannot be empty")
-            
+        """Initialize connection to Ollama API"""
         try:
-            response = requests.get(f"{self.base_url}/tags")
-            if response.status_code == 200:
-                cprint(f"✨ Successfully connected to Ollama API", "green")
-                models = response.json().get("models", [])
-                if models:
-                    model_names = [model["name"] for model in models]
-                    cprint(f"📚 Available Ollama models: {model_names}", "cyan")
-                    if self.model_name not in model_names:
-                        cprint(f"⚠️ Model {self.model_name} not found! Please run:", "yellow")
-                        cprint(f"   ollama pull {self.model_name}", "yellow")
-                        raise ValueError(f"Model {self.model_name} not found")
-                else:
-                    cprint("⚠️ No models found! Please pull the model:", "yellow")
-                    cprint(f"   ollama pull {self.model_name}", "yellow")
-                    raise ValueError("No models found")
-            else:
-                cprint(f"⚠️ Ollama API returned status code: {response.status_code}", "yellow")
-                raise ConnectionError(f"Ollama API returned status code: {response.status_code}")
-        except requests.exceptions.ConnectionError:
-            cprint("❌ Could not connect to Ollama API - is the server running?", "red")
-            cprint("💡 Start the server with: ollama serve", "yellow")
-            raise
+            response = requests.get("http://localhost:11434/api/tags")
+            response.raise_for_status()
+            self.client = True
+            print("✨ Successfully connected to Ollama API")
+            print(f"📚 Available Ollama models: {self.AVAILABLE_MODELS}")
+            return True
         except Exception as e:
-            cprint(f"❌ Could not connect to Ollama API: {str(e)}", "red")
-            cprint("💡 Make sure Ollama is running locally (ollama serve)", "yellow")
-            raise
-
+            print(f"Error connecting to Ollama API: {e}")
+            return False
+            
+    def is_available(self):
+        """Check if model is available"""
+        return self.client is not None
+        
     @property
     def model_type(self):
-        """Return the type of model"""
+        """Get model type"""
         return "ollama"
-    
-    def is_available(self):
-        """Check if the model is available"""
-        try:
-            response = requests.get(f"{self.base_url}/tags")
-            return response.status_code == 200
-        except:
-            return False
-    
-    def generate_response(self, system_prompt, user_content, temperature=0.7):
-        """Generate a response using the Ollama model
         
-        Args:
-            system_prompt: System prompt to guide the model
-            user_content: User's input content
-            temperature: Controls randomness (0.0 to 1.0)
+    def generate_response(self, system_prompt, user_content, temperature=0.7):
+        """Generate response from Ollama model"""
+        if not self.is_available():
+            print("Model not initialized")
+            return None
             
-        Returns:
-            Generated response text or None if failed
-        """
         try:
-            # Format the prompt with system and user content
-            messages = [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_content}
-            ]
-            
-            # Prepare the request
             data = {
                 "model": self.model_name,
-                "messages": messages,
-                "stream": False,
-                "options": {
-                    "temperature": temperature
-                }
+                "prompt": f"{system_prompt}\n\n{user_content}",
+                "temperature": temperature
             }
             
-            # Make the request
-            response = requests.post(
-                f"{self.base_url}/chat",
-                json=data
+            response = requests.post(self.api_url, json=data, headers=self.headers)
+            response.raise_for_status()
+            
+            return ModelResponse(
+                content=response.json().get('response', ''),
+                raw_response=response.json()
             )
             
-            if response.status_code == 200:
-                content = response.json().get("message", {}).get("content", "")
-                return content
-            else:
-                cprint(f"❌ Ollama API error: {response.status_code}", "red")
-                cprint(f"Response: {response.text}", "red")
-                return None
-                
         except Exception as e:
-            cprint(f"❌ Error generating response: {str(e)}", "red")
-            return None
-    
-    def __str__(self):
-        return f"OllamaModel(model={self.model_name})"                  
+            print(f"Error generating response: {e}")
+            return None  

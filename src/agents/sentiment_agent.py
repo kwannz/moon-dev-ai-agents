@@ -1,9 +1,7 @@
 '''
-🌙 Moon Dev's Sentiment Agent
-Built with love by Moon Dev 🚀
-
-This agent monitors Twitter sentiment for our token list using twikit.
-It will analyze sentiment using HuggingFace models and track mentioned tokens.
+Sentiment Agent
+Monitors Twitter sentiment for token list using twikit.
+Analyzes sentiment using HuggingFace models and tracks mentioned tokens.
 
 Required:
 1. First run twitter_login.py to generate cookies located: src/scripts/twitter_login.py
@@ -116,7 +114,7 @@ class SentimentAgent(BaseAgent):
             cprint(f"⚠️ Error loading sentiment model: {str(e)}", "yellow")
             self.tokenizer = None
             self.model = None
-        cprint("🌙 Moon Dev's Sentiment Agent initialized! (Twitter functionality disabled)", "green")
+        cprint("Sentiment Agent initialized! (Twitter functionality disabled)", "green")
         
     def init_sentiment_model(self):
         """Initialize the BERT model for sentiment analysis"""
@@ -310,7 +308,7 @@ class SentimentAgent(BaseAgent):
         score_percent = (sentiment_score + 1) * 50  # Convert -1 to 1 into 0 to 100
             
         # Prepare announcement
-        message = f"Moon Dev's Sentiment Analysis: After analyzing {len(texts)} tweets, "
+        message = f"Sentiment Analysis: After analyzing {len(texts)} tweets, "
         message += f"the crypto sentiment is {sentiment} "
         message += f"with a score of {score_percent:.1f} out of 100"
         
@@ -402,10 +400,10 @@ class SentimentAgent(BaseAgent):
 
     def run_async(self):
         """Run sentiment analysis (Twitter functionality disabled)"""
-        cprint("🤖 Moon Dev's Sentiment Analysis running...", "cyan")
+        cprint("Sentiment Analysis running...", "cyan")
         cprint("⚠️ Twitter functionality is disabled", "yellow")
         time.sleep(CHECK_INTERVAL_MINUTES * 60)
-        cprint("🌙 Moon Dev's Sentiment Analysis complete! 🚀", "green")
+        cprint("Sentiment Analysis complete!", "green")
 
     def run(self):
         """Main function to run sentiment analysis (implements BaseAgent interface)"""
@@ -414,7 +412,7 @@ class SentimentAgent(BaseAgent):
 if __name__ == "__main__":
     try:
         agent = SentimentAgent()
-        cprint(f"\n🌙 Moon Dev's Sentiment Agent starting (checking every {CHECK_INTERVAL_MINUTES} minutes)...", "cyan")
+        cprint(f"\nSentiment Agent starting (checking every {CHECK_INTERVAL_MINUTES} minutes)...", "cyan")
         
         while True:
             try:
@@ -429,7 +427,7 @@ if __name__ == "__main__":
                 time.sleep(60)  # Wait a minute before retrying
                 
     except KeyboardInterrupt:
-        cprint("\n👋 Moon Dev's Sentiment Agent shutting down gracefully...", "yellow")
+        cprint("\nSentiment Agent shutting down gracefully...", "yellow")
     except Exception as e:
         cprint(f"\n❌ Fatal error: {str(e)}", "red")
         sys.exit(1)

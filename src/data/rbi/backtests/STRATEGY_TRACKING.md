@@ -1,4 +1,4 @@
-# Strategy Backtest Tracking 🌙✨
+# Strategy Backtest Tracking ✨
 
 ## Completed Strategies
 1. ✅ ATR Mean Reversion (Return: 10.49%, Sharpe: 0.56, Drawdown: -12.65%)
@@ -33,4 +33,4 @@
 - Each strategy will be backtested using the BTC-USD-15m.csv data
 - Using talib and pandas_ta for indicators
 - All results are saved in the stats and charts folders
-- Moon Dev's custom emojis and print statements included in each strategy 🌙✨ 
+- Debug print statements included in each strategy ✨     

@@ -1,4 +1,4 @@
-# 🌙 Moon Dev's Custom Strategies Directory
+# Lumix Custom Strategies Directory
 
 This directory is for your trading strategies. Strategies with certain filename prefixes will be automatically ignored by git to keep them private.
 
@@ -65,7 +65,7 @@ metadata = {
 - Use the example strategy as a template
 - Implement proper error handling
 - Add detailed metadata for better LLM analysis
-- Use Moon Dev's utility functions from nice_funcs.py
+- Use utility functions from nice_funcs.py
 
 ## Security Notes
 - Never commit API keys or private keys in any file
@@ -73,4 +73,4 @@ metadata = {
 - Double check your strategy filenames before committing
 
 ## Questions?
-Check out the example strategy or reach out to Moon Dev for help! 🌙 🚀 
+Check out the example strategy for help!  

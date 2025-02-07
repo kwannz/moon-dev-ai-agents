@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Moon Dev's Backtest AI 🌙 - DynamicValidation Strategy Backtest Implementation
+Lumix Backtest AI - DynamicValidation Strategy Backtest Implementation
 
 This implementation of the "DynamicValidation" strategy focuses on market structure,
 supply and demand, and risk management using dynamic validation of lows and highs.
-It uses TA‐Lib indicators through the self.I wrapper, with plenty of Moon Dev themed logging 🚀✨
+It uses TA‐Lib indicators through the self.I wrapper, with detailed logging ✨
 """
 
 import os
@@ -176,6 +176,6 @@ if __name__ == '__main__':
     print("🌙🚀 Saving final performance chart to:", final_chart_file)
     bt.plot(filename=final_chart_file, open_browser=False)
     
-    print("\n🌙✨ Backtesting complete. Moon Dev out! 🚀")
+    print("\n✨ Backtesting complete!")
     
 # End of file

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Moon Dev's ATR MeanReversion Strategy Backtest 🌙✨
+Lumix ATR MeanReversion Strategy Backtest
 This strategy uses Keltner Channels (20-period SMA ± multiplier*STDDEV) and ATR for risk management.
 It looks for when price pokes outside a Keltner Channel, then checks for a reversal candlestick pattern.
 """
@@ -55,7 +55,7 @@ def load_and_clean_data(file_path):
     return df[required_columns + (['Volume'] if 'Volume' in df.columns else [])]
 
 class ATRMeanReversion(Strategy):
-    """ATR Mean Reversion Strategy by Moon Dev 🌙"""
+    """ATR Mean Reversion Strategy"""
     
     kelter_period = 20
     kelter_multiplier = 1.5
@@ -65,7 +65,7 @@ class ATRMeanReversion(Strategy):
     
     def init(self):
         """Initialize the strategy with indicators"""
-        print("🌙✨ Initializing Moon Dev's ATR Mean Reversion Strategy")
+        print("✨ Initializing ATR Mean Reversion Strategy")
         
         # Calculate Keltner Channels
         self.kc_middle = self.I(lambda: pd.Series(self.data.Close).rolling(self.kelter_period).mean())
@@ -109,7 +109,7 @@ class ATRMeanReversion(Strategy):
                 risk_per_unit = abs(entry_price - stop_loss)
                 position_size = max(int(risk_amount / risk_per_unit), self.min_position_size)
                 
-                print(f"🌙🚀 [LONG ENTRY] Moon Dev spotted a Bullish Signal! Entry: {entry_price:.2f}")
+                print(f"🚀 [LONG ENTRY] Spotted a Bullish Signal! Entry: {entry_price:.2f}")
                 print(f"   ➡ Stop Loss: {stop_loss:.2f}, Take Profit: {take_profit:.2f}")
                 print(f"   ➡ Position Size: {position_size} units")
                 print(f"   ➡ Risk Amount: ${risk_amount:.2f}, Risk per unit: ${risk_per_unit:.2f}")
@@ -129,7 +129,7 @@ class ATRMeanReversion(Strategy):
                 risk_per_unit = abs(stop_loss - entry_price)
                 position_size = max(int(risk_amount / risk_per_unit), self.min_position_size)
                 
-                print(f"🌙🚀 [SHORT ENTRY] Moon Dev spotted a Bearish Signal! Entry: {entry_price:.2f}")
+                print(f"🚀 [SHORT ENTRY] Spotted a Bearish Signal! Entry: {entry_price:.2f}")
                 print(f"   ➡ Stop Loss: {stop_loss:.2f}, Take Profit: {take_profit:.2f}")
                 print(f"   ➡ Position Size: {position_size} units")
                 print(f"   ➡ Risk Amount: ${risk_amount:.2f}, Risk per unit: ${risk_per_unit:.2f}")

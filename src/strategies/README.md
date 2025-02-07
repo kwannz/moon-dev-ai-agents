@@ -1,7 +1,7 @@
-# 🌙 Moon Dev's Trading Strategies
+# Lumix Trading Strategies
 
 ## Overview
-This directory contains the base strategy class and custom trading strategies for Moon Dev's AI Trading System.
+This directory contains the base strategy class and custom trading strategies for Lumix AI Trading System.
 
 ## Structure
 ```
@@ -51,4 +51,4 @@ class MyStrategy(BaseStrategy):
                 'indicators': {'rsi': 28, 'trend': 'bullish'}
             }
         }
-``` 
+```  

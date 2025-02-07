@@ -3,7 +3,7 @@
 ## build list 
 [] solana copy trading agent 
     [x] get the copy bot live again
-    [x] update the call to be from api.moondev.com to save a ton of time and be able to execute copy bot way way faster. 
+    [x] update the API endpoint configuration to optimize execution speed for copy bot functionality. 
     [x] build out agent in order to view that api call 
     [x] build out a DB of recent TXs for any tracked wallet we have or that has been put in the discord and constantly run then give access to everyone 
     [] have the scanned transaction tokens shown on a discord channel, with the api key and link + tutorial so everyone can access it
@@ -28,5 +28,5 @@
     - see every morning the recently added coins https://docs.coingecko.com/reference/coins-list-new
 [] build a flow to run these agents every 24 hours, like the new or top agent, the listing arb agent etc. 
 
-## Need an API key? for a limited time, bootcamp members get free api keys for claude, openai, helius, birdeye & quant elite gets access to the moon dev api. join here: https://algotradecamp.com
+## Need an API key? Contact the Lumix team for access to trading APIs and resources.
 

@@ -1,16 +1,19 @@
-Below is your complete, fixed code for Moon Dev’s HierarchicalBreakout strategy. All indicators are now calculated only using TA‑Lib (wrapped via self.I) with NO backtesting.lib usage – and plenty of Moon Dev themed debug prints to boot! Enjoy! 🌙✨
+"""
+HierarchicalBreakout strategy implementation using TA-Lib indicators.
+All backtesting.lib references removed in favor of pure TA-Lib calculations.
+"""
 
 #!/usr/bin/env python3
 """
-Moon Dev's Backtest AI 🌙
+HierarchicalBreakout strategy implementation using TA-Lib indicators.
 Backtesting implementation for the HierarchicalBreakout strategy.
-This strategy uses a multi‐timeframe analysis (simulated on our 15‑minute bars)
-to decide on trades based solely on price action and market structure.
-It uses TA‑Lib for indicator calculation (NEVER using backtesting.lib built‐ins!)
+Uses multi-timeframe analysis on 15-minute bars for trading decisions.
+Based on price action and market structure using TA-Lib indicators.
 """
 
 import os
 import pandas as pd
+from pathlib import Path
 import numpy as np
 from backtesting import Backtest, Strategy
 import talib
@@ -110,7 +113,7 @@ class HierarchicalBreakout(Strategy):
 # ─────────────── MAIN EXECUTION ─────────────────────────────────────────────
 if __name__ == '__main__':
     # DATA HANDLING:
-    data_path = "/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/rbi/BTC-USD-15m.csv"
+    data_path = str(Path(__file__).parent.parent / "BTC-USD-15m.csv")
     print("🌙 [DATA] Loading data from:", data_path)
     data = pd.read_csv(data_path, parse_dates=['datetime'])
 
@@ -137,7 +140,7 @@ if __name__ == '__main__':
     print("✨ [STRATEGY DETAILS]:", stats._strategy)
     
     strategy_name = "HierarchicalBreakout"
-    chart_dir = "/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/rbi/charts"
+    chart_dir = str(Path(__file__).parent.parent / "charts")
     chart_file = os.path.join(chart_dir, f"{strategy_name}_chart.html")
     print(f"🚀 [PLOT] Saving initial performance plot to: {chart_file}")
     bt.plot(filename=chart_file, open_browser=False)
@@ -157,6 +160,6 @@ if __name__ == '__main__':
     print(f"🌙 [PLOT] Saving optimized performance plot to: {opt_chart_file}")
     bt.plot(filename=opt_chart_file, open_browser=False)
 
-    print("🚀 [DONE] HierarchicalBreakout backtest and optimization completed successfully! 🌙✨")
+    print("Backtest completed successfully!")
 
-Happy backtesting – may the Moon Dev spirit guide your trades!
+print("Backtest completed successfully!")

@@ -1,10 +1,6 @@
-Here is the fixed code with no usage of backtesting.lib:
-
-```python
 #!/usr/bin/env python3
 """
-Moon Dev's Backtest AI 🌙 – TimeframeTrendAnalyzer Strategy
-By: Moon Dev
+Lumix Backtest AI - TimeframeTrendAnalyzer Strategy
 This script implements a backtest for the TimeframeTrendAnalyzer strategy,
 which uses multi-timeframe market structure analysis and price‐action breakout
 to identify potential entry points. The strategy works as follows:
@@ -21,7 +17,7 @@ to identify potential entry points. The strategy works as follows:
 • The position size is calculated with proper integer rounding.
 
 Risk management and parameter optimization settings are built in.
-Plenty of Moon Dev-themed debug prints are included for easy tracing! 🌙✨🚀
+Debug prints are included for easy tracing! ✨
 """
 
 import os
@@ -42,7 +38,7 @@ class TimeframeTrendAnalyzer(Strategy):
     risk_reward = 2.0         # Default risk-reward ratio
 
     def init(self):
-        print("🌙✨ [INIT] Initializing TimeframeTrendAnalyzer strategy...")
+        print("✨ [INIT] Initializing TimeframeTrendAnalyzer strategy...")
         # Resample the original 15-minute OHLCV data into higher timeframes.
         # Using backtesting.py's self.data (a pandas DataFrame) for indicator calculations.
         self.weekly_data = self.data.resample('W', closed='right', label='right').agg({
@@ -55,7 +51,7 @@ class TimeframeTrendAnalyzer(Strategy):
             'Open': 'first', 'High': 'max', 'Low': 'min', 'Close': 'last', 'Volume': 'sum'})
         self.fiftymin_data = self.data.resample('50T', closed='right', label='right').agg({
             'Open': 'first', 'High': 'max', 'Low': 'min', 'Close': 'last', 'Volume': 'sum'})
-        print("🌙✨ [INIT] Aggregated weekly, daily, 4H, 1H, and 50min data computed! 🚀")
+        print("✨ [INIT] Aggregated weekly, daily, 4H, 1H, and 50min data computed!")
 
     def get_last_bar(self, df, current_time):
         "Helper: return the last bar in df with timestamp <= current_time."
@@ -63,4 +59,6 @@ class TimeframeTrendAnalyzer(Strategy):
             subset = df.loc[:current_time]
             if subset.empty:
                 return None
-            return
+            return subset.iloc[-1]
+        except IndexError:
+            return df.iloc[-1]

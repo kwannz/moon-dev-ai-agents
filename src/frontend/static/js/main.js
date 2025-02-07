@@ -1,4 +1,4 @@
-// Moon Dev's RBI Agent Frontend 🌙
+// Lumix RBI Agent Frontend
 
 // Realistic timings (in milliseconds) based on actual processing times
 const PHASE_TIMINGS = {
@@ -16,7 +16,7 @@ const MESSAGE_INTERVAL = {
 
 const funMessages = [
     "🤖 AI Agents are cooking up some alpha...",
-    "🌙 Moon Dev's agents are working their magic...",
+    "✨ Lumix agents are working their magic...",
     "🚀 Preparing for launch to the moon...",
     "💫 Discovering hidden patterns in the market...",
     "🎯 Optimizing strategy parameters...",
@@ -353,7 +353,7 @@ function copyToClipboard(button) {
 }
 
 // Add some fun console messages
-console.log("🌙 Moon Dev's RBI Agent Frontend loaded!");
+console.log("✨ Lumix RBI Agent Frontend loaded!");
 console.log("✨ Ready to discover some alpha!");
 
 // Add CSS for message animations
@@ -404,4 +404,4 @@ style.textContent = `
         50% { opacity: 1; }
     }
 `;
-document.head.appendChild(style); 
+document.head.appendChild(style);  

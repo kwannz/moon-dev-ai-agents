@@ -1,7 +1,6 @@
 """
-🌙 Moon Dev's OHLCV Data Collector
+Lumix OHLCV Data Collector
 Collects Open-High-Low-Close-Volume data for specified tokens
-Built with love by Moon Dev 🚀
 """
 
 from src.config import *
@@ -21,7 +20,7 @@ def collect_token_data(token, days_back=LOOKBACK_DAYS, timeframe=TIMEFRAME):
         # Check temp data first
         temp_file = f"temp_data/{token}_latest.csv"
         if os.path.exists(temp_file):
-            print(f"📂 Moon Dev found cached data for {token[:4]}")
+            print(f"📂 Found cached data for {token[:4]}")
             return pd.read_csv(temp_file)
             
         # Get data from Helius
@@ -33,10 +32,10 @@ def collect_token_data(token, days_back=LOOKBACK_DAYS, timeframe=TIMEFRAME):
             return None
         
         if data is None or data.empty:
-            cprint(f"❌ Moon Dev's AI Agent couldn't fetch data for {token}", "white", "on_red")
+            cprint(f"❌ AI Agent couldn't fetch data for {token}", "white", "on_red")
             return None
             
-        cprint(f"📊 Moon Dev's AI Agent processed {len(data)} candles for analysis", "white", "on_blue")
+        cprint(f"📊 AI Agent processed {len(data)} candles for analysis", "white", "on_blue")
         
         # Save data if configured
         if SAVE_OHLCV_DATA:
@@ -49,26 +48,26 @@ def collect_token_data(token, days_back=LOOKBACK_DAYS, timeframe=TIMEFRAME):
         
         # Save to CSV
         data.to_csv(save_path)
-        cprint(f"💾 Moon Dev's AI Agent cached data for {token[:4]}", "white", "on_green")
+        cprint(f"💾 AI Agent cached data for {token[:4]}", "white", "on_green")
         
         return data
         
     except Exception as e:
-        cprint(f"❌ Moon Dev's AI Agent encountered an error: {str(e)}", "white", "on_red")
+        cprint(f"❌ AI Agent encountered an error: {str(e)}", "white", "on_red")
         return None
 
 def collect_all_tokens():
     """Collect OHLCV data for all monitored tokens"""
     market_data = {}
     
-    cprint("\n🔍 Moon Dev's AI Agent starting market data collection...", "white", "on_blue")
+    cprint("\n🔍 AI Agent starting market data collection...", "white", "on_blue")
     
     for token in MONITORED_TOKENS:
         data = collect_token_data(token)
         if data is not None:
             market_data[token] = data
             
-    cprint("\n✨ Moon Dev's AI Agent completed market data collection!", "white", "on_green")
+    cprint("\n✨ AI Agent completed market data collection!", "white", "on_green")
     
     return market_data
 
@@ -79,4 +78,4 @@ if __name__ == "__main__":
         print("\n👋 Lumix OHLCV Collector shutting down gracefully...")
     except Exception as e:
         print(f"❌ Error: {str(e)}")
-        print("🔧 Please check the logs and try again!")          
+        print("🔧 Please check the logs and try again!")            

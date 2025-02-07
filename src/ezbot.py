@@ -144,7 +144,7 @@ def bot():
         if price < STOPLOSS_PRICE and pos > 0:
             print(f'selling {symbol[-4:]} bc price is {price}  is under {STOPLOSS_PRICE}')
             n.chunk_kill(symbol, max_usd_order_size, slippage)
-            print(f'chunk kill complete... thank you moon dev you are my savior 777')
+            print(f'chunk kill complete... position closed successfully')
             time.sleep(15)
 
         else:
@@ -209,7 +209,7 @@ def bot():
         if price > sell_over:
             print(f'selling {symbol[-4:]} bc price is {price} and sell over is {sell_over}')
             n.chunk_kill(symbol, max_usd_order_size, slippage)
-            print(f'chunk kill complete... thank you moon dev you are my savior 777')
+            print(f'chunk kill complete... position closed successfully')
             time.sleep(15)
 
 

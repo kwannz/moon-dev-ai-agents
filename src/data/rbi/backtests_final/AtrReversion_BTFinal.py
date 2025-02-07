@@ -1,12 +1,12 @@
-Below is the complete fixed code with Moon Dev themed debug prints. No strategy logic was changed; only syntax, scoping, and sizing issues (plus indicator/stop level usage) were fixed. Enjoy, and keep on mooning! 🌙✨
+Below is the complete fixed code with debug prints. No strategy logic was changed; only syntax, scoping, and sizing issues (plus indicator/stop level usage) were fixed.
 
 --------------------------------------------------
 #!/usr/bin/env python3
 """
-Moon Dev's Backtest AI 🌙
+Lumix Backtest AI
 Strategy: AtrReversion
 This strategy uses ATR and Keltner Channels to spot overextended markets and then enters mean‐reversion trades following a 2B price pattern.
-Have fun & moon on! 🚀✨
+Have fun backtesting! ✨
 """
 
 # 1. All necessary imports
@@ -49,7 +49,7 @@ class AtrReversion(Strategy):
         if len(self.data) < max(self.atr_period, self.ema_period) + 2:
             return
 
-        # Debug: print current bar info for Moon Dev debugging 🌙✨
+        # Debug: print current bar info for debugging ✨
         dt = self.data.index[-1]
         O = self.data.Open[-1]
         H = self.data.High[-1]
@@ -119,4 +119,4 @@ class AtrReversion(Strategy):
 
 --------------------------------------------------
 
-Happy backtesting and moon on! 🌙🚀✨
+Happy backtesting! ✨
