@@ -193,11 +193,19 @@ class ChartAnalysisAgent(BaseAgent):
             print(f"\n🤖 Analyzing {symbol} with AI...")
             
             # Get AI analysis using model factory
-            response = self.model.generate_response(
-                system_prompt="You are Moon Dev's Chart Analysis AI. Analyze chart data and provide trading signals.",
-                user_content=context,
-                temperature=self.ai_temperature
-            )
+            if self.model is None:
+                print("⚠️ Model not initialized, skipping chart analysis")
+                return None
+                
+            try:
+                response = self.model.generate_response(
+                    system_prompt="You are Moon Dev's Chart Analysis AI. Analyze chart data and provide trading signals.",
+                    user_content=context,
+                    temperature=self.ai_temperature
+                )
+            except Exception as e:
+                print(f"❌ Error getting AI analysis: {str(e)}")
+                return None
             
             if not response:
                 print("❌ No response from AI")

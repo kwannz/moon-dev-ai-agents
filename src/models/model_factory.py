@@ -65,8 +65,6 @@ class ModelFactory:
         except Exception as e:
             cprint(f"❌ Failed to initialize Ollama model: {str(e)}", "red")
             raise
-        except Exception as e:
-            cprint(f"❌ Failed to initialize Ollama: {str(e)}", "red")
         
         cprint("\n" + "═" * 50, "cyan")
         cprint(f"📊 Initialization Summary:", "cyan")
@@ -210,4 +208,4 @@ class ModelFactory:
         return None
 
 # Create a singleton instance
-model_factory = ModelFactory()                                              
+model_factory = ModelFactory()                                                

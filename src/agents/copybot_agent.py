@@ -153,11 +153,19 @@ class CopyBotAgent:
             print("\n🤖 Sending data to Moon Dev's AI for analysis...")
             
             # Get LLM analysis
-            response = self.model.generate_response(
-                system_prompt="You are Moon Dev's CopyBot Agent. Analyze portfolio positions and market data.",
-                user_content=full_prompt,
-                temperature=AI_TEMPERATURE
-            )
+            if self.model is None:
+                print("⚠️ Model not initialized, skipping AI analysis")
+                return None
+                
+            try:
+                response = self.model.generate_response(
+                    system_prompt="You are Moon Dev's CopyBot Agent. Analyze portfolio positions and market data.",
+                    user_content=full_prompt,
+                    temperature=AI_TEMPERATURE
+                )
+            except Exception as e:
+                print(f"❌ Error getting AI analysis: {str(e)}")
+                return None
             if not response:
                 return None
                 

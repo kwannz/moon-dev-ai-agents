@@ -107,9 +107,13 @@ class FundingAgent(BaseAgent):
         openai.api_key = openai_key
         
         # Initialize Ollama model
-        self.model = model_factory.get_model("ollama", "deepseek-r1:1.5b")
-        if not self.model:
-            raise ValueError("Could not initialize Ollama model")
+        try:
+            self.model = model_factory.get_model("ollama", "deepseek-r1:1.5b")
+            if not self.model:
+                raise ValueError("Could not initialize Ollama model")
+        except Exception as e:
+            cprint(f"❌ Error initializing Ollama model: {str(e)}", "red")
+            self.model = None
             
         # Set AI parameters
         self.ai_temperature = AI_TEMPERATURE if AI_TEMPERATURE > 0 else config.AI_TEMPERATURE
@@ -178,6 +182,10 @@ class FundingAgent(BaseAgent):
             print(f"\n🤖 Analyzing {symbol} with AI...")
             
             # Get AI analysis using model factory
+            if self.model is None:
+                print("⚠️ Model not initialized, skipping AI analysis")
+                return None
+                
             response = self.model.generate_response(
                 system_prompt="You are Moon Dev's Funding Analysis AI. Analyze funding rates and market data.",
                 user_content=context,

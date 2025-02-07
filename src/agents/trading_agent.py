@@ -119,11 +119,22 @@ Strategy Signals Available:
             else:
                 strategy_context = "No strategy signals available."
             
-            response = self.model.generate_response(
-                system_prompt=TRADING_PROMPT.format(strategy_context=strategy_context),
-                user_content=f"Market Data to Analyze:\n{market_data}",
-                temperature=AI_TEMPERATURE
-            )
+            if self.model is None:
+                print("⚠️ Model not initialized, skipping market analysis")
+                return None
+                
+            try:
+                response = self.model.generate_response(
+                    system_prompt=TRADING_PROMPT.format(strategy_context=strategy_context),
+                    user_content=f"Market Data to Analyze:\n{market_data}",
+                    temperature=AI_TEMPERATURE
+                )
+                if not response:
+                    print("❌ No response from model")
+                    return None
+            except Exception as e:
+                print(f"❌ Error getting AI analysis: {str(e)}")
+                return None
             if not response:
                 return None
                 
@@ -177,17 +188,28 @@ Strategy Signals Available:
             cprint(f"🎯 Maximum position size: ${max_position_size:.2f} ({MAX_POSITION_PERCENTAGE}% of ${usd_size:.2f})", "cyan")
             
             # Get allocation from AI
-            response = self.model.generate_response(
-                system_prompt=ALLOCATION_PROMPT.format(
-                    MAX_POSITION_PERCENTAGE=MAX_POSITION_PERCENTAGE,
-                    CASH_PERCENTAGE=CASH_PERCENTAGE,
-                    USDC_ADDRESS=USDC_ADDRESS
-                ),
-                user_content=f"""Portfolio size: ${usd_size}
+            if self.model is None:
+                print("⚠️ Model not initialized, skipping portfolio allocation")
+                return None
+                
+            try:
+                response = self.model.generate_response(
+                    system_prompt=ALLOCATION_PROMPT.format(
+                        MAX_POSITION_PERCENTAGE=MAX_POSITION_PERCENTAGE,
+                        CASH_PERCENTAGE=CASH_PERCENTAGE,
+                        USDC_ADDRESS=USDC_ADDRESS
+                    ),
+                    user_content=f"""Portfolio size: ${usd_size}
 Maximum position size: ${max_position_size}
 Available tokens: {MONITORED_TOKENS}""",
-                temperature=AI_TEMPERATURE
-            )
+                    temperature=AI_TEMPERATURE
+                )
+                if not response:
+                    print("❌ No response from model")
+                    return None
+            except Exception as e:
+                print(f"❌ Error getting AI allocation: {str(e)}")
+                return None
             
             # Parse the response
             if not response:
@@ -463,4 +485,4 @@ def main():
             time.sleep(INTERVAL)
 
 if __name__ == "__main__":
-    main()              
+    main()                

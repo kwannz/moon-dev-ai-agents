@@ -314,11 +314,19 @@ class LiquidationAgent(BaseAgent):
             print(f"\n🤖 Analyzing liquidation spike with AI...")
             
             # Get AI analysis using model factory
-            response = self.model.generate_response(
-                system_prompt="You are a liquidation analyst. You must respond in exactly 3 lines: BUY/SELL/NOTHING, reason, and confidence.",
-                user_content=context,
-                temperature=self.ai_temperature
-            )
+            if self.model is None:
+                print("⚠️ Model not initialized, skipping AI analysis")
+                return None
+                
+            try:
+                response = self.model.generate_response(
+                    system_prompt="You are a liquidation analyst. You must respond in exactly 3 lines: BUY/SELL/NOTHING, reason, and confidence.",
+                    user_content=context,
+                    temperature=self.ai_temperature
+                )
+            except Exception as e:
+                print(f"❌ Error getting AI analysis: {str(e)}")
+                return None
             
             if not response:
                 print("❌ No response from AI")

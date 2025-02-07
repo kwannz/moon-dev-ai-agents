@@ -179,11 +179,19 @@ class TweetAgent:
                 context = TWEET_PROMPT.format(text=chunk)
                 
                 # Get tweets using Ollama
-                response = self.model.generate_response(
-                    system_prompt="You are Moon Dev's Tweet Generator. Generate tweets based on the provided text.",
-                    user_content=context,
-                    temperature=self.ai_temperature
-                )
+                if self.model is None:
+                    print("⚠️ Model not initialized, skipping tweet generation")
+                    continue
+                    
+                try:
+                    response = self.model.generate_response(
+                        system_prompt="You are Moon Dev's Tweet Generator. Generate tweets based on the provided text.",
+                        user_content=context,
+                        temperature=self.ai_temperature
+                    )
+                except Exception as e:
+                    print(f"❌ Error generating tweets: {str(e)}")
+                    continue
                 if not response:
                     print("❌ Failed to get model response")
                     continue

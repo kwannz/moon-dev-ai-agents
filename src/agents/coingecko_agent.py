@@ -367,11 +367,21 @@ Remember to format your response like this:
 """
             
             # Get AI response using Ollama model
-            response_text = self.model.generate_response(
-                system_prompt=prompt,
-                user_content=market_context,
-                temperature=temperature
-            )
+            if self.model is None:
+                print("⚠️ Model not initialized, skipping market analysis")
+                return "Error: Model not initialized"
+                
+            try:
+                response_text = self.model.generate_response(
+                    system_prompt=prompt,
+                    user_content=market_context,
+                    temperature=temperature
+                )
+                if response_text is None:
+                    raise ValueError("Failed to get model response")
+            except Exception as e:
+                print(f"❌ Error getting AI analysis: {str(e)}")
+                return f"Error analyzing market data: {str(e)}"
             if response_text is None:
                 raise ValueError("Failed to get model response")
             
@@ -533,7 +543,8 @@ class CoinGeckoAPI:
             'days': days
         }
         print(f"📊 Getting {days} days of OHLC data for {id}...")
-        return self._make_request(f"coins/{id}/ohlc", params)
+        response = self._make_request(f"coins/{id}/ohlc", params)
+        return response if isinstance(response, list) else []
 
 class TokenExtractorAgent:
     """Agent that extracts token/crypto symbols from conversations"""
@@ -572,9 +583,13 @@ class TokenExtractorAgent:
             
     def extract_tokens(self, round_num: int, agent_one_msg: str, agent_two_msg: str) -> List[Dict]:
         """Extract tokens/symbols from agent messages"""
-        try:
-            print_section("🔍 Extracting Mentioned Tokens", "on_cyan")
+        print_section("🔍 Extracting Mentioned Tokens", "on_cyan")
+        
+        if self.model is None:
+            print("⚠️ Model not initialized, skipping token extraction")
+            return []
             
+        try:
             response = self.model.generate_response(
                 system_prompt=TOKEN_EXTRACTOR_PROMPT,
                 user_content=f"""
@@ -588,7 +603,10 @@ Extract all token symbols and return as a simple list.
 """,
                 temperature=EXTRACTOR_TEMP
             )
-            
+            if not response:
+                print("❌ No response from model")
+                return []
+                
             # Clean up response and split into list
             tokens = str(response).strip().split('\n')
             tokens = [t.strip().upper() for t in tokens if t.strip()]
@@ -635,6 +653,10 @@ class MultiAgentSystem:
         
     def generate_round_synopsis(self, agent_one_response: str, agent_two_response: str) -> str:
         """Generate a brief synopsis of the round's key points using Synopsis Agent"""
+        if self.agent_one.model is None:
+            print("⚠️ Model not initialized, skipping round synopsis")
+            return "Error: Model not initialized"
+            
         try:
             response = self.agent_one.model.generate_response(
                 system_prompt=SYNOPSIS_AGENT_PROMPT,

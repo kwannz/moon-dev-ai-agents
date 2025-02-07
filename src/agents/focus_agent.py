@@ -167,7 +167,7 @@ class FocusAgent:
                 print(f"⚠️ Error initializing model (attempt {retry_count + 1}/{max_retries}): {str(e)}")
                 retry_count += 1
                 if retry_count < max_retries:
-                    time.sleep(1)  # Wait before retrying
+                    time_lib.sleep(1)  # Wait before retrying
                 else:
                     raise ValueError(f"Failed to initialize {MODEL_TYPE} {MODEL_NAME} model after {max_retries} attempts")
         
@@ -257,11 +257,19 @@ class FocusAgent:
             cprint(f"  └─ Content type check: {'chicken' in transcript.lower()}", "yellow")
             
             # Generate response using model factory
-            response = self.model.generate_response(
-                system_prompt=FOCUS_PROMPT,
-                user_content=transcript,
-                temperature=AI_TEMPERATURE
-            )
+            if self.model is None:
+                print("⚠️ Model not initialized, skipping focus analysis")
+                return 0, "Error: Model not initialized"
+                
+            try:
+                response = self.model.generate_response(
+                    system_prompt=FOCUS_PROMPT,
+                    user_content=transcript,
+                    temperature=AI_TEMPERATURE
+                )
+            except Exception as e:
+                print(f"❌ Error getting AI analysis: {str(e)}")
+                return 0, "Error getting AI analysis"
             
             if not response:
                 raise ValueError("Failed to get model response")
