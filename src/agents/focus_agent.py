@@ -31,7 +31,7 @@ import threading
 import pandas as pd
 import tempfile
 from src.config import *
-from src.models import model_factory
+from src.models import ModelFactory
 import re
 
 # Load .env file explicitly from project root
