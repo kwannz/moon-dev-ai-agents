@@ -1,4 +1,7 @@
-from src.data.helius_client import HeliusClient
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from data.helius_client import HeliusClient
 import asyncio
 
 async def test_helius_api():
