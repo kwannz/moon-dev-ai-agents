@@ -370,9 +370,21 @@ Available tokens: {MONITORED_TOKENS}""",
             current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             cprint(f"\n⏰ AI Agent Run Starting at {current_time}", "white", "on_green")
             
-            # Collect OHLCV data for all tokens
-            cprint("📊 Collecting market data...", "white", "on_blue")
-            market_data = collect_all_tokens()
+            # Check if BIRDEYE_API_KEY is disabled
+            if os.getenv("BIRDEYE_API_KEY") == "disabled":
+                cprint("⚠️ BIRDEYE_API_KEY is disabled, using mock market data", "yellow")
+                market_data = {
+                    token: {
+                        "price": 1.0,
+                        "volume": 1000000,
+                        "market_cap": 1000000000,
+                        "timestamp": datetime.now().isoformat()
+                    } for token in MONITORED_TOKENS
+                }
+            else:
+                # Collect OHLCV data for all tokens
+                cprint("📊 Collecting market data...", "white", "on_blue")
+                market_data = collect_all_tokens()
             
             # Analyze each token's data
             for token, data in market_data.items():
@@ -451,4 +463,4 @@ def main():
             time.sleep(INTERVAL)
 
 if __name__ == "__main__":
-    main()            
+    main()              
