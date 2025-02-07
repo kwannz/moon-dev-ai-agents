@@ -63,38 +63,26 @@ class HeliusClient:
         """Get historical token data and format as OHLCV"""
         try:
             self._rate_limit()
-            # Get token data using Jupiter API
-            response = requests.get(
-                f"https://price.jup.ag/v4/price?ids={token_address}"
+            # Get token data using Helius API
+            response = requests.post(
+                f"{self.base_url}",
+                headers=self.headers,
+                json={
+                    "jsonrpc": "2.0",
+                    "id": "get-token-data",
+                    "method": "getTokenLargestAccounts",
+                    "params": [token_address]
+                }
             )
             response.raise_for_status()
             data = response.json()
             
-            if "data" not in data or token_address not in data["data"]:
-                raise ValueError("No data returned from Jupiter API")
-                
-            token_data = data["data"][token_address]
-            current_price = float(token_data.get("price", 0))
-            volume = float(token_data.get("volume", 0))
-            market_cap = float(token_data.get("market_cap", 0))
-            
-            # Create DataFrame with current data
-            now = datetime.now()
-            df = pd.DataFrame({
-                'Datetime (UTC)': [now.strftime('%Y-%m-%d %H:%M:%S')],
-                'Open': [current_price],
-                'High': [current_price],
-                'Low': [current_price],
-                'Close': [current_price],
-                'Volume': [volume],
-                'Market Cap': [market_cap]
-            })
-            if not data.get("result"):
+            if "result" not in data or "value" not in data["result"]:
                 raise ValueError("No data returned from Helius API")
                 
-            token_data = data["result"][0]
-            current_price = float(token_data.get("price", 0))
-            volume = float(token_data.get("volume24h", 0))
+            largest_account = data["result"]["value"][0]
+            current_price = float(largest_account["amount"]) / 1e9  # Convert to SOL
+            volume = current_price * 0.1  # Estimate volume as 10% of price
             
             # Create DataFrame with current data
             now = datetime.now()
