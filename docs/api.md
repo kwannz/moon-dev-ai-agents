@@ -1,4 +1,4 @@
-# 🌙 Moon Dev Market Data API Documentation
+# Market Data API Documentation
 
 ## Table of Contents
 - [Overview](#overview)
@@ -146,6 +146,3 @@ The API includes built-in error handling and will:
 3. All methods include error handling and logging
 4. The API uses colorful console output for better visibility
 5. Rate limiting is handled automatically
-
----
-*Built with 🌙 by Moon Dev - Making trading data accessible and beautiful*
