@@ -1,4 +1,4 @@
-🌙 Strategy Backtest Tracking ✨
+✨ Strategy Backtest Tracking ✨
 
 Completed Strategies:
 1. ATR Mean Reversion (Return: 10.49%, Sharpe: 0.56, Drawdown: -12.65%)
