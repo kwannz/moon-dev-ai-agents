@@ -1,6 +1,5 @@
 """
-🌙 Moon Dev's Nice Functions - A collection of utility functions for trading
-Built with love by Moon Dev 🚀
+Lumix Trading Functions - A collection of utility functions for trading
 """
 
 from src.config import *
@@ -22,12 +21,7 @@ from dotenv import load_dotenv
 import shutil
 import atexit
 from src.data.helius_client import HeliusClient
-
-# Load environment variables
-load_dotenv()
-HELIUS_API_KEY = os.getenv("HELIUS_API_KEY")
-if not HELIUS_API_KEY:
-    raise ValueError("HELIUS_API_KEY not found in environment variables!")
+from src.data.jupiter_client import JupiterClient
 
 # Constants
 MIN_TRADES_LAST_HOUR = 100  # Minimum trades required in last hour
@@ -57,7 +51,7 @@ os.makedirs('temp_data', exist_ok=True)
 
 def cleanup_temp_data():
     if os.path.exists('temp_data'):
-        print("🧹 Moon Dev cleaning up temporary data...")
+        print("🧹 Cleaning up temporary data...")
         shutil.rmtree('temp_data')
 
 atexit.register(cleanup_temp_data)
@@ -240,15 +234,36 @@ def token_creation_info(address):
     else:
         print("Failed to retrieve token creation info:", response.status_code)
 
-def market_buy(token, amount, slippage):
-    import requests
-    import sys
-    import json
-    import base64
-    from solders.keypair import Keypair
-    from solders.transaction import VersionedTransaction
-    from solana.rpc.api import Client
-    from solana.rpc.types import TxOpts
+def market_buy(token: str, amount: float, slippage: int = SLIPPAGE) -> bool:
+    """Execute a market buy order using Jupiter API"""
+    try:
+        # Initialize Jupiter client
+        jupiter = JupiterClient()
+        
+        # Get wallet public key
+        wallet_key = Keypair.from_base58_string(os.getenv("SOLANA_PRIVATE_KEY"))
+        wallet_pubkey = str(wallet_key.pubkey())
+        
+        # Get quote for USDC to token swap
+        quote = jupiter.get_quote(
+            input_mint=USDC_ADDRESS,
+            output_mint=token,
+            amount=int(amount),
+            slippage_bps=slippage
+        )
+        if not quote:
+            return False
+            
+        # Execute swap
+        tx = jupiter.execute_swap(quote, wallet_pubkey)
+        if not tx:
+            return False
+            
+        cprint(f"✅ Market buy executed: {amount} -> {token}", "green")
+        return True
+    except Exception as e:
+        cprint(f"❌ Market buy failed: {str(e)}", "red")
+        return False
 
     KEY = Keypair.from_base58_string(os.getenv("SOLANA_PRIVATE_KEY"))
     if not KEY:
@@ -283,15 +298,36 @@ def market_buy(token, amount, slippage):
 
 
 
-def market_sell(QUOTE_TOKEN, amount, slippage):
-    import requests
-    import sys
-    import json
-    import base64
-    from solders.keypair import Keypair
-    from solders.transaction import VersionedTransaction
-    from solana.rpc.api import Client
-    from solana.rpc.types import TxOpts
+def market_sell(token: str, amount: float, slippage: int = SLIPPAGE) -> bool:
+    """Execute a market sell order using Jupiter API"""
+    try:
+        # Initialize Jupiter client
+        jupiter = JupiterClient()
+        
+        # Get wallet public key
+        wallet_key = Keypair.from_base58_string(os.getenv("SOLANA_PRIVATE_KEY"))
+        wallet_pubkey = str(wallet_key.pubkey())
+        
+        # Get quote for token to USDC swap
+        quote = jupiter.get_quote(
+            input_mint=token,
+            output_mint=USDC_ADDRESS,
+            amount=int(amount),
+            slippage_bps=slippage
+        )
+        if not quote:
+            return False
+            
+        # Execute swap
+        tx = jupiter.execute_swap(quote, wallet_pubkey)
+        if not tx:
+            return False
+            
+        cprint(f"✅ Market sell executed: {amount} {token} -> USDC", "green")
+        return True
+    except Exception as e:
+        cprint(f"❌ Market sell failed: {str(e)}", "red")
+        return False
 
     KEY = Keypair.from_base58_string(os.getenv("SOLANA_PRIVATE_KEY"))
     if not KEY:
@@ -328,84 +364,41 @@ def market_sell(QUOTE_TOKEN, amount, slippage):
 
 
 
-def get_time_range(days_back: int = 10):
-    """Get time range with specified days lookback (default 10 days)"""
+def get_time_range():
+
     now = datetime.now()
-    earlier = now - timedelta(days=days_back)
+    ten_days_earlier = now - timedelta(days=10)
     time_to = int(now.timestamp())
-    time_from = int(earlier.timestamp())
+    time_from = int(ten_days_earlier.timestamp())
+    #print(time_from, time_to)
+
     return time_from, time_to
 
 import math
-def round_down(value: float, decimals: int) -> float:
-    """Round down a float value to specified number of decimal places"""
+def round_down(value, decimals):
     factor = 10 ** decimals
     return math.floor(value * factor) / factor
 
+
+def get_time_range(days_back):
+
+    now = datetime.now()
+    ten_days_earlier = now - timedelta(days=days_back)
+    time_to = int(now.timestamp())
+    time_from = int(ten_days_earlier.timestamp())
+    #print(time_from, time_to)
+
+    return time_from, time_to
+
 def get_data(address, days_back_4_data, timeframe):
-    time_from, time_to = get_time_range(days_back_4_data)
-
-    # Check temp data first
-    temp_file = f"temp_data/{address}_latest.csv"
-    if os.path.exists(temp_file):
-        print(f"📂 Moon Dev found cached data for {address[:4]}")
-        return pd.read_csv(temp_file)
-
-    url = f"https://public-api.birdeye.so/defi/ohlcv?address={address}&type={timeframe}&time_from={time_from}&time_to={time_to}"
-
-    headers = {"X-API-KEY": BIRDEYE_API_KEY}
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        json_response = response.json()
-        items = json_response.get('data', {}).get('items', [])
-
-        processed_data = [{
-            'Datetime (UTC)': datetime.utcfromtimestamp(item['unixTime']).strftime('%Y-%m-%d %H:%M:%S'),
-            'Open': item['o'],
-            'High': item['h'],
-            'Low': item['l'],
-            'Close': item['c'],
-            'Volume': item['v']
-        } for item in items]
-
-        df = pd.DataFrame(processed_data)
-
-        # Remove any rows with dates far in the future
-        current_date = datetime.now()
-        df['datetime_obj'] = pd.to_datetime(df['Datetime (UTC)'])
-        df = df[df['datetime_obj'] <= current_date]
-        df = df.drop('datetime_obj', axis=1)
-
-        # Pad if needed
-        if len(df) < 40:
-            print(f"🌙 MoonDev Alert: Padding data to ensure minimum 40 rows for analysis! 🚀")
-            rows_to_add = 40 - len(df)
-            first_row_replicated = pd.concat([df.iloc[0:1]] * rows_to_add, ignore_index=True)
-            df = pd.concat([first_row_replicated, df], ignore_index=True)
-
-        print(f"📊 MoonDev's Data Analysis Ready! Processing {len(df)} candles... 🎯")
-
-        # Always save to temp for current run
-        df.to_csv(temp_file)
-        print(f"🔄 Moon Dev cached data for {address[:4]}")
-
-        # Calculate indicators
-        df['MA20'] = ta.sma(df['Close'], length=20)
-        df['RSI'] = ta.rsi(df['Close'], length=14)
-        df['MA40'] = ta.sma(df['Close'], length=40)
-
-        df['Price_above_MA20'] = df['Close'] > df['MA20']
-        df['Price_above_MA40'] = df['Close'] > df['MA40']
-        df['MA20_above_MA40'] = df['MA20'] > df['MA40']
-
-        return df
-    else:
-        print(f"❌ MoonDev Error: Failed to fetch data for address {address}. Status code: {response.status_code}")
-        if response.status_code == 401:
-            print("🔑 Check your BIRDEYE_API_KEY in .env file!")
+    """Get market data using Helius API"""
+    try:
+        # Use HeliusClient for data collection
+        client = HeliusClient()
+        return client.get_token_data(address, days_back_4_data, timeframe)
+    except Exception as e:
+        cprint(f"❌ Error getting market data: {str(e)}", "red")
         return pd.DataFrame()
-
-
 
 def fetch_wallet_holdings_og(wallet_address: str) -> pd.DataFrame:
     """Fetch token holdings for a wallet using Helius API"""
@@ -413,31 +406,26 @@ def fetch_wallet_holdings_og(wallet_address: str) -> pd.DataFrame:
         # Initialize empty DataFrame
         df = pd.DataFrame(columns=['Mint Address', 'Amount', 'USD Value'])
         
-        # Get wallet public key from private key
-        from solders.keypair import Keypair
-        wallet_key = Keypair.from_base58_string(os.getenv("SOLANA_PRIVATE_KEY"))
-        wallet_pubkey = str(wallet_key.pubkey())
-        
         # Get wallet SOL balance
         helius_client = HeliusClient()
-        sol_balance = helius_client.get_wallet_balance(wallet_pubkey)
+        sol_balance = helius_client.get_wallet_balance(wallet_address)
         if sol_balance > 0:
             df = pd.DataFrame([{
                 'Mint Address': 'So11111111111111111111111111111111111111112',  # Native SOL mint
                 'Amount': sol_balance,
                 'USD Value': sol_balance * 100  # Approximate SOL price
             }])
-        
+            
         # Get token accounts
         response = requests.post(
-            f"https://mainnet.helius-rpc.com/?api-key={HELIUS_API_KEY}",
-            headers={"Content-Type": "application/json"},
+            f"{helius_client.base_url}",
+            headers=helius_client.headers,
             json={
                 "jsonrpc": "2.0",
                 "id": "get-token-accounts",
                 "method": "getTokenAccountsByOwner",
                 "params": [
-                    wallet_pubkey,
+                    wallet_address,
                     {"programId": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"},
                     {"encoding": "jsonParsed"}
                 ]
@@ -457,7 +445,7 @@ def fetch_wallet_holdings_og(wallet_address: str) -> pd.DataFrame:
                     amount = float(token_info.get("tokenAmount", {}).get("uiAmount", 0))
                     
                     # Get token price
-                    price = float(token_price(mint) or 0)
+                    price = float(helius_client.get_token_price(mint) or 0)
                     usd_value = amount * price
                     
                     if usd_value > 0.05:  # Only include tokens worth more than $0.05
@@ -468,15 +456,44 @@ def fetch_wallet_holdings_og(wallet_address: str) -> pd.DataFrame:
                         })
             
             if rows:
-                df = pd.DataFrame(rows)
-                cprint(f'** Total USD balance is {df["USD Value"].sum():.2f}', 'white', 'on_green')
-                print(df)
+                df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
+                cprint(f'Total USD balance: ${df["USD Value"].sum():.2f}', 'white', 'on_green')
             
         return df
-        
     except Exception as e:
         cprint(f"Error fetching wallet holdings: {str(e)}", 'white', 'on_red')
-        return df
+        return pd.DataFrame()
+
+    url = f"https://public-api.birdeye.so/v1/wallet/token_list?wallet={address}"
+    headers = {"x-chain": "solana", "X-API-KEY": API_KEY}
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        json_response = response.json()
+
+        if 'data' in json_response and 'items' in json_response['data']:
+            df = pd.DataFrame(json_response['data']['items'])
+            df = df[['address', 'uiAmount', 'valueUsd']]
+            df = df.rename(columns={'address': 'Mint Address', 'uiAmount': 'Amount', 'valueUsd': 'USD Value'})
+            df = df.dropna()
+            df = df[df['USD Value'] > 0.05]
+        else:
+            cprint("No data available in the response.", 'white', 'on_red')
+
+    else:
+        cprint(f"Failed to retrieve token list for {address}.", 'white', 'on_magenta')
+
+    # Print the DataFrame if it's not empty
+    if not df.empty:
+        print(df)
+        # Assuming cprint is a function you have for printing in color
+        cprint(f'** Total USD balance is {df["USD Value"].sum()}', 'white', 'on_green')
+        # Save the filtered DataFrame to a CSV file
+        # TOKEN_PER_ADDY_CSV = 'filtered_wallet_holdings.csv'  # Define your CSV file name
+        # df.to_csv(TOKEN_PER_ADDY_CSV, index=False)
+    else:
+        # If the DataFrame is empty, print a message or handle it as needed
+        cprint("No wallet holdings to display.", 'white', 'on_red')
 
     return df
 
@@ -490,41 +507,56 @@ def fetch_wallet_token_single(address, token_mint_address):
     return df
 
 
-def token_price(address: str) -> float:
-    url = f"https://public-api.birdeye.so/defi/price?address={address}"
-    headers = {"X-API-KEY": BIRDEYE_API_KEY}
+def token_price(address):
+    """Get token price using Helius API"""
     try:
-        response = requests.get(url, headers=headers)
-        price_data = response.json()
-        if price_data.get('success'):
-            return float(price_data.get('data', {}).get('value', 0))
-        return 0.0
+        client = HeliusClient()
+        return client.get_token_price(address)
     except Exception as e:
-        print(f"Error getting token price: {str(e)}")
-        return 0.0
+        cprint(f"❌ Error getting token price: {str(e)}", "red")
+        return None
     
-# price = token_price('2zMMhcVQEXDtdE6vsFS7S7D5oUodfJHE8vd1gnBouauv')
-# print(price)
-# time.sleep(897)
+# Example: price = token_price('token_address')
 
 
-def get_position(token_mint_address: str) -> float:
+def get_position(token_mint_address):
     """
-    Fetches the balance of a specific token given its mint address.
-    Returns the balance as a float, or 0.0 if not found.
-    """
-    try:
-        dataframe = fetch_wallet_token_single(address, token_mint_address)
-        if dataframe.empty:
-            return 0.0
+    Fetches the balance of a specific token given its mint address from a DataFrame.
 
-        dataframe['Mint Address'] = dataframe['Mint Address'].astype(str)
-        if dataframe['Mint Address'].isin([token_mint_address]).any():
-            return float(dataframe.loc[dataframe['Mint Address'] == token_mint_address, 'Amount'].iloc[0])
-        return 0.0
-    except Exception as e:
-        print(f"Error getting position: {str(e)}")
-        return 0.0
+    Parameters:
+    - dataframe: A pandas DataFrame containing token balances with columns ['Mint Address', 'Amount'].
+    - token_mint_address: The mint address of the token to find the balance for.
+
+    Returns:
+    - The balance of the specified token if found, otherwise a message indicating the token is not in the wallet.
+    """
+    dataframe = fetch_wallet_token_single(address, token_mint_address)
+
+    #dataframe = pd.read_csv('data/token_per_addy.csv')
+
+    print('-----------------')
+    #print(dataframe)
+
+    #print(dataframe)
+
+    # Check if the DataFrame is empty
+    if dataframe.empty:
+        print("The DataFrame is empty. No positions to show.")
+        return 0  # Indicating no balance found
+
+    # Ensure 'Mint Address' column is treated as string for reliable comparison
+    dataframe['Mint Address'] = dataframe['Mint Address'].astype(str)
+
+    # Check if the token mint address exists in the DataFrame
+    if dataframe['Mint Address'].isin([token_mint_address]).any():
+        # Get the balance for the specified token
+        balance = dataframe.loc[dataframe['Mint Address'] == token_mint_address, 'Amount'].iloc[0]
+        #print(f"Balance for {token_mint_address[-4:]} token: {balance}")
+        return balance
+    else:
+        # If the token mint address is not found in the DataFrame, return a message indicating so
+        print("Token mint address not found in the wallet.")
+        return 0  # Indicating no balance found
 
 
 def get_decimals(token_mint_address):
@@ -564,14 +596,23 @@ def pnl_close(token_mint_address):
 
     print(f'checking pnl close to see if its time to exit for {token_mint_address[:4]}...')
     # check solana balance
-    balance = float(get_position(token_mint_address) or 0)
-    price = float(token_price(token_mint_address) or 0)
-    usd_value = balance * price
 
-    tp = float(sell_at_multiple or 1.5) * float(USDC_SIZE or 0)
-    sl = ((1 + STOP_LOSS_PERCENTAGE) * float(USDC_SIZE or 0))
+
+    # if time is on the 5 minute do the balance check, if not grab from data/current_position.csv
+    balance = get_position(token_mint_address)
+
+    # save to data/current_position.csv w/ pandas
+
+    # get current price of token
+    price = token_price(token_mint_address)
+
+    usd_value = float(balance) * float(price) if balance and price else 0.0
+
+    tp = float(sell_at_multiple) * float(USDC_SIZE) if sell_at_multiple and USDC_SIZE else 0.0
+    sl = ((1 + float(STOP_LOSS_PERCENTAGE)) * float(USDC_SIZE)) if STOP_LOSS_PERCENTAGE and USDC_SIZE else 0.0
     sell_size = balance
-    decimals = int(get_decimals(token_mint_address) or 0)
+    decimals = 0
+    decimals = get_decimals(token_mint_address)
     #print(f'for {token_mint_address[-4:]} decimals is {decimals}')
 
     sell_size = int(sell_size * 10 **decimals)
@@ -598,13 +639,13 @@ def pnl_close(token_mint_address):
             cprint('order error.. trying again', 'white', 'on_red')
             time.sleep(2)
 
-        balance = float(get_position(token_mint_address) or 0)
-        price = float(token_price(token_mint_address) or 0)
+        balance = get_position(token_mint_address)
+        price = token_price(token_mint_address)
         usd_value = balance * price
-        tp = float(sell_at_multiple or 1.5) * float(USDC_SIZE or 0)
+        tp = sell_at_multiple * USDC_SIZE
         sell_size = balance
-        sell_size = int(sell_size * 10 ** decimals)
-        print(f'USD Value is {usd_value:.2f} | TP is {tp:.2f}')
+        sell_size = int(sell_size * 10 **decimals)
+        print(f'USD Value is {usd_value} | TP is {tp} ')
 
 
     else:
@@ -627,13 +668,13 @@ def pnl_close(token_mint_address):
             #print(f'for {token_mint_address[-4:]} value is {usd_value} and tp is {tp} so closing...')
             try:
 
-                market_sell(token_mint_address, sell_size, SLIPPAGE)
+                market_sell(token_mint_address, sell_size)
                 cprint(f'just made an order {token_mint_address[:4]} selling {sell_size} ...', 'white', 'on_blue')
                 time.sleep(1)
-                market_sell(token_mint_address, sell_size, SLIPPAGE)
+                market_sell(token_mint_address, sell_size)
                 cprint(f'just made an order {token_mint_address[:4]} selling {sell_size} ...', 'white', 'on_blue')
                 time.sleep(1)
-                market_sell(token_mint_address, sell_size, SLIPPAGE)
+                market_sell(token_mint_address, sell_size)
                 cprint(f'just made an order {token_mint_address[:4]} selling {sell_size} ...', 'white', 'on_blue')
                 time.sleep(15)
 
@@ -641,11 +682,11 @@ def pnl_close(token_mint_address):
                 cprint('order error.. trying again', 'white', 'on_red')
                 # time.sleep(7)
 
-            balance = float(get_position(token_mint_address) or 0)
-            price = float(token_price(token_mint_address) or 0)
+            balance = get_position(token_mint_address)
+            price = token_price(token_mint_address)
             usd_value = balance * price
-            tp = float(sell_at_multiple or 1.5) * float(USDC_SIZE or 0)
-            sl = ((1 + STOP_LOSS_PERCENTAGE) * float(USDC_SIZE or 0))
+            tp = sell_at_multiple * USDC_SIZE
+            sl = ((1+stop_loss_percentage) * USDC_SIZE)
             sell_size = balance
 
             sell_size = int(sell_size * 10 **decimals)
@@ -738,8 +779,12 @@ def kill_switch(token_mint_address):
     '''
 
     # if time is on the 5 minute do the balance check, if not grab from data/current_position.csv
-    balance = float(get_position(token_mint_address) or 0)
-    price = float(token_price(token_mint_address) or 0)
+    balance = get_position(token_mint_address)
+
+    # get current price of token
+    price = token_price(token_mint_address)
+    price = float(price)
+
     usd_value = balance * price
 
     if usd_value < 10000:
@@ -747,7 +792,7 @@ def kill_switch(token_mint_address):
     else:
         sell_size = 10000/price
 
-    tp = float(sell_at_multiple or 1.5) * float(USDC_SIZE or 0)
+    tp = sell_at_multiple * USDC_SIZE
 
     # round to 2 decimals
     sell_size = round_down(sell_size, 2)
@@ -781,12 +826,12 @@ def kill_switch(token_mint_address):
         balance = float(get_position(token_mint_address) or 0)
         price = float(token_price(token_mint_address) or 0)
         usd_value = balance * price
-        tp = float(sell_at_multiple or 1.5) * float(USDC_SIZE or 0)
+        tp = float(sell_at_multiple or 0) * float(USDC_SIZE or 0)
 
         if usd_value < 10000:
             sell_size = balance
         else:
-            sell_size = 10000/price
+            sell_size = 10000/price if price else 0
 
         # down downwards to 2 decimals
         sell_size = round_down(sell_size, 2)
@@ -829,15 +874,15 @@ def delete_dont_overtrade_file():
     else:
         print('The file does not exist')
 
-def supply_demand_zones(token_address: str, timeframe: str, limit: int):
-    """Calculate supply and demand zones for a token"""
+def supply_demand_zones(token_address, timeframe, limit):
+
     print('starting moons supply and demand zone calculations..')
 
     sd_df = pd.DataFrame()
 
-    time_from, time_to = get_time_range(days_back=3)  # Default to 3 days
+    time_from, time_to = get_time_range()
 
-    df = get_data(token_address, days_back_4_data=3, timeframe=timeframe)
+    df = get_data(token_address, time_from, time_to, timeframe)
 
     # only keep the data for as many bars as limit says
     df = df[-limit:]
@@ -875,15 +920,13 @@ def supply_demand_zones(token_address: str, timeframe: str, limit: int):
 
 
 def elegant_entry(symbol, buy_under):
-    """Entry function for elegant trading strategy"""
+
     pos = float(get_position(symbol) or 0)
     price = float(token_price(symbol) or 0)
     pos_usd = pos * price
     size_needed = float(USDC_SIZE or 0) - pos_usd
-    if size_needed > max_usd_order_size: 
-        chunk_size = max_usd_order_size
-    else: 
-        chunk_size = size_needed
+    if size_needed > max_usd_order_size: chunk_size = max_usd_order_size
+    else: chunk_size = size_needed
 
     chunk_size = int(chunk_size * 10**6)
     chunk_size = str(chunk_size)
@@ -895,15 +938,17 @@ def elegant_entry(symbol, buy_under):
         time.sleep(10)
 
     # add debug prints for next while
-    print(f'position: {pos:.2f} price: {price:.8f} pos_usd: ${pos_usd:.2f}')
+    print(f'position: {round(pos,2)} price: {round(price,8)} pos_usd: ${round(pos_usd,2)}')
     print(f'buy_under: {buy_under}')
-    while pos_usd < (.97 * float(USDC_SIZE or 0)) and (price < float(buy_under or 0)):
+    while pos_usd < (.97 * usd_size) and (price < buy_under):
 
-        print(f'position: {pos:.2f} price: {price:.8f} pos_usd: ${pos_usd:.2f}')
+        print(f'position: {round(pos,2)} price: {round(price,8)} pos_usd: ${round(pos_usd,2)}')
 
         try:
+
             for i in range(orders_per_open):
-                market_buy(symbol, chunk_size, SLIPPAGE)
+                market_buy(symbol, chunk_size, slippage)
+                # cprint green background black text
                 cprint(f'chunk buy submitted of {symbol[:4]} sz: {chunk_size} you my dawg moon dev', 'white', 'on_blue')
                 time.sleep(1)
 
@@ -945,20 +990,18 @@ def elegant_entry(symbol, buy_under):
                 time.sleep(10)
                 break
 
-        pos = float(get_position(symbol) or 0)
-        price = float(token_price(symbol) or 0)
+        pos = get_position(symbol)
+        price = token_price(symbol)
         pos_usd = pos * price
-        size_needed = float(USDC_SIZE or 0) - pos_usd
-        if size_needed > max_usd_order_size: 
-            chunk_size = max_usd_order_size
-        else: 
-            chunk_size = size_needed
+        size_needed = usd_size - pos_usd
+        if size_needed > max_usd_order_size: chunk_size = max_usd_order_size
+        else: chunk_size = size_needed
         chunk_size = int(chunk_size * 10**6)
         chunk_size = str(chunk_size)
 
 
-# Breakout entry strategy
-def breakout_entry(symbol: str, BREAKOUT_PRICE: float):
+# like the elegant entry but for breakout so its looking for price > BREAKOUT_PRICE
+def breakout_entry(symbol, BREAKOUT_PRICE):
     """Entry function for breakout trading strategy"""
     pos = float(get_position(symbol) or 0)
     price = float(token_price(symbol) or 0)
@@ -977,34 +1020,16 @@ def breakout_entry(symbol: str, BREAKOUT_PRICE: float):
     if pos_usd > (.97 * float(USDC_SIZE or 0)):
         print('position filled')
         time.sleep(10)
+        return
 
-    # add debug prints for next while
     print(f'position: {pos:.2f} price: {price:.8f} pos_usd: ${pos_usd:.2f}')
-    print(f'breakout_price: {BREAKOUT_PRICE}')
-    while pos_usd < (.97 * float(USDC_SIZE or 0)) and (price > float(BREAKOUT_PRICE or 0)):
-
+    print(f'breakoutpurce: {BREAKOUT_PRICE}')
+    
+    breakout_price = float(BREAKOUT_PRICE or 0)
+    while pos_usd < (.97 * float(USDC_SIZE or 0)) and price > breakout_price:
         print(f'position: {pos:.2f} price: {price:.8f} pos_usd: ${pos_usd:.2f}')
 
-        for i in range(orders_per_open):
-            market_buy(symbol, chunk_size, SLIPPAGE)
-            cprint(f'chunk buy submitted of {symbol[:4]} sz: {chunk_size}', 'white', 'on_blue')
-            time.sleep(1)
-        #     cprint(f'chunk buy submitted of {symbol[-4:]} sz: {chunk_size} you my dawg moon dev', 'white', 'on_blue')
-        #     time.sleep(1)
-
-        # time.sleep(tx_sleep)
-
-        # pos = get_position(symbol)
-        # price = token_price(symbol)
-        # pos_usd = pos * price
-        # size_needed = usd_size - pos_usd
-        # if size_needed > max_usd_order_size: chunk_size = max_usd_order_size
-        # else: chunk_size = size_needed
-        # chunk_size = int(chunk_size * 10**6)
-        # chunk_size = str(chunk_size)
-
         try:
-
             for i in range(orders_per_open):
                 market_buy(symbol, chunk_size, SLIPPAGE)
                 cprint(f'chunk buy submitted of {symbol[:4]} sz: {chunk_size}', 'white', 'on_blue')
@@ -1023,30 +1048,29 @@ def breakout_entry(symbol: str, BREAKOUT_PRICE: float):
             chunk_size = int(chunk_size * 10**6)
             chunk_size = str(chunk_size)
 
-        except:
-
+        except Exception as e:
             try:
-                cprint(f'trying again to make the order in 30 seconds.....', 'light_blue', 'on_light_magenta')
+                cprint(f'Retrying order in 30 seconds: {str(e)}', 'light_blue', 'on_light_magenta')
                 time.sleep(30)
                 for i in range(orders_per_open):
-                    market_buy(symbol, chunk_size, slippage)
-                    # cprint green background black text
-                    cprint(f'chunk buy submitted of {symbol[:4]} sz: {chunk_size} you my dawg moon dev', 'white', 'on_blue')
+                    market_buy(symbol, chunk_size, SLIPPAGE)
+                    cprint(f'chunk buy submitted of {symbol[:4]} sz: {chunk_size}', 'white', 'on_blue')
                     time.sleep(1)
 
                 time.sleep(tx_sleep)
-                pos = get_position(symbol)
-                price = token_price(symbol)
+                pos = float(get_position(symbol) or 0)
+                price = float(token_price(symbol) or 0)
                 pos_usd = pos * price
-                size_needed = usd_size - pos_usd
-                if size_needed > max_usd_order_size: chunk_size = max_usd_order_size
-                else: chunk_size = size_needed
+                size_needed = float(USDC_SIZE or 0) - pos_usd
+                if size_needed > max_usd_order_size: 
+                    chunk_size = max_usd_order_size
+                else: 
+                    chunk_size = size_needed
                 chunk_size = int(chunk_size * 10**6)
                 chunk_size = str(chunk_size)
 
-
-            except:
-                cprint(f'Final Error in the buy, restart needed', 'white', 'on_red')
+            except Exception as e:
+                cprint(f'Final Error in the buy: {str(e)}', 'white', 'on_red')
                 time.sleep(10)
                 break
 
@@ -1063,15 +1087,15 @@ def breakout_entry(symbol: str, BREAKOUT_PRICE: float):
 
 
 
-def ai_entry(symbol: str, amount: float):
+def ai_entry(symbol, amount):
     """AI agent entry function for Moon Dev's trading system 🤖"""
     cprint("🤖 Moon Dev's AI Trading Agent initiating position entry...", "white", "on_blue")
     
     # amount passed in is the target allocation (up to 30% of usd_size)
-    target_size = float(amount or 0)  # This could be up to $3 (30% of $10)
+    target_size = amount  # This could be up to $3 (30% of $10)
     
-    pos = float(get_position(symbol) or 0)
-    price = float(token_price(symbol) or 0)
+    pos = get_position(symbol)
+    price = token_price(symbol)
     pos_usd = pos * price
     
     cprint(f"🎯 Target allocation: ${target_size:.2f} USD (max 30% of ${usd_size})", "white", "on_blue")
@@ -1101,7 +1125,7 @@ def ai_entry(symbol: str, amount: float):
 
     while pos_usd < (target_size * 0.97):
         cprint(f"🤖 AI Agent executing entry for {symbol[:8]}...", "white", "on_blue")
-        print(f"Position: {pos:.2f} | Price: {price:.8f} | USD Value: ${pos_usd:.2f}")
+        print(f"Position: {round(pos,2)} | Price: {round(price,8)} | USD Value: ${round(pos_usd,2)}")
 
         try:
             for i in range(orders_per_open):
@@ -1112,12 +1136,12 @@ def ai_entry(symbol: str, amount: float):
             time.sleep(tx_sleep)
             
             # Update position info
-            pos = float(get_position(symbol) or 0)
-            price = float(token_price(symbol) or 0)
+            pos = get_position(symbol)
+            price = token_price(symbol)
             pos_usd = pos * price
             
             # Break if we're at or above target
-            if pos_usd >= (float(target_size or 0) * 0.97):
+            if pos_usd >= (target_size * 0.97):
                 break
                 
             # Recalculate needed size
@@ -1143,11 +1167,11 @@ def ai_entry(symbol: str, amount: float):
                     time.sleep(1)
 
                 time.sleep(tx_sleep)
-                pos = float(get_position(symbol) or 0)
-                price = float(token_price(symbol) or 0)
+                pos = get_position(symbol)
+                price = token_price(symbol)
                 pos_usd = pos * price
                 
-                if pos_usd >= (float(target_size or 0) * 0.97):
+                if pos_usd >= (target_size * 0.97):
                     break
                     
                 size_needed = target_size - pos_usd
