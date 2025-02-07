@@ -1,14 +1,7 @@
 """
-🌙 Moon Dev's CopyBot Agent
-Analyzes current copybot positions to identify opportunities for increased position sizes
-
-video for copy bot: https://youtu.be/tQPRW19Qcak?si=b6rAGpz4CuXKXyzn
-
-think about list
-- not all these tokens will have OHLCV data so we need to address that some how
-- good to pass in BTC/ETH data too in order to see market structure
-
-Need an API key? for a limited time, bootcamp members get free api keys for claude, openai, helius, birdeye & quant elite gets access to the moon dev api. join here: https://algotradecamp.com
+CopyBot Agent
+Analyzes current portfolio positions to identify opportunities for increased position sizes.
+Monitors OHLCV data and market structure to make informed position sizing decisions.
 """
 
 import os
@@ -29,7 +22,7 @@ COPYBOT_PORTFOLIO_PATH = os.path.join(
 
 # LLM Prompts
 PORTFOLIO_ANALYSIS_PROMPT = """
-You are Moon Dev's CopyBot Agent 🌙
+You are the CopyBot Agent
 
 Your task is to analyze the current copybot portfolio positions and market data to identify which positions deserve larger allocations.
 
@@ -65,7 +58,7 @@ Remember:
 """
 
 class CopyBotAgent:
-    """Moon Dev's CopyBot Agent 🤖"""
+    """CopyBot Agent for portfolio analysis"""
     
     def __init__(self):
         """Initialize the CopyBot agent with LLM"""
@@ -153,7 +146,7 @@ class CopyBotAgent:
             print(full_prompt)
             print("=" * 80)
             
-            print("\n🤖 Sending data to Moon Dev's AI for analysis...")
+            print("\nSending data for analysis...")
             
             # Get LLM analysis
             if self.model is None:
@@ -162,7 +155,7 @@ class CopyBotAgent:
                 
             try:
                 response = self.model.generate_response(
-                    system_prompt="You are Moon Dev's CopyBot Agent. Analyze portfolio positions and market data.",
+                    system_prompt="You are the CopyBot Agent. Analyze portfolio positions and market data.",
                     user_content=full_prompt,
                     temperature=AI_TEMPERATURE
                 )
@@ -215,7 +208,7 @@ class CopyBotAgent:
     def execute_position_updates(self):
         """Execute position size updates based on analysis"""
         try:
-            print("\n🚀 Moon Dev executing position updates...")
+            print("\nExecuting position updates...")
             
             for _, row in self.recommendations_df.iterrows():
                 token = row['token']
@@ -295,7 +288,7 @@ class CopyBotAgent:
     def run_analysis_cycle(self):
         """Run a complete portfolio analysis cycle"""
         try:
-            print("\n🌙 Starting Moon Dev CopyBot Portfolio Analysis...")
+            print("\nStarting CopyBot Portfolio Analysis...")
             
             # Load portfolio data
             if not self.load_portfolio_data():

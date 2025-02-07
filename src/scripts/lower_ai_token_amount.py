@@ -1,3 +1,5 @@
+from pathlib import Path
+
 def remove_vowels(text):
     vowels = "AEIOUaeiou"
     result = ''.join([char for char in text if char not in vowels])
