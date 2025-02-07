@@ -163,7 +163,7 @@ def get_data(symbol, timeframe='15m', bars=100, add_indicators=True):
         pd.DataFrame: OHLCV data with columns [timestamp, open, high, low, close, volume]
                      and technical indicators if requested
     """
-    print("\n🌙 Lumix Hyperliquid Data Fetcher")
+    print("\n✨ Lumix Hyperliquid Data Fetcher")
     print(f"🎯 Symbol: {symbol}")
     print(f"⏰ Timeframe: {timeframe}")
     print(f"📊 Requested bars: {min(bars, MAX_ROWS)}")
@@ -339,7 +339,7 @@ def test_funding_rates():
         traceback.print_exc()
 
 if __name__ == "__main__":
-    print("\n🌙 Lumix Hyperliquid Function Tester")
+    print("\n✨ Lumix Hyperliquid Function Tester")
     print("=" * 50)
     
     def test_btc_data():
@@ -375,4 +375,4 @@ if __name__ == "__main__":
     test_market_info()
     test_funding_rates()  # Now tests individual symbols
     
-    print("\n✨ Testing complete! 🌙")   
+    print("\n✨ Testing complete! ✨")   

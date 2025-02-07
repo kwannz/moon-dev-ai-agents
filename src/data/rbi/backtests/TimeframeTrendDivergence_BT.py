@@ -13,7 +13,7 @@ from backtesting import Backtest, Strategy
 
 # Data preparation
 data_path = str(Path(__file__).parent.parent / "BTC-USD-15m.csv")
-print("🌙 Loading data from:", data_path)
+print("✨ Loading data from:", data_path)
 df = pd.read_csv(data_path)
 
 # Clean up column names

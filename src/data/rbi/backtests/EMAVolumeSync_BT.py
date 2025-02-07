@@ -44,7 +44,7 @@ class EMAVolumeSync(Strategy):
         self.volume_ma = self.I(talib.SMA, self.data.Volume, timeperiod=self.volume_ma_period)
 
         # Debug prints
-        print("🌙 EMAVolumeSync Strategy Initialized! ✨")
+        print("✨ EMAVolumeSync Strategy Initialized! ✨")
         print(f"📊 Green EMA (High): {self.ema_period} periods")
         print(f"📊 Red EMA (Low): {self.ema_period} periods")
         print(f"📊 Volume MA: {self.volume_ma_period} periods")
@@ -103,17 +103,17 @@ class EMAVolumeSync(Strategy):
         if self.position:
             if self.position.is_long and crossunder(self.data.Close, self.red_ema):
                 self.position.close()
-                print(f"🌙 Exit Long at {current_close} | Trend Reversal Detected ✨")
+                print(f"✨ Exit Long at {current_close} | Trend Reversal Detected ✨")
             elif self.position.is_short and crossover(self.data.Close, self.green_ema):
                 self.position.close()
-                print(f"🌙 Exit Short at {current_close} | Trend Reversal Detected ✨")
+                print(f"✨ Exit Short at {current_close} | Trend Reversal Detected ✨")
 
 if __name__ == "__main__":
     # Initialize backtest
     bt = Backtest(data, EMAVolumeSync, cash=1_000_000, commission=0.002)
 
     # Run initial backtest
-    print("\n🌙 Running initial backtest...")
+    print("\n✨ Running initial backtest...")
     stats = bt.run()
     print("\n📊 Backtest Stats:")
     print(stats)

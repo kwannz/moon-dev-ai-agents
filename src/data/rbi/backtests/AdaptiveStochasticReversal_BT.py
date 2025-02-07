@@ -28,7 +28,7 @@ class AdaptiveStochasticReversal(bt.Strategy):
             # Weekly/Long-term Timeframe
             if self.stoch_rsi[-1] < self.params.weekly_oversold:
                 self.buy(size=self.stake)
-                print(f"🌙 Bought at: {self.data.Close[0]:.2f} 💫")
+                print(f"✨ Bought at: {self.data.Close[0]:.2f} 💫")
 
             # Shorter Timeframe
             elif self.stoch_rsi[-1] > self.params.shorter_timeframe_overbought:
@@ -42,11 +42,11 @@ class AdaptiveStochasticReversal(bt.Strategy):
             # Trailing Stop-Loss
             if self.data.Close[0] < self.data.Close[-1] * (1 - self.params.risk_pct):
                 self.sell(size=self.stake)
-                print(f"🌙 Stopped out at: {self.data.Close[0]:.2f} 💫")
+                print(f"✨ Stopped out at: {self.data.Close[0]:.2f} 💫")
 
     def notify_trade(self, trade):
         if trade.justopened:
-            print(f"🌙 Opened trade at: {trade.price:.2f} 💫")
+            print(f"✨ Opened trade at: {trade.price:.2f} 💫")
         elif trade.isclosed:
             print(f"✨ Closed trade. Total profit/loss: {trade.pnl:.2f} 🚀")
 

@@ -11,7 +11,7 @@
 
 ## Overview
 
-The Moon Dev Market Data API (`src/agents/api.py`) provides access to real-time market data. The API is designed to be easy to use while providing powerful features for market analysis and automated trading.
+The Lumix Market Data API (`src/agents/api.py`) provides access to real-time market data. The API is designed to be easy to use while providing powerful features for market analysis and automated trading.
 
 ## Installation
 
@@ -22,7 +22,7 @@ pip install requests pandas python-dotenv termcolor
 
 2. Set up your environment variables:
 ```bash
-# Create a .env file and add your Moon Dev API key
+# Create a .env file and add your Lumix API key
 MOONDEV_API_KEY=your_api_key_here
 ```
 

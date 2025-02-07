@@ -2,7 +2,7 @@
 Listing Arbitrage Agent
 Monitors and analyzes new token listings for arbitrage opportunities
 
-Created by Lumix 🌙
+Created by Lumix ✨
 For updates: https://github.com/kwannz/lumix-ai-agents
 """
 

@@ -20,7 +20,7 @@ from backtesting import Backtest, Strategy
 DATA_PATH = str(Path(__file__).parent.parent / "BTC-USD-15m.csv")
 
 def load_and_clean_data(filepath):
-    print("🌙✨ Loading data from:", filepath)
+    print("✨✨ Loading data from:", filepath)
     data = pd.read_csv(filepath, parse_dates=["datetime"])
     # Clean column names: remove spaces and lowercase
     data.columns = data.columns.str.strip().str.lower()
@@ -50,7 +50,7 @@ class ATR_MeanReversion(Strategy):
     risk_pct = 0.01                   # Risk percentage of account equity to risk per trade
     
     def init(self):
-        print("🌙✨ Initializing ATR_MeanReversion Strategy...")
+        print("✨✨ Initializing ATR_MeanReversion Strategy...")
         # Calculate indicators via self.I wrapper with TA-lib
         self.sma = self.I(talib.SMA, self.data.Close, timeperiod=self.keltner_period)
         self.atr = self.I(talib.ATR, self.data.High, self.data.Low, self.data.Close, timeperiod=self.keltner_period)
@@ -61,12 +61,12 @@ class ATR_MeanReversion(Strategy):
         
         # Container to store candidate reversal candle info
         self.reversal_candle = None
-        print("🚀 Indicators initialized! SMA, ATR and Keltner channels ready. 🌙")
+        print("🚀 Indicators initialized! SMA, ATR and Keltner channels ready. ✨")
     
     def next(self):
         # --- Debug prints for tracing bars ---
         dt = self.data.datetime[-1]
-        print(f"🌙 Bar Date/Time: {dt}, Open: {self.data.Open[-1]}, High: {self.data.High[-1]}, Low: {self.data.Low[-1]}, Close: {self.data.Close[-1]}")
+        print(f"✨ Bar Date/Time: {dt}, Open: {self.data.Open[-1]}, High: {self.data.High[-1]}, Low: {self.data.Low[-1]}, Close: {self.data.Close[-1]}")
         
         # Check for candidate reversal candle formation on previous bar (if enough history exists)
         if len(self.data.Close) >= 2:

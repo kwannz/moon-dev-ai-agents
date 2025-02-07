@@ -26,7 +26,7 @@ def count_browser_tabs():
     return 0
 
 def open_wallet_tabs(csv_path, batch_size=OPENS_PER_BATCH):
-    print("🌙 Lumix Smart Tab Opener Starting Up! 🚀")
+    print("✨ Lumix Smart Tab Opener Starting Up! 🚀")
     print(f"📂 Opening CSV file: {csv_path}")
     
     # Verify file exists

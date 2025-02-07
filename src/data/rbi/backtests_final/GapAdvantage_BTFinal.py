@@ -53,7 +53,7 @@ class GapAdvantage(Strategy):
         
         # VWAP indicator using our custom function
         self.vwap = self.I(custom_vwap, self.data.High, self.data.Low, self.data.Close, self.data.Volume)
-        print("🌙✨ [INIT] Indicators loaded: SMA9, SMA50, and VWAP calculated via custom_vwap()!")
+        print("✨✨ [INIT] Indicators loaded: SMA9, SMA50, and VWAP calculated via custom_vwap()!")
         
         # To store trade-dependent levels
         self.entry_price = None
@@ -64,7 +64,7 @@ class GapAdvantage(Strategy):
         price = self.data.Close[-1]
         current_vwap = self.vwap[-1]
         current_sma9 = self.sma9[-1]
-        print(f"🌙🚀 [NEXT] Price: {price:.2f}, VWAP: {current_vwap:.2f}, SMA9: {current_sma9:.2f}")
+        print(f"✨🚀 [NEXT] Price: {price:.2f}, VWAP: {current_vwap:.2f}, SMA9: {current_sma9:.2f}")
         
         # If not in a current position, check entry conditions.
         if not self.position:
@@ -88,12 +88,12 @@ class GapAdvantage(Strategy):
                     position_size = self.risk_pct
                 # Enter trade with position size, stop loss, and take profit as absolute price levels.
                 self.buy(size=position_size, sl=self.sl, tp=self.tp)
-                print(f"🌙✨ [ENTRY] Enter trade at {self.entry_price:.2f}, SL at {self.sl:.2f}, TP at {self.tp:.2f}, Size: {position_size}")
+                print(f"✨✨ [ENTRY] Enter trade at {self.entry_price:.2f}, SL at {self.sl:.2f}, TP at {self.tp:.2f}, Size: {position_size}")
         else:
             # Exit logic: exit if price hits stop loss or take profit levels.
             if price <= self.sl or price >= self.tp:
                 self.position.close()
-                print(f"🌙🚀 [EXIT] Close trade at {price:.2f} (SL: {self.sl:.2f}, TP: {self.tp:.2f})")
+                print(f"✨🚀 [EXIT] Close trade at {price:.2f} (SL: {self.sl:.2f}, TP: {self.tp:.2f})")
 
 # --------------
 # Main Backtest Execution
@@ -105,14 +105,14 @@ if __name__ == '__main__':
     start_date = "2020-01-01"
     end_date = "2020-12-31"
     
-    print("🌙✨ [MAIN] Downloading data for", symbol)
+    print("✨✨ [MAIN] Downloading data for", symbol)
     data = yf.download(symbol, start=start_date, end=end_date)
-    print("🌙✨ [MAIN] Data downloaded. Starting backtest...")
+    print("✨✨ [MAIN] Data downloaded. Starting backtest...")
     
     bt = Backtest(data, GapAdvantage, cash=100000, commission=0.002)
     stats = bt.run()
     
-    print("🌙✨ [MAIN] Backtest completed. Stats:")
+    print("✨✨ [MAIN] Backtest completed. Stats:")
     print(stats)
     
     bt.plot()  # Optional: plots the backtest results

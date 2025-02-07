@@ -39,7 +39,7 @@ class StochasticPhaseTrader(Strategy):
                                           self.period, self.fastk_period, self.fastd_period)
         # Save the last buy's stoch RSI value for DCA decisions.
         self.last_buy_stoch = None
-        print("🌙✨ [INIT] StochasticPhaseTrader initialized with parameters:")
+        print("✨✨ [INIT] StochasticPhaseTrader initialized with parameters:")
         print(f"      period={self.period}, fastk_period={self.fastk_period}, fastd_period={self.fastd_period}")
         print(f"      oversold threshold={self.oversold}, overbought threshold={self.overbought}")
         print(f"      risk_percent={self.risk_percent}, sl_pct={self.sl_pct}")
@@ -49,7 +49,7 @@ class StochasticPhaseTrader(Strategy):
         current_k = self.stochk[-1]
         # For crossover detection, get the previous candle's stochk value if available
         prev_k = self.stochk[-2] if len(self.stochk) > 1 else current_k
-        print(f"🌙✨ [NEXT] Candle @ {self.data.index[-1]} | Close: {current_close:.2f} | StochK: {current_k:.2f}")
+        print(f"✨✨ [NEXT] Candle @ {self.data.index[-1]} | Close: {current_close:.2f} | StochK: {current_k:.2f}")
 
         # ENTRY SIGNAL: When NOT in a position and the indicator crosses below the oversold threshold
         if not self.position:

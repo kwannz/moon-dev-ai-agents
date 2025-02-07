@@ -200,7 +200,7 @@ class FocusAgent:
         """Check if current time is within scheduled hours"""
         current_time = datetime.now().time()
         if not (SCHEDULE_START <= current_time <= SCHEDULE_END):
-            cprint(f"\n🌙 Focus Agent is scheduled to run between {SCHEDULE_START.strftime('%I:%M %p')} and {SCHEDULE_END.strftime('%I:%M %p')}", "yellow")
+            cprint(f"\n✨ Focus Agent is scheduled to run between {SCHEDULE_START.strftime('%I:%M %p')} and {SCHEDULE_END.strftime('%I:%M %p')}", "yellow")
             cprint("😴 Going to sleep until next scheduled time...", "yellow")
             raise SystemExit(0)
         

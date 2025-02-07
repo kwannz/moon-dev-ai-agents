@@ -29,7 +29,7 @@ class HierarchicalBreakout(Strategy):
     swing_period  = 4           # Swing lookback for stop loss (1 hr ~ 4 x 15mins).
 
     def init(self):
-        print("🌙 [INIT] Initializing HierarchicalBreakout strategy indicators...")
+        print("✨ [INIT] Initializing HierarchicalBreakout strategy indicators...")
 
         # Multi-timeframe trend confirmation indicators:
         self.weekly_sma = self.I(talib.SMA, self.data.Close, timeperiod=self.weekly_period)
@@ -47,7 +47,7 @@ class HierarchicalBreakout(Strategy):
 
     def next(self):
         current_price = self.data.Close[-1]
-        print(f"🌙 [NEXT] Bar Date: {self.data.index[-1]} | Close: {current_price:.2f}")
+        print(f"✨ [NEXT] Bar Date: {self.data.index[-1]} | Close: {current_price:.2f}")
 
         # Determine trend from our “higher” timeframes.
         weekly_trend_bull = current_price > self.weekly_sma[-1]
@@ -71,7 +71,7 @@ class HierarchicalBreakout(Strategy):
                     pos_size = risk_amount / risk_per_unit
                     take_profit = current_price + self.risk_reward * risk_per_unit
 
-                    print(f"🌙 [LONG ENTRY SIGNAL] Price {current_price:.2f} > cons_high {self.cons_high[-1]:.2f}!")
+                    print(f"✨ [LONG ENTRY SIGNAL] Price {current_price:.2f} > cons_high {self.cons_high[-1]:.2f}!")
                     print(f"✨ [LONG ENTRY] Risk: ${risk_amount:.2f} at risk/unit: {risk_per_unit:.2f} => Size: {pos_size:.4f} shares.")
                     print(f"🚀 [LONG ORDER] Entry: {current_price:.2f}, SL: {stop_loss:.2f}, TP: {take_profit:.2f}")
 
@@ -90,7 +90,7 @@ class HierarchicalBreakout(Strategy):
                     pos_size = risk_amount / risk_per_unit
                     take_profit = current_price - self.risk_reward * risk_per_unit
 
-                    print(f"🌙 [SHORT ENTRY SIGNAL] Price {current_price:.2f} < cons_low {self.cons_low[-1]:.2f}!")
+                    print(f"✨ [SHORT ENTRY SIGNAL] Price {current_price:.2f} < cons_low {self.cons_low[-1]:.2f}!")
                     print(f"✨ [SHORT ENTRY] Risk: ${risk_amount:.2f} at risk/unit: {risk_per_unit:.2f} => Size: {pos_size:.4f} shares.")
                     print(f"🚀 [SHORT ORDER] Entry: {current_price:.2f}, SL: {stop_loss:.2f}, TP: {take_profit:.2f}")
 
@@ -102,19 +102,19 @@ class HierarchicalBreakout(Strategy):
                 entry_price = self.position.entry_price
                 target_profit = (self.position.tp - entry_price) if hasattr(self.position, "tp") else 0
                 if target_profit and current_price > entry_price + 0.5 * target_profit:
-                    print("🚀 [LONG POSITION] Break-even threshold reached! Consider moving SL to entry price to protect gains! 🌙")
+                    print("🚀 [LONG POSITION] Break-even threshold reached! Consider moving SL to entry price to protect gains! ✨")
             elif self.position.is_short:
                 entry_price = self.position.entry_price
                 target_profit = (entry_price - self.position.tp) if hasattr(self.position, "tp") else 0
                 if target_profit and current_price < entry_price - 0.5 * target_profit:
-                    print("🚀 [SHORT POSITION] Break-even threshold reached! Consider moving SL to entry price to protect gains! 🌙")
+                    print("🚀 [SHORT POSITION] Break-even threshold reached! Consider moving SL to entry price to protect gains! ✨")
 
 
 # ─────────────── MAIN EXECUTION ─────────────────────────────────────────────
 if __name__ == '__main__':
     # DATA HANDLING:
     data_path = str(Path(__file__).parent.parent / "BTC-USD-15m.csv")
-    print("🌙 [DATA] Loading data from:", data_path)
+    print("✨ [DATA] Loading data from:", data_path)
     data = pd.read_csv(data_path, parse_dates=['datetime'])
 
     # Clean up column names and remove any unnamed columns.
@@ -132,10 +132,10 @@ if __name__ == '__main__':
 
     # Create the Backtest instance with our strategy.
     bt = Backtest(data, HierarchicalBreakout, cash=1_000_000, commission=0.0)
-    print("🌙 [BACKTEST] Starting initial backtest with default parameters for HierarchicalBreakout...")
+    print("✨ [BACKTEST] Starting initial backtest with default parameters for HierarchicalBreakout...")
 
     stats = bt.run()
-    print("\n🌙 [STATS] Initial backtest complete! Full stats below:")
+    print("\n✨ [STATS] Initial backtest complete! Full stats below:")
     print(stats)
     print("✨ [STRATEGY DETAILS]:", stats._strategy)
     
@@ -145,7 +145,7 @@ if __name__ == '__main__':
     print(f"🚀 [PLOT] Saving initial performance plot to: {chart_file}")
     bt.plot(filename=chart_file, open_browser=False)
 
-    print("\n🌙 [OPTI] Starting optimization! Optimizing risk_reward and risk_pct parameters...")
+    print("\n✨ [OPTI] Starting optimization! Optimizing risk_reward and risk_pct parameters...")
     optimized_stats = bt.optimize(
         risk_reward = range(2, 5),       # Try risk/reward of 2, 3, 4
         risk_pct    = [0.005, 0.01, 0.015],
@@ -157,7 +157,7 @@ if __name__ == '__main__':
     print("🚀 [OPTI STRATEGY DETAILS]:", optimized_stats._strategy)
 
     opt_chart_file = os.path.join(chart_dir, f"{strategy_name}_optimized_chart.html")
-    print(f"🌙 [PLOT] Saving optimized performance plot to: {opt_chart_file}")
+    print(f"✨ [PLOT] Saving optimized performance plot to: {opt_chart_file}")
     bt.plot(filename=opt_chart_file, open_browser=False)
 
     print("Backtest completed successfully!")

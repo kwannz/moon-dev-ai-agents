@@ -45,7 +45,7 @@ class TrendVengeance(Strategy):
         self.trailing_stop_short = None
 
         # Debug print
-        print("🌙 TrendVengeance strategy initialized! ✨")
+        print("✨ TrendVengeance strategy initialized! ✨")
 
     def next(self):
         # Calculate position size based on risk percentage
@@ -73,7 +73,7 @@ class TrendVengeance(Strategy):
             self.trailing_stop_long = max(self.trailing_stop_long, self.data.Low[-1] - 2 * atr_value)
             if self.data.Close[-1] < self.trailing_stop_long:
                 self.position.close()
-                print(f"🌙 Long position closed! Price: {self.data.Close[-1]}, Trailing Stop: {self.trailing_stop_long}")
+                print(f"✨ Long position closed! Price: {self.data.Close[-1]}, Trailing Stop: {self.trailing_stop_long}")
 
         # Trailing stop logic for short positions
         if self.position.is_short:
@@ -94,7 +94,7 @@ bt = Backtest(data, TrendVengeance, cash=1_000_000, commission=0.002)
 
 # Run initial backtest
 stats = bt.run()
-print("🌙 Initial Backtest Results:")
+print("✨ Initial Backtest Results:")
 print(stats)
 print(stats._strategy)
 

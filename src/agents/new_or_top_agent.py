@@ -1,5 +1,5 @@
 """
-🌙 Lumix New & Top Coins Agent 🔍
+✨ Lumix New & Top Coins Agent 🔍
 
 This agent goes through and analyzes all of the new tokens that have been listed in the coin gecko and then also analyzes the top movers of the last 24 hours on coin gecko and then makes recommendations based off that data. 
 
@@ -189,7 +189,7 @@ class NewOrTopAgent:
                     raise ValueError(f"Failed to initialize model after {max_retries} attempts")
         print("🚀 Using Ollama model: deepseek-r1:1.5b")
             
-        print_fancy("🌙 Lumix New & Top Coins Agent Initialized! 🌟", 'white', 'on_magenta', SUCCESS_EMOJIS)
+        print_fancy("✨ Lumix New & Top Coins Agent Initialized! 🌟", 'white', 'on_magenta', SUCCESS_EMOJIS)
         
     def get_top_gainers(self) -> pd.DataFrame:
         """Get only top gainers (positive performers)"""
@@ -523,7 +523,7 @@ class NewOrTopAgent:
 
 def main():
     """Main function to run the agent"""
-    print_fancy("\n🌙 Lumix Cosmic Token Analysis Starting! 🌟", 'white', 'on_magenta', SUCCESS_EMOJIS)
+    print_fancy("\n✨ Lumix Cosmic Token Analysis Starting! 🌟", 'white', 'on_magenta', SUCCESS_EMOJIS)
     agent = NewOrTopAgent()
     
     try:
@@ -534,7 +534,7 @@ def main():
                 time.sleep(450)  # 450 * 8 = 3600 (1 hour)
             
     except KeyboardInterrupt:
-        print_fancy("\n👋 Agent stopped by user - Lumix out! 🌙", 'white', 'on_magenta')
+        print_fancy("\n👋 Agent stopped by user - Lumix out! ✨", 'white', 'on_magenta')
     except Exception as e:
         print_fancy(f"\nError: {str(e)}", 'white', 'on_red', ERROR_EMOJIS)
 

@@ -22,7 +22,7 @@ class TrendBreakoutMomentumStrategy:
 
     def I(self, indicator, *args, **kwargs):
         """Wrapper for indicator calculations using TA-Lib or pandas-ta"""
-        print(f"🌙 Calculating indicator: {indicator.__name__}")
+        print(f"✨ Calculating indicator: {indicator.__name__}")
         return indicator(self.data.Close.values, *args, **kwargs)
 
     def get_trend_direction(self):
@@ -30,7 +30,7 @@ class TrendBreakoutMomentumStrategy:
         weekly_sma = self.I(talib.SMA, timeperiod=52)
         daily_sma = self.I(talib.SMA, timeperiod=20)
         trend_direction = 1 if daily_sma[-1] > weekly_sma[-1] else -1
-        print(f"🌙 Trend direction: {'bullish' if trend_direction == 1 else 'bearish'}")
+        print(f"✨ Trend direction: {'bullish' if trend_direction == 1 else 'bearish'}")
         return trend_direction
 
     def find_consolidation(self, timeframe='4H'):
@@ -42,7 +42,7 @@ class TrendBreakoutMomentumStrategy:
 
         atr = self.I(talib.ATR, timeperiod=14)
         consolidation = (data.High - data.Low) < atr.reindex(data.index)
-        print(f"🌙 Consolidation identified: {consolidation.sum()} periods")
+        print(f"✨ Consolidation identified: {consolidation.sum()} periods")
         return consolidation
 
     def find_breakout(self, timeframe='1H'):
