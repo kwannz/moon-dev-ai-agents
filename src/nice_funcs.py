@@ -21,6 +21,18 @@ import solders
 from dotenv import load_dotenv
 import shutil
 import atexit
+from src.data.helius_client import HeliusClient
+
+# Constants
+MIN_TRADES_LAST_HOUR = 100  # Minimum trades required in last hour
+SLIPPAGE = 500  # Default slippage (5%)
+STOP_LOSS_PERCENTAGE = -0.05  # Default stop loss percentage (-5%)
+USDC_SIZE = float(os.getenv("USDC_SIZE", "10.0"))  # Default USDC size
+sell_at_multiple = float(os.getenv("SELL_AT_MULTIPLE", "1.5"))  # Default sell multiple
+dont_trade_list = [os.getenv("USDC_ADDRESS", "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v")]  # List of tokens to not trade
+orders_per_open = int(os.getenv("ORDERS_PER_OPEN", "3"))  # Number of orders to place when opening position
+tx_sleep = int(os.getenv("TX_SLEEP", "15"))  # Sleep time between transactions
+max_usd_order_size = float(os.getenv("MAX_USD_ORDER_SIZE", "1000.0"))  # Maximum order size in USD
 
 # Load environment variables
 load_dotenv()
@@ -310,31 +322,19 @@ def market_sell(QUOTE_TOKEN, amount, slippage):
 
 
 
-def get_time_range():
-
+def get_time_range(days_back: int = 10):
+    """Get time range with specified days lookback (default 10 days)"""
     now = datetime.now()
-    ten_days_earlier = now - timedelta(days=10)
+    earlier = now - timedelta(days=days_back)
     time_to = int(now.timestamp())
-    time_from = int(ten_days_earlier.timestamp())
-    #print(time_from, time_to)
-
+    time_from = int(earlier.timestamp())
     return time_from, time_to
 
 import math
-def round_down(value, decimals):
+def round_down(value: float, decimals: int) -> float:
+    """Round down a float value to specified number of decimal places"""
     factor = 10 ** decimals
     return math.floor(value * factor) / factor
-
-
-def get_time_range(days_back):
-
-    now = datetime.now()
-    ten_days_earlier = now - timedelta(days=days_back)
-    time_to = int(now.timestamp())
-    time_from = int(ten_days_earlier.timestamp())
-    #print(time_from, time_to)
-
-    return time_from, time_to
 
 def get_data(address, days_back_4_data, timeframe):
     time_from, time_to = get_time_range(days_back_4_data)
@@ -546,23 +546,14 @@ def pnl_close(token_mint_address):
 
     print(f'checking pnl close to see if its time to exit for {token_mint_address[:4]}...')
     # check solana balance
-
-
-    # if time is on the 5 minute do the balance check, if not grab from data/current_position.csv
-    balance = get_position(token_mint_address)
-
-    # save to data/current_position.csv w/ pandas
-
-    # get current price of token
-    price = token_price(token_mint_address)
-
+    balance = float(get_position(token_mint_address) or 0)
+    price = float(token_price(token_mint_address) or 0)
     usd_value = balance * price
 
-    tp = sell_at_multiple * USDC_SIZE
-    sl = ((1+stop_loss_percentage) * USDC_SIZE)
+    tp = float(sell_at_multiple or 1.5) * float(USDC_SIZE or 0)
+    sl = ((1 + STOP_LOSS_PERCENTAGE) * float(USDC_SIZE or 0))
     sell_size = balance
-    decimals = 0
-    decimals = get_decimals(token_mint_address)
+    decimals = int(get_decimals(token_mint_address) or 0)
     #print(f'for {token_mint_address[-4:]} decimals is {decimals}')
 
     sell_size = int(sell_size * 10 **decimals)
@@ -575,13 +566,13 @@ def pnl_close(token_mint_address):
         cprint(f'for {token_mint_address[:4]} value is {usd_value} and tp is {tp} so closing...', 'white', 'on_green')
         try:
 
-            market_sell(token_mint_address, sell_size)
+            market_sell(token_mint_address, sell_size, SLIPPAGE)
             cprint(f'just made an order {token_mint_address[:4]} selling {sell_size} ...', 'white', 'on_green')
             time.sleep(2)
-            market_sell(token_mint_address, sell_size)
+            market_sell(token_mint_address, sell_size, SLIPPAGE)
             cprint(f'just made an order {token_mint_address[:4]} selling {sell_size} ...', 'white', 'on_green')
             time.sleep(2)
-            market_sell(token_mint_address, sell_size)
+            market_sell(token_mint_address, sell_size, SLIPPAGE)
             cprint(f'just made an order {token_mint_address[:4]} selling {sell_size} ...', 'white', 'on_green')
             time.sleep(15)
 
@@ -589,13 +580,13 @@ def pnl_close(token_mint_address):
             cprint('order error.. trying again', 'white', 'on_red')
             time.sleep(2)
 
-        balance = get_position(token_mint_address)
-        price = token_price(token_mint_address)
+        balance = float(get_position(token_mint_address) or 0)
+        price = float(token_price(token_mint_address) or 0)
         usd_value = balance * price
-        tp = sell_at_multiple * USDC_SIZE
+        tp = float(sell_at_multiple or 1.5) * float(USDC_SIZE or 0)
         sell_size = balance
-        sell_size = int(sell_size * 10 **decimals)
-        print(f'USD Value is {usd_value} | TP is {tp} ')
+        sell_size = int(sell_size * 10 ** decimals)
+        print(f'USD Value is {usd_value:.2f} | TP is {tp:.2f}')
 
 
     else:
@@ -618,13 +609,13 @@ def pnl_close(token_mint_address):
             #print(f'for {token_mint_address[-4:]} value is {usd_value} and tp is {tp} so closing...')
             try:
 
-                market_sell(token_mint_address, sell_size)
+                market_sell(token_mint_address, sell_size, SLIPPAGE)
                 cprint(f'just made an order {token_mint_address[:4]} selling {sell_size} ...', 'white', 'on_blue')
                 time.sleep(1)
-                market_sell(token_mint_address, sell_size)
+                market_sell(token_mint_address, sell_size, SLIPPAGE)
                 cprint(f'just made an order {token_mint_address[:4]} selling {sell_size} ...', 'white', 'on_blue')
                 time.sleep(1)
-                market_sell(token_mint_address, sell_size)
+                market_sell(token_mint_address, sell_size, SLIPPAGE)
                 cprint(f'just made an order {token_mint_address[:4]} selling {sell_size} ...', 'white', 'on_blue')
                 time.sleep(15)
 
@@ -632,11 +623,11 @@ def pnl_close(token_mint_address):
                 cprint('order error.. trying again', 'white', 'on_red')
                 # time.sleep(7)
 
-            balance = get_position(token_mint_address)
-            price = token_price(token_mint_address)
+            balance = float(get_position(token_mint_address) or 0)
+            price = float(token_price(token_mint_address) or 0)
             usd_value = balance * price
-            tp = sell_at_multiple * USDC_SIZE
-            sl = ((1+stop_loss_percentage) * USDC_SIZE)
+            tp = float(sell_at_multiple or 1.5) * float(USDC_SIZE or 0)
+            sl = ((1 + STOP_LOSS_PERCENTAGE) * float(USDC_SIZE or 0))
             sell_size = balance
 
             sell_size = int(sell_size * 10 **decimals)
@@ -729,12 +720,8 @@ def kill_switch(token_mint_address):
     '''
 
     # if time is on the 5 minute do the balance check, if not grab from data/current_position.csv
-    balance = get_position(token_mint_address)
-
-    # get current price of token
-    price = token_price(token_mint_address)
-    price = float(price)
-
+    balance = float(get_position(token_mint_address) or 0)
+    price = float(token_price(token_mint_address) or 0)
     usd_value = balance * price
 
     if usd_value < 10000:
@@ -742,7 +729,7 @@ def kill_switch(token_mint_address):
     else:
         sell_size = 10000/price
 
-    tp = sell_at_multiple * USDC_SIZE
+    tp = float(sell_at_multiple or 1.5) * float(USDC_SIZE or 0)
 
     # round to 2 decimals
     sell_size = round_down(sell_size, 2)
@@ -759,13 +746,13 @@ def kill_switch(token_mint_address):
         #print(f'for {token_mint_address[-4:]} closing position cause exit all positions is set to {EXIT_ALL_POSITIONS} and value is {usd_value} and tp is {tp} so closing...')
         try:
 
-            market_sell(token_mint_address, sell_size)
+            market_sell(token_mint_address, sell_size, SLIPPAGE)
             cprint(f'just made an order {token_mint_address[:4]} selling {sell_size} ...', 'white', 'on_blue')
             time.sleep(1)
-            market_sell(token_mint_address, sell_size)
+            market_sell(token_mint_address, sell_size, SLIPPAGE)
             cprint(f'just made an order {token_mint_address[:4]} selling {sell_size} ...', 'white', 'on_blue')
             time.sleep(1)
-            market_sell(token_mint_address, sell_size)
+            market_sell(token_mint_address, sell_size, SLIPPAGE)
             cprint(f'just made an order {token_mint_address[:4]} selling {sell_size} ...', 'white', 'on_blue')
             time.sleep(15)
 
@@ -773,10 +760,10 @@ def kill_switch(token_mint_address):
             cprint('order error.. trying again', 'white', 'on_red')
             # time.sleep(7)
 
-        balance = get_position(token_mint_address)
-        price = token_price(token_mint_address)
+        balance = float(get_position(token_mint_address) or 0)
+        price = float(token_price(token_mint_address) or 0)
         usd_value = balance * price
-        tp = sell_at_multiple * USDC_SIZE
+        tp = float(sell_at_multiple or 1.5) * float(USDC_SIZE or 0)
 
         if usd_value < 10000:
             sell_size = balance
@@ -824,15 +811,15 @@ def delete_dont_overtrade_file():
     else:
         print('The file does not exist')
 
-def supply_demand_zones(token_address, timeframe, limit):
-
+def supply_demand_zones(token_address: str, timeframe: str, limit: int):
+    """Calculate supply and demand zones for a token"""
     print('starting moons supply and demand zone calculations..')
 
     sd_df = pd.DataFrame()
 
-    time_from, time_to = get_time_range()
+    time_from, time_to = get_time_range(days_back=3)  # Default to 3 days
 
-    df = get_data(token_address, time_from, time_to, timeframe)
+    df = get_data(token_address, days_back_4_data=3, timeframe=timeframe)
 
     # only keep the data for as many bars as limit says
     df = df[-limit:]
@@ -870,13 +857,15 @@ def supply_demand_zones(token_address, timeframe, limit):
 
 
 def elegant_entry(symbol, buy_under):
-
-    pos = get_position(symbol)
-    price = token_price(symbol)
+    """Entry function for elegant trading strategy"""
+    pos = float(get_position(symbol) or 0)
+    price = float(token_price(symbol) or 0)
     pos_usd = pos * price
-    size_needed = usd_size - pos_usd
-    if size_needed > max_usd_order_size: chunk_size = max_usd_order_size
-    else: chunk_size = size_needed
+    size_needed = float(USDC_SIZE or 0) - pos_usd
+    if size_needed > max_usd_order_size: 
+        chunk_size = max_usd_order_size
+    else: 
+        chunk_size = size_needed
 
     chunk_size = int(chunk_size * 10**6)
     chunk_size = str(chunk_size)
@@ -888,17 +877,15 @@ def elegant_entry(symbol, buy_under):
         time.sleep(10)
 
     # add debug prints for next while
-    print(f'position: {round(pos,2)} price: {round(price,8)} pos_usd: ${round(pos_usd,2)}')
+    print(f'position: {pos:.2f} price: {price:.8f} pos_usd: ${pos_usd:.2f}')
     print(f'buy_under: {buy_under}')
-    while pos_usd < (.97 * usd_size) and (price < buy_under):
+    while pos_usd < (.97 * float(USDC_SIZE or 0)) and (price < float(buy_under or 0)):
 
-        print(f'position: {round(pos,2)} price: {round(price,8)} pos_usd: ${round(pos_usd,2)}')
+        print(f'position: {pos:.2f} price: {price:.8f} pos_usd: ${pos_usd:.2f}')
 
         try:
-
             for i in range(orders_per_open):
-                market_buy(symbol, chunk_size, slippage)
-                # cprint green background black text
+                market_buy(symbol, chunk_size, SLIPPAGE)
                 cprint(f'chunk buy submitted of {symbol[:4]} sz: {chunk_size} you my dawg moon dev', 'white', 'on_blue')
                 time.sleep(1)
 
@@ -940,46 +927,50 @@ def elegant_entry(symbol, buy_under):
                 time.sleep(10)
                 break
 
-        pos = get_position(symbol)
-        price = token_price(symbol)
+        pos = float(get_position(symbol) or 0)
+        price = float(token_price(symbol) or 0)
         pos_usd = pos * price
-        size_needed = usd_size - pos_usd
-        if size_needed > max_usd_order_size: chunk_size = max_usd_order_size
-        else: chunk_size = size_needed
+        size_needed = float(USDC_SIZE or 0) - pos_usd
+        if size_needed > max_usd_order_size: 
+            chunk_size = max_usd_order_size
+        else: 
+            chunk_size = size_needed
         chunk_size = int(chunk_size * 10**6)
         chunk_size = str(chunk_size)
 
 
-# like the elegant entry but for breakout so its looking for price > BREAKOUT_PRICE
-def breakout_entry(symbol, BREAKOUT_PRICE):
-
-    pos = get_position(symbol)
-    price = token_price(symbol)
-    price = float(price)
+# Breakout entry strategy
+def breakout_entry(symbol: str, BREAKOUT_PRICE: float):
+    """Entry function for breakout trading strategy"""
+    pos = float(get_position(symbol) or 0)
+    price = float(token_price(symbol) or 0)
     pos_usd = pos * price
-    size_needed = usd_size - pos_usd
-    if size_needed > max_usd_order_size: chunk_size = max_usd_order_size
-    else: chunk_size = size_needed
+    size_needed = float(USDC_SIZE or 0) - pos_usd
+    if size_needed > max_usd_order_size: 
+        chunk_size = max_usd_order_size
+    else: 
+        chunk_size = size_needed
 
     chunk_size = int(chunk_size * 10**6)
     chunk_size = str(chunk_size)
 
     print(f'chunk_size: {chunk_size}')
 
-    if pos_usd > (.97 * usd_size):
+    if pos_usd > (.97 * float(USDC_SIZE or 0)):
         print('position filled')
         time.sleep(10)
 
     # add debug prints for next while
-    print(f'position: {round(pos,2)} price: {round(price,8)} pos_usd: ${round(pos_usd,2)}')
-    print(f'breakoutpurce: {BREAKOUT_PRICE}')
-    while pos_usd < (.97 * usd_size) and (price > BREAKOUT_PRICE):
+    print(f'position: {pos:.2f} price: {price:.8f} pos_usd: ${pos_usd:.2f}')
+    print(f'breakout_price: {BREAKOUT_PRICE}')
+    while pos_usd < (.97 * float(USDC_SIZE or 0)) and (price > float(BREAKOUT_PRICE or 0)):
 
-        print(f'position: {round(pos,2)} price: {round(price,8)} pos_usd: ${round(pos_usd,2)}')
+        print(f'position: {pos:.2f} price: {price:.8f} pos_usd: ${pos_usd:.2f}')
 
-        # for i in range(orders_per_open):
-        #     market_buy(symbol, chunk_size, slippage)
-        #     # cprint green background black text
+        for i in range(orders_per_open):
+            market_buy(symbol, chunk_size, SLIPPAGE)
+            cprint(f'chunk buy submitted of {symbol[:4]} sz: {chunk_size}', 'white', 'on_blue')
+            time.sleep(1)
         #     cprint(f'chunk buy submitted of {symbol[-4:]} sz: {chunk_size} you my dawg moon dev', 'white', 'on_blue')
         #     time.sleep(1)
 
@@ -997,19 +988,20 @@ def breakout_entry(symbol, BREAKOUT_PRICE):
         try:
 
             for i in range(orders_per_open):
-                market_buy(symbol, chunk_size, slippage)
-                # cprint green background black text
-                cprint(f'chunk buy submitted of {symbol[:4]} sz: {chunk_size} you my dawg moon dev', 'white', 'on_blue')
+                market_buy(symbol, chunk_size, SLIPPAGE)
+                cprint(f'chunk buy submitted of {symbol[:4]} sz: {chunk_size}', 'white', 'on_blue')
                 time.sleep(1)
 
             time.sleep(tx_sleep)
 
-            pos = get_position(symbol)
-            price = token_price(symbol)
+            pos = float(get_position(symbol) or 0)
+            price = float(token_price(symbol) or 0)
             pos_usd = pos * price
-            size_needed = usd_size - pos_usd
-            if size_needed > max_usd_order_size: chunk_size = max_usd_order_size
-            else: chunk_size = size_needed
+            size_needed = float(USDC_SIZE or 0) - pos_usd
+            if size_needed > max_usd_order_size: 
+                chunk_size = max_usd_order_size
+            else: 
+                chunk_size = size_needed
             chunk_size = int(chunk_size * 10**6)
             chunk_size = str(chunk_size)
 
@@ -1040,26 +1032,28 @@ def breakout_entry(symbol, BREAKOUT_PRICE):
                 time.sleep(10)
                 break
 
-        pos = get_position(symbol)
-        price = token_price(symbol)
+        pos = float(get_position(symbol) or 0)
+        price = float(token_price(symbol) or 0)
         pos_usd = pos * price
-        size_needed = usd_size - pos_usd
-        if size_needed > max_usd_order_size: chunk_size = max_usd_order_size
-        else: chunk_size = size_needed
+        size_needed = float(USDC_SIZE or 0) - pos_usd
+        if size_needed > max_usd_order_size: 
+            chunk_size = max_usd_order_size
+        else: 
+            chunk_size = size_needed
         chunk_size = int(chunk_size * 10**6)
         chunk_size = str(chunk_size)
 
 
 
-def ai_entry(symbol, amount):
+def ai_entry(symbol: str, amount: float):
     """AI agent entry function for Moon Dev's trading system 🤖"""
     cprint("🤖 Moon Dev's AI Trading Agent initiating position entry...", "white", "on_blue")
     
     # amount passed in is the target allocation (up to 30% of usd_size)
-    target_size = amount  # This could be up to $3 (30% of $10)
+    target_size = float(amount or 0)  # This could be up to $3 (30% of $10)
     
-    pos = get_position(symbol)
-    price = token_price(symbol)
+    pos = float(get_position(symbol) or 0)
+    price = float(token_price(symbol) or 0)
     pos_usd = pos * price
     
     cprint(f"🎯 Target allocation: ${target_size:.2f} USD (max 30% of ${usd_size})", "white", "on_blue")
@@ -1089,7 +1083,7 @@ def ai_entry(symbol, amount):
 
     while pos_usd < (target_size * 0.97):
         cprint(f"🤖 AI Agent executing entry for {symbol[:8]}...", "white", "on_blue")
-        print(f"Position: {round(pos,2)} | Price: {round(price,8)} | USD Value: ${round(pos_usd,2)}")
+        print(f"Position: {pos:.2f} | Price: {price:.8f} | USD Value: ${pos_usd:.2f}")
 
         try:
             for i in range(orders_per_open):
@@ -1100,12 +1094,12 @@ def ai_entry(symbol, amount):
             time.sleep(tx_sleep)
             
             # Update position info
-            pos = get_position(symbol)
-            price = token_price(symbol)
+            pos = float(get_position(symbol) or 0)
+            price = float(token_price(symbol) or 0)
             pos_usd = pos * price
             
             # Break if we're at or above target
-            if pos_usd >= (target_size * 0.97):
+            if pos_usd >= (float(target_size or 0) * 0.97):
                 break
                 
             # Recalculate needed size
@@ -1131,11 +1125,11 @@ def ai_entry(symbol, amount):
                     time.sleep(1)
 
                 time.sleep(tx_sleep)
-                pos = get_position(symbol)
-                price = token_price(symbol)
+                pos = float(get_position(symbol) or 0)
+                price = float(token_price(symbol) or 0)
                 pos_usd = pos * price
                 
-                if pos_usd >= (target_size * 0.97):
+                if pos_usd >= (float(target_size or 0) * 0.97):
                     break
                     
                 size_needed = target_size - pos_usd
