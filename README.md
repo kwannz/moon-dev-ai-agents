@@ -2,6 +2,18 @@
 
 A real-time trading system powered by Helius API and Jupiter V6 Swap API for Solana trading, with AI-driven decision making using the DeepSeek R1 1.5B model.
 
+## Ollama Server Setup
+1. Install Ollama: Follow instructions at https://ollama.ai/
+2. Pull the DeepSeek R1 1.5B model:
+   ```bash
+   ollama pull deepseek-coder:1.5b
+   ```
+3. Start Ollama server:
+   ```bash
+   ollama serve
+   ```
+4. The system will automatically connect to http://localhost:11434/api
+
 ## Features
 - Real-time market data from Helius API
 - Automated trading via Jupiter V6 Swap API
