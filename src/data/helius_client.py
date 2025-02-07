@@ -59,6 +59,29 @@ class HeliusClient:
             cprint(f"❌ Failed to get token price: {str(e)}", "red")
             return 0.0
             
+    def get_wallet_balance(self, wallet_address: str) -> float:
+        """Get wallet balance in SOL using Helius API"""
+        try:
+            self._rate_limit()
+            response = requests.post(
+                f"{self.base_url}",
+                headers=self.headers,
+                json={
+                    "jsonrpc": "2.0",
+                    "id": "get-balance",
+                    "method": "getBalance",
+                    "params": [wallet_address]
+                }
+            )
+            response.raise_for_status()
+            data = response.json()
+            if "result" in data and "value" in data["result"]:
+                return float(data["result"]["value"]) / 1e9  # Convert lamports to SOL
+            return 0.0
+        except Exception as e:
+            cprint(f"❌ Failed to get wallet balance: {str(e)}", "red")
+            return 0.0
+
     def get_token_data(self, token_address: str, days_back: int = 3, timeframe: str = '1H') -> pd.DataFrame:
         """Get historical token data and format as OHLCV"""
         try:

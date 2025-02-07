@@ -418,7 +418,17 @@ def fetch_wallet_holdings_og(wallet_address: str) -> pd.DataFrame:
         wallet_key = Keypair.from_base58_string(os.getenv("SOLANA_PRIVATE_KEY"))
         wallet_pubkey = str(wallet_key.pubkey())
         
-        # Use Helius API to get token accounts
+        # Get wallet SOL balance
+        helius_client = HeliusClient()
+        sol_balance = helius_client.get_wallet_balance(wallet_pubkey)
+        if sol_balance > 0:
+            df = pd.DataFrame([{
+                'Mint Address': 'So11111111111111111111111111111111111111112',  # Native SOL mint
+                'Amount': sol_balance,
+                'USD Value': sol_balance * 100  # Approximate SOL price
+            }])
+        
+        # Get token accounts
         response = requests.post(
             f"https://mainnet.helius-rpc.com/?api-key={HELIUS_API_KEY}",
             headers={"Content-Type": "application/json"},
