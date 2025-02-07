@@ -121,4 +121,12 @@ src/data/chat_agent/prompt_log.txt
 
 # Also add the directory in case it doesn't exist yet
 src/data/chat_agent/*.txt
-src/data/code_runner/screenshotssrc/frontend/
+src/data/code_runner/screenshots
+
+# Frontend-related
+node_modules/
+package-lock.json
+*.html
+*.css
+*.js
+src/frontend/
