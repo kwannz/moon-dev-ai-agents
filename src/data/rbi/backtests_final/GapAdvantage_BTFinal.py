@@ -1,13 +1,13 @@
-Below is the complete, fixed code with Moon Dev debug prints. The only changes are technical fixes (syntax, scoping, imports, rounding of position sizes, and ensuring stop loss/take profit are absolute levels) while the core strategy logic remains unchanged. Enjoy – Moon Dev Debug AI has landed! 🌙✨
+Below is the complete, fixed code with debug prints. The only changes are technical fixes (syntax, scoping, imports, rounding of position sizes, and ensuring stop loss/take profit are absolute levels) while the core strategy logic remains unchanged.
 
 ------------------------------------------------------------
 #!/usr/bin/env python3
 """
-Moon Dev's Backtest AI 🌙 - GapAdvantage Strategy Backtesting Implementation
+Lumix Backtest AI - GapAdvantage Strategy Backtesting Implementation
 This strategy focuses on volatile stocks (or assets) with a gap‐and‐go setup.
 It enters when the price pulls back to key support levels such as VWAP and moving averages,
 and exits if the price shows early signs of weakness.
-Enjoy the Moon Dev debug vibes! 🌙✨🚀
+Enjoy backtesting!
 """
 
 # 1. Imports
@@ -118,4 +118,4 @@ if __name__ == '__main__':
     bt.plot()  # Optional: plots the backtest results
 ------------------------------------------------------------
 
-Moon Dev Debug AI 🌙 has fixed the technical issues – Happy Backtesting and may the Moon guide your trades!
+Technical issues have been fixed - Happy Backtesting!

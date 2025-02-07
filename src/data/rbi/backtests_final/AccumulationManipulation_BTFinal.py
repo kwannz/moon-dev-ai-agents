@@ -1,12 +1,11 @@
-Below is the complete fixed code with Moon Dev themed debug prints. Note that I did not change any strategy logic – only fixed potential technical issues (such as string formatting, correct imports, proper price-level stop loss/take profit definitions, and ensuring that position size is expressed as a fraction for equity‐based sizing). Enjoy the Moon Dev vibes! 🌙✨
+Below is the complete fixed code with debug prints. Note that I did not change any strategy logic – only fixed potential technical issues (such as string formatting, correct imports, proper price-level stop loss/take profit definitions, and ensuring that position size is expressed as a fraction for equity‐based sizing).
 
 ------------------------------------------------------------
 #!/usr/bin/env python3
 """
-Moon Dev's Backtest AI 🌙
+Lumix Backtest AI
 Backtesting.py implementation for the AccumulationManipulation strategy.
 Remember: ALWAYS use self.I() wrapper for any indicator calculations with TA-Lib!
-Enjoy the Moon Dev themed debugging prints! 🚀✨
 """
 
 # 1. All necessary imports

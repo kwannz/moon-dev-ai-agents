@@ -3,7 +3,7 @@ Below is the fixed code with no usage of backtesting.lib. I have replaced all in
 ```python
 #!/usr/bin/env python3
 """
-Moon Dev's Backtest AI 🌙 – AccumulationManipulationDetector Strategy
+Lumix Backtest AI – AccumulationManipulationDetector Strategy
 ──────────────────────────────
 This code:
   • Loads BTC-USD-15m.csv data and cleans column names
@@ -12,7 +12,7 @@ This code:
   • Uses a simple “accumulation” check and market bias (based on two SMAs)
   • Implements entry (using a fair-value gap approximation), stop loss and take profit (using a risk-reward ratio based on Fibonacci‐inspired levels)
   • Uses risk management to size positions using risk percentage
-  • Prints Moon Dev themed debug messages at key events 🚀✨
+  • Prints debug messages at key events ✨
   • Runs an initial backtest (with cash = 1,000,000) and then an optimization run for the risk-reward parameter
   • Saves charts in the provided charts directory.
   

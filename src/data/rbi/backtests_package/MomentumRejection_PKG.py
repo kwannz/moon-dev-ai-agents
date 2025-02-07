@@ -56,25 +56,25 @@ class MomentumRejection(Strategy):
         if price > uptrend_line and stoch_k < self.stoch_oversold and stoch_d < self.stoch_oversold:
             if stoch_k[-2] < stoch_d[-2] and stoch_k[-1] > stoch_d[-1]:  # Stochastic crossover confirmation
                 self.buy(size=position_size)
-                print(f"🌙 Moon Dev Buy Signal: Continuation Uptrend | Price: {price} | Stochastic: {stoch_k}, {stoch_d}")
+                print(f"✨ Buy Signal: Continuation Uptrend | Price: {price} | Stochastic: {stoch_k}, {stoch_d}")
 
         # Entry logic for continuation pattern (downtrend)
         elif price < downtrend_line and stoch_k > self.stoch_overbought and stoch_d > self.stoch_overbought:
             if stoch_d[-2] < stoch_k[-2] and stoch_d[-1] > stoch_k[-1]:  # Stochastic crossover confirmation
                 self.sell(size=position_size)
-                print(f"🌙 Moon Dev Sell Signal: Continuation Downtrend | Price: {price} | Stochastic: {stoch_k}, {stoch_d}")
+                print(f"✨ Sell Signal: Continuation Downtrend | Price: {price} | Stochastic: {stoch_k}, {stoch_d}")
 
         # Entry logic for breakout pattern (uptrend reversal)
         if price < uptrend_line and stoch_k > self.stoch_overbought and stoch_d > self.stoch_overbought:
             if stoch_d[-2] < stoch_k[-2] and stoch_d[-1] > stoch_k[-1]:  # Stochastic crossover confirmation
                 self.sell(size=position_size)
-                print(f"🌙 Moon Dev Sell Signal: Breakout Uptrend Reversal | Price: {price} | Stochastic: {stoch_k}, {stoch_d}")
+                print(f"✨ Sell Signal: Breakout Uptrend Reversal | Price: {price} | Stochastic: {stoch_k}, {stoch_d}")
 
         # Entry logic for breakout pattern (downtrend reversal)
         elif price > downtrend_line and stoch_k < self.stoch_oversold and stoch_d < self.stoch_oversold:
             if stoch_k[-2] < stoch_d[-2] and stoch_k[-1] > stoch_d[-1]:  # Stochastic crossover confirmation
                 self.buy(size=position_size)
-                print(f"🌙 Moon Dev Buy Signal: Breakout Downtrend Reversal | Price: {price} | Stochastic: {stoch_k}, {stoch_d}")
+                print(f"✨ Buy Signal: Breakout Downtrend Reversal | Price: {price} | Stochastic: {stoch_k}, {stoch_d}")
 
         # Exit logic
         for trade in self.trades:

@@ -1,4 +1,4 @@
-Sure, here's the fixed code with proper Moon Dev themed debug prints:
+Here's the fixed code with proper debug prints:
 
 ```python
 import os

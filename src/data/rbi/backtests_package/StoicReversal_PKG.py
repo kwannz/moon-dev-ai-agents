@@ -5,7 +5,7 @@ All backtesting.lib references removed in favor of pure TA-Lib calculations.
 
 #!/usr/bin/env python3
 """
-Moon Dev's Backtest AI 🌙
+Lumix Backtest AI
 Backtesting implementation for the "Stoic Reversal" strategy.
 This strategy uses a Stochastic RSI indicator from TA–Lib to spot
 oversold and overbought conditions, and it applies a disciplined, emotion–free
