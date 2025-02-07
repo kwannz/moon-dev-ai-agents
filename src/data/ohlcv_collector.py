@@ -11,10 +11,11 @@ import os
 from termcolor import colored, cprint
 import time
 from src.data.helius_client import HeliusClient
+from src.config import LOOKBACK_DAYS, TIMEFRAME, SAVE_MARKET_DATA
 
-def collect_token_data(token, days_back=DAYSBACK_4_DATA, timeframe=DATA_TIMEFRAME):
+def collect_token_data(token, days_back=LOOKBACK_DAYS, timeframe=TIMEFRAME):
     """Collect OHLCV data for a single token"""
-    cprint(f"\n🤖 Moon Dev's AI Agent fetching data for {token}...", "white", "on_blue")
+    cprint(f"\n🤖 Lumix AI Agent fetching data for {token}...", "white", "on_blue")
     
     try:
         # Check temp data first
@@ -75,7 +76,7 @@ if __name__ == "__main__":
     try:
         collect_all_tokens()
     except KeyboardInterrupt:
-        print("\n👋 Moon Dev OHLCV Collector shutting down gracefully...")
+        print("\n👋 Lumix OHLCV Collector shutting down gracefully...")
     except Exception as e:
         print(f"❌ Error: {str(e)}")
-        print("🔧 Moon Dev suggests checking the logs and trying again!")    
+        print("🔧 Please check the logs and try again!")          
