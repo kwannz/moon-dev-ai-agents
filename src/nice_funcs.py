@@ -23,6 +23,12 @@ import shutil
 import atexit
 from src.data.helius_client import HeliusClient
 
+# Load environment variables
+load_dotenv()
+HELIUS_API_KEY = os.getenv("HELIUS_API_KEY")
+if not HELIUS_API_KEY:
+    raise ValueError("HELIUS_API_KEY not found in environment variables!")
+
 # Constants
 MIN_TRADES_LAST_HOUR = 100  # Minimum trades required in last hour
 SLIPPAGE = 500  # Default slippage (5%)
