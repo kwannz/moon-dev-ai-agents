@@ -251,8 +251,8 @@ from io import BytesIO
 import PyPDF2
 from youtube_transcript_api import YouTubeTranscriptApi
 import openai
-from anthropic import Anthropic
 from pathlib import Path
+from src.models import model_factory
 from termcolor import cprint
 import threading
 import itertools
@@ -307,16 +307,15 @@ def init_deepseek_client():
         print("💡 Will fall back to Claude model from config.py")
         return None
 
-def init_anthropic_client():
-    """Initialize Anthropic client for Claude models"""
+def init_model(model_config):
+    """Initialize model using model factory"""
     try:
-        anthropic_key = os.getenv("ANTHROPIC_KEY")
-        if not anthropic_key:
-            raise ValueError("🚨 ANTHROPIC_KEY not found in environment variables!")
-            
-        return Anthropic(api_key=anthropic_key)
+        model = model_factory.get_model(model_config["type"], model_config["name"])
+        if not model:
+            raise ValueError(f"🚨 Could not initialize {model_config['type']} {model_config['name']} model!")
+        return model
     except Exception as e:
-        print(f"❌ Error initializing Anthropic client: {str(e)}")
+        print(f"❌ Error initializing model: {str(e)}")
         return None
 
 def chat_with_model(system_prompt, user_content, model_config):
@@ -348,7 +347,7 @@ def chat_with_model(system_prompt, user_content, model_config):
             response = model.generate_response(
                 system_prompt="",  # O3 doesn't use system prompts
                 user_content=combined_prompt,
-                reasoning_effort=reasoning_effort  # Use configured reasoning effort
+                temperature=AI_TEMPERATURE
             )
         else:
             # For other models, use standard parameters
@@ -365,7 +364,7 @@ def chat_with_model(system_prompt, user_content, model_config):
             
         if not hasattr(response, 'content'):
             cprint(f"❌ Response missing content attribute. Response type: {type(response)}", "red")
-            cprint(f"Response attributes: {dir(response)}", "yellow")
+            cprint("Response attributes: None", "yellow")
             return None
 
         content = response.content
@@ -385,9 +384,7 @@ def chat_with_model(system_prompt, user_content, model_config):
             cprint(f"🔍 Response error: {getattr(e, 'response', 'No response details')}", "yellow")
         if hasattr(e, '__dict__'):
             cprint("🔍 Error attributes:", "yellow")
-            for attr in dir(e):
-                if not attr.startswith('_'):
-                    cprint(f"  ├─ {attr}: {getattr(e, attr)}", "yellow")
+            cprint(f"  ├─ Error: {str(e)}", "yellow")
         return None
 
 def get_youtube_transcript(video_id):
@@ -631,7 +628,7 @@ def process_trading_idea(idea: str) -> None:
             
         # Phase 2: Backtest using only the research output
         print("\n📈 Phase 2: Backtest")
-        backtest = create_backtest(strategy, strategy_name)
+        backtest = create_backtest(strategy, str(strategy_name) if strategy_name else "")
         
         if not backtest:
             print("❌ Backtest phase failed!")
@@ -644,7 +641,7 @@ def process_trading_idea(idea: str) -> None:
             
         # Phase 3: Package Check using only the backtest code
         print("\n📦 Phase 3: Package Check")
-        package_checked = package_check(backtest, strategy_name)
+        package_checked = package_check(backtest, str(strategy_name) if strategy_name else "")
         
         if not package_checked:
             print("❌ Package check failed!")
@@ -657,7 +654,7 @@ def process_trading_idea(idea: str) -> None:
             
         # Phase 4: Debug using only the package-checked code
         print("\n🔧 Phase 4: Debug")
-        final_backtest = debug_backtest(package_checked, strategy, strategy_name)
+        final_backtest = debug_backtest(package_checked, strategy, str(strategy_name) if strategy_name else "")
         
         if not final_backtest:
             print("❌ Debug phase failed!")

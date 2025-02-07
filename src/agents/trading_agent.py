@@ -58,7 +58,6 @@ Remember:
 - Cash must be stored as USDC using USDC_ADDRESS: {USDC_ADDRESS}
 """
 
-import anthropic
 import os
 import pandas as pd
 import json
@@ -71,13 +70,34 @@ import time
 from src.config import *
 from src import nice_funcs as n
 from src.data.ohlcv_collector import collect_all_tokens
+from src.agents.focus_agent import MODEL_TYPE, MODEL_NAME
+from src.models.model_factory import model_factory
 
 # Load environment variables
 load_dotenv()
 
 class TradingAgent:
     def __init__(self):
-        self.client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_KEY"))
+        self.model_type = MODEL_TYPE
+        self.model_name = MODEL_NAME
+        print(f"🚀 Initializing {self.model_type} model...")
+        self.model = None
+        max_retries = 3
+        retry_count = 0
+        
+        while self.model is None and retry_count < max_retries:
+            try:
+                self.model = model_factory.get_model(self.model_type, self.model_name)
+                if self.model and hasattr(self.model, 'generate_response'):
+                    break
+                raise ValueError("Could not initialize model")
+            except Exception as e:
+                print(f"⚠️ Error initializing model (attempt {retry_count + 1}/{max_retries}): {str(e)}")
+                retry_count += 1
+                if retry_count < max_retries:
+                    time.sleep(1)  # Wait before retrying
+                else:
+                    raise ValueError(f"Failed to initialize {self.model_type} {self.model_name} model after {max_retries} attempts")
         self.recommendations_df = pd.DataFrame(columns=['token', 'action', 'confidence', 'reasoning'])
         print("🤖 Moon Dev's LLM Trading Agent initialized!")
 
@@ -99,28 +119,26 @@ Strategy Signals Available:
             else:
                 strategy_context = "No strategy signals available."
             
-            message = self.client.messages.create(
-                model=AI_MODEL,
-                max_tokens=AI_MAX_TOKENS,
-                temperature=AI_TEMPERATURE,
-                messages=[
-                    {
-                        "role": "user", 
-                        "content": f"{TRADING_PROMPT.format(strategy_context=strategy_context)}\n\nMarket Data to Analyze:\n{market_data}"
-                    }
-                ]
-            )
-            
-            # Parse the response - handle both string and list responses
-            response = message.content
-            if isinstance(response, list):
-                # Extract text from TextBlock objects if present
-                response = '\n'.join([
-                    item.text if hasattr(item, 'text') else str(item)
-                    for item in response
-                ])
-            
-            lines = response.split('\n')
+            if self.model is None:
+                print("⚠️ Model not initialized, skipping market analysis")
+                return None
+                
+            try:
+                response = self.model.generate_response(
+                    system_prompt=TRADING_PROMPT.format(strategy_context=strategy_context),
+                    user_content=f"Market Data to Analyze:\n{market_data}",
+                    temperature=AI_TEMPERATURE
+                )
+                if not response:
+                    print("❌ No response from model")
+                    return None
+            except Exception as e:
+                print(f"❌ Error getting AI analysis: {str(e)}")
+                return None
+            if not response:
+                return None
+                
+            lines = str(response).split('\n')
             action = lines[0].strip() if lines else "NOTHING"
             
             # Extract confidence from the response (assuming it's mentioned as a percentage)
@@ -170,37 +188,33 @@ Strategy Signals Available:
             cprint(f"🎯 Maximum position size: ${max_position_size:.2f} ({MAX_POSITION_PERCENTAGE}% of ${usd_size:.2f})", "cyan")
             
             # Get allocation from AI
-            message = self.client.messages.create(
-                model=AI_MODEL,
-                max_tokens=AI_MAX_TOKENS,
-                temperature=AI_TEMPERATURE,
-                messages=[{
-                    "role": "user", 
-                    "content": f"""You are Moon Dev's Portfolio Allocation AI 🌙
-
-Given:
-- Total portfolio size: ${usd_size}
-- Maximum position size: ${max_position_size} ({MAX_POSITION_PERCENTAGE}% of total)
-- Minimum cash (USDC) buffer: {CASH_PERCENTAGE}%
-- Available tokens: {MONITORED_TOKENS}
-- USDC Address: {USDC_ADDRESS}
-
-Provide a portfolio allocation that:
-1. Never exceeds max position size per token
-2. Maintains minimum cash buffer
-3. Returns allocation as a JSON object with token addresses as keys and USD amounts as values
-4. Uses exact USDC address: {USDC_ADDRESS} for cash allocation
-
-Example format:
-{{
-    "token_address": amount_in_usd,
-    "{USDC_ADDRESS}": remaining_cash_amount  # Use exact USDC address
-}}"""
-                }]
-            )
+            if self.model is None:
+                print("⚠️ Model not initialized, skipping portfolio allocation")
+                return None
+                
+            try:
+                response = self.model.generate_response(
+                    system_prompt=ALLOCATION_PROMPT.format(
+                        MAX_POSITION_PERCENTAGE=MAX_POSITION_PERCENTAGE,
+                        CASH_PERCENTAGE=CASH_PERCENTAGE,
+                        USDC_ADDRESS=USDC_ADDRESS
+                    ),
+                    user_content=f"""Portfolio size: ${usd_size}
+Maximum position size: ${max_position_size}
+Available tokens: {MONITORED_TOKENS}""",
+                    temperature=AI_TEMPERATURE
+                )
+                if not response:
+                    print("❌ No response from model")
+                    return None
+            except Exception as e:
+                print(f"❌ Error getting AI allocation: {str(e)}")
+                return None
             
             # Parse the response
-            allocations = self.parse_allocation_response(str(message.content))
+            if not response:
+                return None
+            allocations = self.parse_allocation_response(str(response))
             if not allocations:
                 return None
                 
@@ -295,10 +309,6 @@ Example format:
     def parse_allocation_response(self, response):
         """Parse the AI's allocation response and handle both string and TextBlock formats"""
         try:
-            # Handle TextBlock format from Claude 3
-            if isinstance(response, list):
-                response = response[0].text if hasattr(response[0], 'text') else str(response[0])
-            
             print("🔍 Raw response received:")
             print(response)
             
@@ -367,12 +377,9 @@ Example format:
             
             return allocations
             
-        except json.JSONDecodeError as e:
-            print(f"❌ Error parsing allocation JSON: {e}")
-            print(f"🔍 Raw text received:\n{allocation_text}")
-            return None
         except Exception as e:
-            print(f"❌ Unexpected error parsing allocations: {e}")
+            print(f"❌ Error parsing allocations: {e}")
+            print(f"🔍 Raw text received:\n{allocation_text}")
             return None
 
     def run(self):
@@ -385,9 +392,21 @@ Example format:
             current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             cprint(f"\n⏰ AI Agent Run Starting at {current_time}", "white", "on_green")
             
-            # Collect OHLCV data for all tokens
-            cprint("📊 Collecting market data...", "white", "on_blue")
-            market_data = collect_all_tokens()
+            # Check if BIRDEYE_API_KEY is disabled
+            if os.getenv("BIRDEYE_API_KEY") == "disabled":
+                cprint("⚠️ BIRDEYE_API_KEY is disabled, using mock market data", "yellow")
+                market_data = {
+                    token: {
+                        "price": 1.0,
+                        "volume": 1000000,
+                        "market_cap": 1000000000,
+                        "timestamp": datetime.now().isoformat()
+                    } for token in MONITORED_TOKENS
+                }
+            else:
+                # Collect OHLCV data for all tokens
+                cprint("📊 Collecting market data...", "white", "on_blue")
+                market_data = collect_all_tokens()
             
             # Analyze each token's data
             for token, data in market_data.items():
@@ -466,4 +485,4 @@ def main():
             time.sleep(INTERVAL)
 
 if __name__ == "__main__":
-    main() 
+    main()                

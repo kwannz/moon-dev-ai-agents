@@ -91,13 +91,13 @@ def patched_client(*args, **kwargs):
 
 httpx.Client = patched_client
 
-# imports 
-from twikit import Client, TooManyRequests, BadRequest
+# imports
+from .base_agent import BaseAgent
 
-class SentimentAgent:
+class SentimentAgent(BaseAgent):
     def __init__(self):
         """Initialize the Sentiment Agent"""
-        self.client = None
+        super().__init__("sentiment")
         self.tokenizer = None
         self.model = None
         self.audio_dir = Path("src/audio")
@@ -109,34 +109,63 @@ class SentimentAgent:
         
         # Load the sentiment model at initialization
         cprint("🤖 Loading sentiment model...", "cyan")
-        self.init_sentiment_model()
-            
-        cprint("🌙 Moon Dev's Sentiment Agent initialized!", "green")
+        try:
+            self.init_sentiment_model()
+            cprint("✨ Sentiment model loaded!", "green")
+        except Exception as e:
+            cprint(f"⚠️ Error loading sentiment model: {str(e)}", "yellow")
+            self.tokenizer = None
+            self.model = None
+        cprint("🌙 Moon Dev's Sentiment Agent initialized! (Twitter functionality disabled)", "green")
         
     def init_sentiment_model(self):
         """Initialize the BERT model for sentiment analysis"""
-        if self.model is None:
-            self.tokenizer = AutoTokenizer.from_pretrained("finiteautomata/bertweet-base-sentiment-analysis")
-            self.model = AutoModelForSequenceClassification.from_pretrained("finiteautomata/bertweet-base-sentiment-analysis")
-            cprint("✨ Sentiment model loaded!", "green")
+        try:
+            if self.tokenizer is None or self.model is None:
+                self.tokenizer = AutoTokenizer.from_pretrained("finiteautomata/bertweet-base-sentiment-analysis")
+                self.model = AutoModelForSequenceClassification.from_pretrained("finiteautomata/bertweet-base-sentiment-analysis")
+                return True
+            return False
+        except Exception as e:
+            cprint(f"❌ Error loading sentiment model: {str(e)}", "red")
+            raise
 
     def analyze_sentiment(self, texts):
         """Analyze sentiment of a batch of texts"""
-        self.init_sentiment_model()
-        
-        sentiments = []
-        batch_size = 8  # Process in small batches to avoid memory issues
-        
-        for i in range(0, len(texts), batch_size):
-            batch_texts = texts[i:i + batch_size]
-            inputs = self.tokenizer(batch_texts, padding=True, truncation=True, max_length=128, return_tensors="pt")
+        if not texts:
+            return 0.0
             
-            with torch.no_grad():
-                outputs = self.model(**inputs)
-                predictions = torch.nn.functional.softmax(outputs.logits, dim=-1)
-                sentiments.extend(predictions.tolist())
+        try:
+            if self.tokenizer is None or self.model is None:
+                try:
+                    self.init_sentiment_model()
+                except Exception:
+                    cprint("⚠️ Could not initialize sentiment model, returning neutral sentiment", "yellow")
+                    return 0.0
+                    
+            if self.tokenizer is None or self.model is None:
+                cprint("⚠️ Model initialization failed, returning neutral sentiment", "yellow")
+                return 0.0
+                
+            sentiments = []
+            batch_size = 8  # Process in small batches to avoid memory issues
+            
+            for i in range(0, len(texts), batch_size):
+                batch_texts = texts[i:i + batch_size]
+                inputs = self.tokenizer(batch_texts, padding=True, truncation=True, max_length=128, return_tensors="pt")
+                
+                with torch.no_grad():
+                    outputs = self.model(**inputs)
+                    predictions = torch.nn.functional.softmax(outputs.logits, dim=-1)
+                    sentiments.extend(predictions.tolist())
+                    
+            return self._calculate_sentiment_scores(sentiments)
+        except Exception as e:
+            cprint(f"❌ Error analyzing sentiment: {str(e)}", "red")
+            return 0.0  # Return neutral sentiment on error
         
-        # Convert to sentiment scores (-1 to 1)
+    def _calculate_sentiment_scores(self, sentiments):
+        """Convert sentiment predictions to scores"""
         scores = []
         for sentiment in sentiments:
             # NEG, NEU, POS
@@ -207,7 +236,7 @@ class SentimentAgent:
                 cutoff_time = datetime.now() - timedelta(hours=24)
                 history_df = history_df[history_df['timestamp'] > cutoff_time]
                 # Convert back to ISO format for consistent storage
-                history_df['timestamp'] = history_df['timestamp'].dt.isoformat()
+                history_df['timestamp'] = history_df['timestamp'].apply(lambda x: x.isoformat())
                 # Append new data
                 history_df = pd.concat([history_df, new_data], ignore_index=True)
             else:
@@ -309,97 +338,10 @@ class SentimentAgent:
         if not is_important:
             cprint(f"📊 Raw sentiment score: {sentiment_score:.2f} (on scale of -1 to 1)", "cyan")
 
-    def init_twitter_client(self):
-        """Initialize Twitter client using saved cookies"""
-        try:
-            if not os.path.exists("cookies.json"):
-                cprint("❌ No cookies.json found! Please run twitter_login.py first", "red")
-                sys.exit(1)
-
-            cprint("🌙 Moon Dev's Sentiment Agent starting up...", "cyan")
-            client = Client()
-            client.load_cookies("cookies.json")
-            cprint("🚀 Moon Dev's cookies loaded successfully! Time to fly to the moon! 🌙", "green")
-            return client
-
-        except Exception as e:
-            cprint(f"❌ Error initializing client: {str(e)}", "red")
-            if os.path.exists("cookies.json"):
-                os.remove("cookies.json")
-                cprint("🗑️ Removed invalid cookies file", "yellow")
-                cprint("🔄 Please run twitter_login.py again", "yellow")
-            sys.exit(1)
-
-    async def get_tweets(self, query):
-        """Get tweets with proper error handling"""
-        collected_tweets = []
-        
-        try:
-            cprint(f'🕒 Time is {datetime.now()} - Moon Dev getting fresh tweets for {query}! 🌟', "cyan")
-            
-            # Random delay before request (1-3 seconds)
-            time.sleep(randint(1, 3))
-            
-            # Get tweets using search
-            tweets = await self.client.search_tweet(query, product='Latest')
-            
-            if tweets:
-                # Process tweets
-                for tweet in tweets:
-                    if len(collected_tweets) >= TWEETS_PER_RUN:
-                        break
-                    if not any(word.lower() in tweet.text.lower() for word in IGNORE_LIST):
-                        collected_tweets.append(tweet)
-                        cprint(f"📝 Found tweet: {tweet.text[:100]}...", "cyan")
-
-                # Try to get more tweets if we need them
-                try:
-                    while len(collected_tweets) < TWEETS_PER_RUN:
-                        # Random delay between requests (2-5 seconds)
-                        time.sleep(randint(2, 5))
-                        more_tweets = await tweets.next()
-                        if not more_tweets:
-                            break
-                            
-                        for tweet in more_tweets:
-                            if len(collected_tweets) >= TWEETS_PER_RUN:
-                                break
-                            if not any(word.lower() in tweet.text.lower() for word in IGNORE_LIST):
-                                collected_tweets.append(tweet)
-                                cprint(f"📝 Found tweet: {tweet.text[:100]}...", "cyan")
-                except AttributeError:
-                    # If pagination is not supported, just continue with what we have
-                    cprint("📊 Got initial batch of tweets", "cyan")
-                except Exception as e:
-                    cprint(f"ℹ️ Stopped pagination: {str(e)}", "yellow")
-
-        except TooManyRequests as e:
-            rate_limit_reset = datetime.fromtimestamp(e.rate_limit_reset)
-            wait_time = (rate_limit_reset - datetime.now()).total_seconds() + randint(5, 10)
-            cprint(f'⏰ Rate limit hit, waiting {wait_time} seconds...', "yellow")
-            time.sleep(wait_time)
-            # Try one more time after waiting
-            try:
-                tweets = await self.client.search_tweet(query, product='Latest')
-                if tweets:
-                    for tweet in tweets:
-                        if len(collected_tweets) >= TWEETS_PER_RUN:
-                            break
-                        if not any(word.lower() in tweet.text.lower() for word in IGNORE_LIST):
-                            collected_tweets.append(tweet)
-                            cprint(f"📝 Found tweet: {tweet.text[:100]}...", "cyan")
-            except Exception as e:
-                cprint(f"❌ Second attempt failed: {str(e)}", "red")
-        except Exception as e:
-            cprint(f"❌ Error fetching tweets: {str(e)}", "red")
-            time.sleep(randint(3, 7))
-
-        if collected_tweets:
-            cprint(f"✨ Successfully collected {len(collected_tweets)} tweets for {query}", "green")
-        else:
-            cprint(f"⚠️ No tweets found for {query}", "yellow")
-
-        return collected_tweets
+    def get_tweets(self, query):
+        """Disabled Twitter functionality - returns empty list"""
+        cprint("⚠️ Twitter functionality is disabled", "yellow")
+        return []
 
     def save_tweets(self, tweets, token):
         """Save tweets to CSV file using pandas, appending new ones and avoiding duplicates"""
@@ -458,39 +400,16 @@ class SentimentAgent:
         except Exception as e:
             cprint(f"❌ Error saving to CSV: {str(e)}", "red")
 
-    async def run_async(self):
-        """Async function to run sentiment analysis"""
+    def run_async(self):
+        """Run sentiment analysis (Twitter functionality disabled)"""
         cprint("🤖 Moon Dev's Sentiment Analysis running...", "cyan")
-        
-        # Initialize client if not already done
-        if not self.client:
-            self.client = self.init_twitter_client()
-        
-        all_tweets = []
-        for token in TOKENS_TO_TRACK:
-            try:
-                cprint(f"🔍 Analyzing sentiment for {token}...", "cyan")
-                tweets = await self.get_tweets(token)
-                if tweets:
-                    self.save_tweets(tweets, token)
-                    all_tweets.extend(tweets)
-                    cprint(f"✅ Saved {len(tweets)} tweets for {token}", "green")
-                else:
-                    cprint(f"⚠️ No tweets found for {token}", "yellow")
-                    
-            except Exception as e:
-                cprint(f"❌ Error processing {token}: {str(e)}", "red")
-                continue
-
-        # Analyze sentiment for all collected tweets
-        if all_tweets:
-            self.analyze_and_announce_sentiment(all_tweets)
-
+        cprint("⚠️ Twitter functionality is disabled", "yellow")
+        time.sleep(CHECK_INTERVAL_MINUTES * 60)
         cprint("🌙 Moon Dev's Sentiment Analysis complete! 🚀", "green")
 
     def run(self):
-        """Main function to run sentiment analysis"""
-        asyncio.run(self.run_async())
+        """Main function to run sentiment analysis (implements BaseAgent interface)"""
+        self.run_async()  # Run the async implementation while maintaining BaseAgent interface
 
 if __name__ == "__main__":
     try:

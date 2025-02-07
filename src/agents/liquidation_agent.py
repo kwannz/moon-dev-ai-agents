@@ -14,8 +14,8 @@ from datetime import datetime, timedelta
 from termcolor import colored, cprint
 from dotenv import load_dotenv
 import openai
-import anthropic
 from pathlib import Path
+from src.models import model_factory
 from src import nice_funcs as n
 from src import nice_funcs_hl as hl
 from src.agents.api import MoonDevAPI
@@ -88,46 +88,37 @@ class LiquidationAgent(BaseAgent):
         """Initialize Luna the Liquidation Agent"""
         super().__init__('liquidation')
         
-        # Set AI parameters - use config values unless overridden
-        self.ai_model = AI_MODEL if AI_MODEL else config.AI_MODEL
+        # Set AI parameters
         self.ai_temperature = AI_TEMPERATURE if AI_TEMPERATURE > 0 else config.AI_TEMPERATURE
-        self.ai_max_tokens = AI_MAX_TOKENS if AI_MAX_TOKENS > 0 else config.AI_MAX_TOKENS
         
-        print(f"🤖 Using AI Model: {self.ai_model}")
-        if AI_MODEL or AI_TEMPERATURE > 0 or AI_MAX_TOKENS > 0:
-            print("⚠️ Note: Using some override settings instead of config.py defaults")
-            if AI_MODEL:
-                print(f"  - Model: {AI_MODEL}")
-            if AI_TEMPERATURE > 0:
-                print(f"  - Temperature: {AI_TEMPERATURE}")
-            if AI_MAX_TOKENS > 0:
-                print(f"  - Max Tokens: {AI_MAX_TOKENS}")
-                
         load_dotenv()
         
-        # Get API keys
+        # Get OpenAI key for TTS
         openai_key = os.getenv("OPENAI_KEY")
-        anthropic_key = os.getenv("ANTHROPIC_KEY")
-        deepseek_key = os.getenv("DEEPSEEK_KEY")
-        
         if not openai_key:
             raise ValueError("🚨 OPENAI_KEY not found in environment variables!")
-        if not anthropic_key:
-            raise ValueError("🚨 ANTHROPIC_KEY not found in environment variables!")
             
-        # Initialize OpenAI client for DeepSeek
-        if deepseek_key and MODEL_OVERRIDE.lower() == "deepseek-chat":
-            self.deepseek_client = openai.OpenAI(
-                api_key=deepseek_key,
-                base_url=DEEPSEEK_BASE_URL
-            )
-            print("🚀 DeepSeek model initialized!")
-        else:
-            self.deepseek_client = None
-            
-        # Initialize other clients
+        # Initialize OpenAI client for TTS
         openai.api_key = openai_key
-        self.client = anthropic.Anthropic(api_key=anthropic_key)
+        
+        # Initialize Ollama model
+        print("🚀 Initializing Ollama model...")
+        self.model = None
+        max_retries = 3
+        retry_count = 0
+        
+        while self.model is None and retry_count < max_retries:
+            try:
+                self.model = model_factory.get_model("ollama", "deepseek-r1:1.5b")
+                if not self.model:
+                    raise ValueError("Could not initialize Ollama model")
+            except Exception as e:
+                print(f"⚠️ Error initializing model (attempt {retry_count + 1}/{max_retries}): {str(e)}")
+                retry_count += 1
+                if retry_count < max_retries:
+                    time.sleep(1)  # Wait before retrying
+                else:
+                    raise ValueError(f"Failed to initialize model after {max_retries} attempts")
         
         self.api = MoonDevAPI()
         
@@ -322,33 +313,26 @@ class LiquidationAgent(BaseAgent):
             
             print(f"\n🤖 Analyzing liquidation spike with AI...")
             
-            # Use DeepSeek if configured
-            if self.deepseek_client and MODEL_OVERRIDE.lower() == "deepseek-chat":
-                print("🚀 Using DeepSeek for analysis...")
-                response = self.deepseek_client.chat.completions.create(
-                    model="deepseek-chat",
-                    messages=[
-                        {"role": "system", "content": "You are a liquidation analyst. You must respond in exactly 3 lines: BUY/SELL/NOTHING, reason, and confidence."},
-                        {"role": "user", "content": context}
-                    ],
-                    max_tokens=self.ai_max_tokens,
-                    temperature=self.ai_temperature,
-                    stream=False
+            # Get AI analysis using model factory
+            if self.model is None:
+                print("⚠️ Model not initialized, skipping AI analysis")
+                return None
+                
+            try:
+                response = self.model.generate_response(
+                    system_prompt="You are a liquidation analyst. You must respond in exactly 3 lines: BUY/SELL/NOTHING, reason, and confidence.",
+                    user_content=context,
+                    temperature=self.ai_temperature
                 )
-                response_text = response.choices[0].message.content.strip()
-            else:
-                # Use Claude as before
-                print("🤖 Using Claude for analysis...")
-                message = self.client.messages.create(
-                    model=self.ai_model,
-                    max_tokens=self.ai_max_tokens,
-                    temperature=self.ai_temperature,
-                    messages=[{
-                        "role": "user",
-                        "content": context
-                    }]
-                )
-                response_text = str(message.content)
+            except Exception as e:
+                print(f"❌ Error getting AI analysis: {str(e)}")
+                return None
+            
+            if not response:
+                print("❌ No response from AI")
+                return None
+                
+            response_text = str(response)
             
             # Handle response
             if not response_text:
@@ -393,7 +377,7 @@ class LiquidationAgent(BaseAgent):
                 'pct_change': total_pct_change,
                 'pct_change_longs': pct_change_longs,
                 'pct_change_shorts': pct_change_shorts,
-                'model_used': 'deepseek-chat' if self.deepseek_client else self.ai_model
+                'model_used': 'deepseek-r1:1.5b'
             }
             
         except Exception as e:

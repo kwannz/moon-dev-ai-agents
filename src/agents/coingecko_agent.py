@@ -232,8 +232,8 @@ from datetime import datetime, timedelta
 import time
 from dotenv import load_dotenv
 from termcolor import colored, cprint
-import anthropic
 from pathlib import Path
+from src.models import model_factory
 import openai
 
 # Local imports
@@ -276,24 +276,30 @@ cleanup_old_memory_files()  # Clean up old files on startup
 class AIAgent:
     """Individual AI Agent for collaborative decision making"""
     
-    def __init__(self, name: str, model: str = None):
+    def __init__(self, name: str, model: str = "deepseek-r1:1.5b"):
         self.name = name
-        self.model = model or AI_MODEL
+        self.model_name = model
         
-        # Initialize appropriate client based on model
-        if "deepseek" in self.model.lower():
-            deepseek_key = os.getenv("DEEPSEEK_KEY")
-            if deepseek_key:
-                self.client = openai.OpenAI(
-                    api_key=deepseek_key,
-                    base_url=DEEPSEEK_BASE_URL
-                )
-                print(f"🚀 {name} using DeepSeek model: {model}")
-            else:
-                raise ValueError("🚨 DEEPSEEK_KEY not found in environment variables!")
-        else:
-            self.client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_KEY"))
-            print(f"🤖 {name} using Claude model: {model}")
+        # Initialize Ollama model
+        print(f"🚀 Initializing Ollama model for {name}...")
+        self.model = None
+        max_retries = 3
+        retry_count = 0
+        
+        while self.model is None and retry_count < max_retries:
+            try:
+                self.model = model_factory.get_model("ollama", self.model_name)
+                if self.model and hasattr(self.model, 'generate_response'):
+                    break
+                raise ValueError("Could not initialize Ollama model")
+            except Exception as e:
+                print(f"⚠️ Error initializing model (attempt {retry_count + 1}/{max_retries}): {str(e)}")
+                retry_count += 1
+                if retry_count < max_retries:
+                    time.sleep(1)  # Wait before retrying
+                else:
+                    raise ValueError(f"Failed to initialize model after {max_retries} attempts")
+        print(f"🤖 {name} using Ollama model: {model}")
             
         # Use a simpler memory file name
         self.memory_file = AGENT_MEMORY_DIR / f"{name.lower().replace(' ', '_')}.json"
@@ -317,7 +323,7 @@ class AIAgent:
         with open(self.memory_file, 'w') as f:
             json.dump(self.memory, f, indent=2)
             
-    def think(self, market_data: Dict, other_agent_message: str = None) -> str:
+    def think(self, market_data: Dict, other_agent_message: Optional[str] = None) -> str:
         """Process market data and other agent's message to make decisions"""
         try:
             print_section(f"🤔 {self.name} is thinking...", "on_magenta")
@@ -360,30 +366,24 @@ Remember to format your response like this:
 [Fun reference to Moon Dev's trading style]
 """
             
-            # Get AI response with correct client
-            if "deepseek" in self.model.lower():
-                response = self.client.chat.completions.create(
-                    model=self.model,
-                    messages=[
-                        {"role": "system", "content": prompt},
-                        {"role": "user", "content": market_context}
-                    ],
-                    max_tokens=max_tokens,
+            # Get AI response using Ollama model
+            if self.model is None:
+                print("⚠️ Model not initialized, skipping market analysis")
+                return "Error: Model not initialized"
+                
+            try:
+                response_text = self.model.generate_response(
+                    system_prompt=prompt,
+                    user_content=market_context,
                     temperature=temperature
                 )
-                response_text = response.choices[0].message.content
-            else:
-                message = self.client.messages.create(
-                    model=self.model,
-                    max_tokens=max_tokens,
-                    temperature=temperature,
-                    system=prompt,
-                    messages=[{
-                        "role": "user",
-                        "content": market_context
-                    }]
-                )
-                response_text = str(message.content)
+                if response_text is None:
+                    raise ValueError("Failed to get model response")
+            except Exception as e:
+                print(f"❌ Error getting AI analysis: {str(e)}")
+                return f"Error analyzing market data: {str(e)}"
+            if response_text is None:
+                raise ValueError("Failed to get model response")
             
             # Clean up the response
             response = (response_text
@@ -497,7 +497,8 @@ class CoinGeckoAPI:
     def get_exchanges(self) -> List[Dict]:
         """Get all exchanges data"""
         print("💱 Getting exchanges data...")
-        return self._make_request("exchanges")
+        response = self._make_request("exchanges")
+        return response if isinstance(response, list) else []
 
     def get_exchange_rates(self) -> Dict:
         """Get BTC-to-Currency exchange rates"""
@@ -542,14 +543,32 @@ class CoinGeckoAPI:
             'days': days
         }
         print(f"📊 Getting {days} days of OHLC data for {id}...")
-        return self._make_request(f"coins/{id}/ohlc", params)
+        response = self._make_request(f"coins/{id}/ohlc", params)
+        return response if isinstance(response, list) else []
 
 class TokenExtractorAgent:
     """Agent that extracts token/crypto symbols from conversations"""
     
     def __init__(self):
-        self.client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_KEY"))
-        self.model = TOKEN_EXTRACTOR_MODEL
+        print("🚀 Initializing Ollama model for Token Extractor...")
+        self.model = None
+        max_retries = 3
+        retry_count = 0
+        
+        while self.model is None and retry_count < max_retries:
+            try:
+                self.model = model_factory.get_model("ollama", "deepseek-r1:1.5b")
+                if self.model and hasattr(self.model, 'generate_response'):
+                    break
+                raise ValueError("Could not initialize Ollama model")
+            except Exception as e:
+                print(f"⚠️ Error initializing model (attempt {retry_count + 1}/{max_retries}): {str(e)}")
+                retry_count += 1
+                if retry_count < max_retries:
+                    time.sleep(1)  # Wait before retrying
+                else:
+                    raise ValueError(f"Failed to initialize model after {max_retries} attempts")
+                    
         self.token_history = self._load_token_history()
         cprint("🔍 Token Extractor Agent initialized!", "white", "on_cyan")
         
@@ -564,17 +583,16 @@ class TokenExtractorAgent:
             
     def extract_tokens(self, round_num: int, agent_one_msg: str, agent_two_msg: str) -> List[Dict]:
         """Extract tokens/symbols from agent messages"""
-        try:
-            print_section("🔍 Extracting Mentioned Tokens", "on_cyan")
+        print_section("🔍 Extracting Mentioned Tokens", "on_cyan")
+        
+        if self.model is None:
+            print("⚠️ Model not initialized, skipping token extraction")
+            return []
             
-            message = self.client.messages.create(
-                model=self.model,
-                max_tokens=EXTRACTOR_MAX_TOKENS,
-                temperature=EXTRACTOR_TEMP,
-                system=TOKEN_EXTRACTOR_PROMPT,  # Use the token extractor prompt
-                messages=[{
-                    "role": "user",
-                    "content": f"""
+        try:
+            response = self.model.generate_response(
+                system_prompt=TOKEN_EXTRACTOR_PROMPT,
+                user_content=f"""
 Agent One said:
 {agent_one_msg}
 
@@ -582,12 +600,15 @@ Agent Two said:
 {agent_two_msg}
 
 Extract all token symbols and return as a simple list.
-"""
-                }]
+""",
+                temperature=EXTRACTOR_TEMP
             )
-            
+            if not response:
+                print("❌ No response from model")
+                return []
+                
             # Clean up response and split into list
-            tokens = str(message.content).strip().split('\n')
+            tokens = str(response).strip().split('\n')
             tokens = [t.strip().upper() for t in tokens if t.strip()]
             
             # Create records for each token
@@ -632,15 +653,14 @@ class MultiAgentSystem:
         
     def generate_round_synopsis(self, agent_one_response: str, agent_two_response: str) -> str:
         """Generate a brief synopsis of the round's key points using Synopsis Agent"""
+        if self.agent_one.model is None:
+            print("⚠️ Model not initialized, skipping round synopsis")
+            return "Error: Model not initialized"
+            
         try:
-            message = self.agent_one.client.messages.create(
-                model="claude-3-haiku-20240307",
-                max_tokens=SYNOPSIS_MAX_TOKENS,
-                temperature=SYNOPSIS_TEMP,
-                system=SYNOPSIS_AGENT_PROMPT,  # Use the synopsis agent prompt
-                messages=[{
-                    "role": "user",
-                    "content": f"""
+            response = self.agent_one.model.generate_response(
+                system_prompt=SYNOPSIS_AGENT_PROMPT,
+                user_content=f"""
 Agent One said:
 {agent_one_response}
 
@@ -648,11 +668,11 @@ Agent Two said:
 {agent_two_response}
 
 Create a brief synopsis of this trading round.
-"""
-                }]
+""",
+                temperature=SYNOPSIS_TEMP
             )
             
-            synopsis = str(message.content).strip()
+            synopsis = str(response).strip()
             return synopsis
             
         except Exception as e:

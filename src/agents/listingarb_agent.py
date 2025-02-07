@@ -109,8 +109,8 @@ from datetime import datetime, timedelta
 import time
 from pathlib import Path
 from termcolor import colored, cprint
-import anthropic
 from dotenv import load_dotenv
+from src.models import model_factory
 import requests
 import numpy as np
 import concurrent.futures
@@ -214,22 +214,25 @@ class AIAgent:
     
     def __init__(self, name: str, model: str):
         self.name = name
-        self.model = model
+        print(f"🚀 Initializing Ollama model for {name}...")
+        self.model = None
+        max_retries = 3
+        retry_count = 0
         
-        # Initialize appropriate client based on model
-        if "deepseek" in self.model.lower():
-            deepseek_key = os.getenv("DEEPSEEK_KEY")
-            if deepseek_key:
-                self.client = openai.OpenAI(
-                    api_key=deepseek_key,
-                    base_url=DEEPSEEK_BASE_URL
-                )
-                print(f"🚀 {name} using DeepSeek model: {model}")
-            else:
-                raise ValueError("🚨 DEEPSEEK_KEY not found in environment variables!")
-        else:
-            self.client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_KEY"))
-            print(f"🤖 {name} using Claude model: {model}")
+        while self.model is None and retry_count < max_retries:
+            try:
+                self.model = model_factory.get_model("ollama", "deepseek-r1:1.5b")
+                if self.model and hasattr(self.model, 'generate_response'):
+                    break
+                raise ValueError("Could not initialize Ollama model")
+            except Exception as e:
+                print(f"⚠️ Error initializing model (attempt {retry_count + 1}/{max_retries}): {str(e)}")
+                retry_count += 1
+                if retry_count < max_retries:
+                    time.sleep(1)  # Wait before retrying
+                else:
+                    raise ValueError(f"Failed to initialize model after {max_retries} attempts")
+        print(f"🤖 {name} using Ollama model: deepseek-r1:1.5b")
             
         self.memory_file = Path(f"src/data/agent_memory/{name.lower().replace(' ', '_')}.json")
         self.memory = {
@@ -267,7 +270,7 @@ class AIAgent:
         with open(self.memory_file, 'w') as f:
             json.dump(self.memory, f, indent=2)
             
-    def analyze(self, token_data: Dict, other_agent_analysis: str = None) -> str:
+    def analyze(self, token_data: Dict, other_agent_analysis: str | None = None) -> str:
         """Analyze a token and provide insights"""
         try:
             # Validate token_data has required fields
@@ -322,27 +325,26 @@ Focus on:
 
 Remember to reference specific data points from the OHLCV table in your analysis!"""
             
-            # Get AI response with correct client
-            if "deepseek" in self.model.lower():
-                response = self.client.chat.completions.create(
-                    model=self.model,
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
-                    ],
-                    max_tokens=300,
+            # Get AI response using model factory
+            if self.model is None:
+                print("⚠️ Model not initialized, skipping token analysis")
+                return "Error: Model not initialized"
+                
+            try:
+                response = self.model.generate_response(
+                    system_prompt=system_prompt,
+                    user_content=user_prompt,
                     temperature=0.7
                 )
-                analysis = response.choices[0].message.content
-            else:
-                response = self.client.messages.create(
-                    model=self.model,
-                    max_tokens=300,
-                    temperature=0.7,
-                    system=system_prompt,
-                    messages=[{"role": "user", "content": user_prompt}]
-                )
-                analysis = response.content[0].text
+            except Exception as e:
+                print(f"❌ Error getting AI analysis: {str(e)}")
+                return f"Error analyzing token: {str(e)}"
+            
+            if not response:
+                print("❌ No response from AI")
+                return "Error: No response from AI"
+                
+            analysis = str(response)
             
             # Update memory with OHLCV context
             if not isinstance(self.memory['analyzed_tokens'], list):

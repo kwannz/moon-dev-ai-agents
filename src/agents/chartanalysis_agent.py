@@ -14,8 +14,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 import time
 from dotenv import load_dotenv
-import anthropic
-import openai
+from src.models import model_factory
 from src import nice_funcs as n
 from src import nice_funcs_hl as hl
 from src.agents.base_agent import BaseAgent
@@ -23,6 +22,7 @@ import traceback
 import base64
 from io import BytesIO
 import re
+import openai
 
 # Get the project root directory
 PROJECT_ROOT = Path(__file__).parent.parent.parent
@@ -87,23 +87,36 @@ class ChartAnalysisAgent(BaseAgent):
         
         # Initialize API clients
         openai_key = os.getenv("OPENAI_KEY")
-        anthropic_key = os.getenv("ANTHROPIC_KEY")
-        
-        if not openai_key or not anthropic_key:
-            raise ValueError("🚨 API keys not found in environment variables!")
+        if not openai_key:
+            raise ValueError("🚨 OpenAI API key not found in environment variables!")
             
         self.openai_client = openai.OpenAI(api_key=openai_key)  # For TTS only
-        self.client = anthropic.Anthropic(api_key=anthropic_key)
         
-        # Set AI parameters - use config values unless overridden
-        self.ai_model = AI_MODEL if AI_MODEL else config.AI_MODEL
+        # Initialize Ollama model
+        self.model = None
+        max_retries = 3
+        retry_count = 0
+        
+        while self.model is None and retry_count < max_retries:
+            try:
+                self.model = model_factory.get_model("ollama", "deepseek-r1:1.5b")
+                if not self.model:
+                    raise ValueError("Could not initialize Ollama model")
+            except Exception as e:
+                print(f"⚠️ Error initializing model (attempt {retry_count + 1}/{max_retries}): {str(e)}")
+                retry_count += 1
+                if retry_count < max_retries:
+                    time.sleep(1)  # Wait before retrying
+                else:
+                    raise ValueError(f"Failed to initialize model after {max_retries} attempts")
+            
+        # Set AI parameters
         self.ai_temperature = AI_TEMPERATURE if AI_TEMPERATURE > 0 else config.AI_TEMPERATURE
-        self.ai_max_tokens = AI_MAX_TOKENS if AI_MAX_TOKENS > 0 else config.AI_MAX_TOKENS
         
         print("📊 Chuck the Chart Agent initialized!")
-        print(f"🤖 Using AI Model: {self.ai_model}")
-        if AI_MODEL or AI_TEMPERATURE > 0 or AI_MAX_TOKENS > 0:
-            print("⚠️ Note: Using some override settings instead of config.py defaults")
+        print("🤖 Using AI Model: deepseek-r1:1.5b")
+        if AI_TEMPERATURE > 0:
+            print(f"⚠️ Note: Using temperature override: {AI_TEMPERATURE}")
         print(f"🎯 Analyzing {len(TIMEFRAMES)} timeframes: {', '.join(TIMEFRAMES)}")
         print(f"📈 Using indicators: {', '.join(INDICATORS)}")
         
@@ -179,36 +192,33 @@ class ChartAnalysisAgent(BaseAgent):
             
             print(f"\n🤖 Analyzing {symbol} with AI...")
             
-            # Get AI analysis using instance settings
-            message = self.client.messages.create(
-                model=self.ai_model,
-                max_tokens=self.ai_max_tokens,
-                temperature=self.ai_temperature,
-                messages=[{
-                    "role": "user",
-                    "content": context
-                }]
-            )
+            # Get AI analysis using model factory
+            if self.model is None:
+                print("⚠️ Model not initialized, skipping chart analysis")
+                return None
+                
+            try:
+                response = self.model.generate_response(
+                    system_prompt="You are Moon Dev's Chart Analysis AI. Analyze chart data and provide trading signals.",
+                    user_content=context,
+                    temperature=self.ai_temperature
+                )
+            except Exception as e:
+                print(f"❌ Error getting AI analysis: {str(e)}")
+                return None
             
-            if not message or not message.content:
+            if not response:
                 print("❌ No response from AI")
                 return None
                 
             # Debug: Print raw response
             print("\n🔍 Raw response:")
-            print(repr(message.content))
+            print(str(response))
             
-            # Get the raw content and convert to string
-            content = str(message.content)
+            # Get the content as string
+            content = str(response)
             
-            # Clean up TextBlock formatting - new format handling
-            if 'TextBlock' in content:
-                # Extract just the text content between quotes
-                match = re.search(r"text='([^']*)'", content, re.IGNORECASE)
-                if match:
-                    content = match.group(1)
-            
-            # Clean up any remaining formatting
+            # Clean up any formatting
             content = content.replace('\\n', '\n')
             content = content.strip('[]')
             
@@ -344,10 +354,13 @@ class ChartAnalysisAgent(BaseAgent):
             print("╟" + "─" * 60 + "╢")
             
             # Print last 5 candles with proper timestamp formatting
-            last_5 = data.tail(5)
+            last_5 = data.tail(5).copy()
             last_5.index = pd.to_datetime(last_5.index)
             for idx, row in last_5.iterrows():
-                time_str = idx.strftime('%Y-%m-%d %H:%M')  # Include date and time
+                try:
+                    time_str = pd.to_datetime(str(idx)).strftime('%Y-%m-%d %H:%M')
+                except:
+                    time_str = str(idx)[:16]  # Fallback to string slicing if conversion fails
                 print(f"║ {time_str} │ {row['open']:.2f} │ {row['high']:.2f} │ {row['low']:.2f} │ {row['close']:.2f} │ {row['volume']:.0f} │")
             
             print("\n║ Technical Indicators:")

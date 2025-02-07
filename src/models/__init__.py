@@ -4,20 +4,12 @@ Built with love by Moon Dev 🚀
 """
 
 from .base_model import BaseModel, ModelResponse
-from .claude_model import ClaudeModel
-from .groq_model import GroqModel
-from .openai_model import OpenAIModel
-from .gemini_model import GeminiModel
-from .deepseek_model import DeepSeekModel
+from .ollama_model import OllamaModel
 from .model_factory import model_factory
 
 __all__ = [
     'BaseModel',
     'ModelResponse',
-    'ClaudeModel',
-    'GroqModel',
-    'OpenAIModel',
-    'GeminiModel',
-    'DeepSeekModel',
+    'OllamaModel',
     'model_factory'
-] 
+]  

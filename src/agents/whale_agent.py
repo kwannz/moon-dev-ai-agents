@@ -29,7 +29,7 @@ from collections import deque
 from src.agents.base_agent import BaseAgent
 import traceback
 import numpy as np
-import anthropic
+from src.models import model_factory
 
 # Get the project root directory
 PROJECT_ROOT = Path(__file__).parent.parent.parent
@@ -95,33 +95,31 @@ class WhaleAgent(BaseAgent):
         
         load_dotenv()
         
-        # Get API keys
+        # Get OpenAI key for TTS
         openai_key = os.getenv("OPENAI_KEY")
-        anthropic_key = os.getenv("ANTHROPIC_KEY")
-        
         if not openai_key:
             raise ValueError("🚨 OPENAI_KEY not found in environment variables!")
-        if not anthropic_key:
-            raise ValueError("🚨 ANTHROPIC_KEY not found in environment variables!")
             
         openai.api_key = openai_key
-        self.client = anthropic.Anthropic(api_key=anthropic_key)
-
-        # Initialize DeepSeek client if needed
-        if "deepseek" in self.ai_model.lower():
-            deepseek_key = os.getenv("DEEPSEEK_KEY")
-            if deepseek_key:
-                self.deepseek_client = openai.OpenAI(
-                    api_key=deepseek_key,
-                    base_url=DEEPSEEK_BASE_URL
-                )
-                print("🚀 Moon Dev's Whale Agent using DeepSeek override!")
-            else:
-                self.deepseek_client = None
-                print("⚠️ DEEPSEEK_KEY not found - DeepSeek model will not be available")
-        else:
-            self.deepseek_client = None
-            print(f"🎯 Moon Dev's Whale Agent using Claude model: {self.ai_model}!")
+        
+        # Initialize Ollama model
+        print("🚀 Initializing Ollama model...")
+        self.model = None
+        max_retries = 3
+        retry_count = 0
+        
+        while self.model is None and retry_count < max_retries:
+            try:
+                self.model = model_factory.get_model("ollama", "deepseek-r1:1.5b")
+                if not self.model:
+                    raise ValueError("Could not initialize Ollama model")
+            except Exception as e:
+                print(f"⚠️ Error initializing model (attempt {retry_count + 1}/{max_retries}): {str(e)}")
+                retry_count += 1
+                if retry_count < max_retries:
+                    time.sleep(1)  # Wait before retrying
+                else:
+                    raise ValueError(f"Failed to initialize model after {max_retries} attempts")
         
         # Initialize Moon Dev API with correct base URL
         self.api = MoonDevAPI(base_url="http://api.moondev.com:8000")
@@ -401,41 +399,26 @@ class WhaleAgent(BaseAgent):
                 market_data=market_data_str
             )
             
-            # Use either DeepSeek or Claude based on model setting
-            if "deepseek" in self.ai_model.lower():
-                if not self.deepseek_client:
-                    raise ValueError("🚨 DeepSeek client not initialized - check DEEPSEEK_KEY")
-                    
-                print(f"\n🤖 Analyzing whale movement with DeepSeek model: {self.ai_model}...")
-                # Make DeepSeek API call
-                response = self.deepseek_client.chat.completions.create(
-                    model=self.ai_model,  # Use the actual model from override
-                    messages=[
-                        {"role": "system", "content": WHALE_ANALYSIS_PROMPT},
-                        {"role": "user", "content": context}
-                    ],
-                    max_tokens=self.ai_max_tokens,
-                    temperature=self.ai_temperature,
-                    stream=False
+            # Get AI analysis using model factory
+            if self.model is None:
+                print("⚠️ Model not initialized, skipping whale analysis")
+                return None
+                
+            try:
+                response = self.model.generate_response(
+                    system_prompt=WHALE_ANALYSIS_PROMPT,
+                    user_content=context,
+                    temperature=self.ai_temperature
                 )
-                response_text = response.choices[0].message.content.strip()
-            else:
-                print(f"\n🤖 Analyzing whale movement with Claude model: {self.ai_model}...")
-                # Get AI analysis using Claude
-                message = self.client.messages.create(
-                    model=self.ai_model,
-                    max_tokens=self.ai_max_tokens,
-                    temperature=self.ai_temperature,
-                    messages=[{
-                        "role": "user",
-                        "content": context
-                    }]
-                )
-                # Handle both string and list responses
-                if isinstance(message.content, list):
-                    response_text = message.content[0].text if message.content else ""
-                else:
-                    response_text = message.content
+            except Exception as e:
+                print(f"❌ Error getting AI analysis: {str(e)}")
+                return None
+            
+            if not response:
+                print("❌ No response from AI")
+                return None
+                
+            response_text = str(response)
             
             # Handle response
             if not response_text:
@@ -677,4 +660,4 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"❌ Error in main loop: {str(e)}")
             print("🔧 Moon Dev suggests checking the logs and trying again!")
-            time.sleep(60)  # Sleep for 1 minute on error 
+            time.sleep(60)  # Sleep for 1 minute on error            
