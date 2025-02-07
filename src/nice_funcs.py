@@ -413,6 +413,11 @@ def fetch_wallet_holdings_og(wallet_address: str) -> pd.DataFrame:
         # Initialize empty DataFrame
         df = pd.DataFrame(columns=['Mint Address', 'Amount', 'USD Value'])
         
+        # Get wallet public key from private key
+        from solders.keypair import Keypair
+        wallet_key = Keypair.from_base58_string(os.getenv("SOLANA_PRIVATE_KEY"))
+        wallet_pubkey = str(wallet_key.pubkey())
+        
         # Use Helius API to get token accounts
         response = requests.post(
             f"https://mainnet.helius-rpc.com/?api-key={HELIUS_API_KEY}",
@@ -422,7 +427,7 @@ def fetch_wallet_holdings_og(wallet_address: str) -> pd.DataFrame:
                 "id": "get-token-accounts",
                 "method": "getTokenAccountsByOwner",
                 "params": [
-                    wallet_address,
+                    wallet_pubkey,
                     {"programId": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"},
                     {"encoding": "jsonParsed"}
                 ]
