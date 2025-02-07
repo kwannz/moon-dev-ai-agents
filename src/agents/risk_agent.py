@@ -1,6 +1,5 @@
 """
-🌙 Moon Dev's Risk Management Agent
-Built with love by Moon Dev 🚀
+Lumix Risk Management Agent
 """
 
 # Model settings
@@ -9,7 +8,7 @@ MODEL_NAME = "deepseek-r1:1.5b"  # Using DeepSeek R1 model
 
 # 🛡️ Risk Override Prompt - The Secret Sauce!
 RISK_OVERRIDE_PROMPT = """
-You are Moon Dev's Risk Management AI 🛡️
+You are Lumix Risk Management AI
 
 We've hit a {limit_type} limit and need to decide whether to override it.
 
@@ -57,13 +56,15 @@ from src.config import *
 from src.agents.base_agent import BaseAgent
 import traceback
 from src.models import model_factory
+from src.data.helius_client import HeliusClient
+from solders.keypair import Keypair
 
 # Load environment variables
 load_dotenv()
 
 class RiskAgent(BaseAgent):
     def __init__(self):
-        """Initialize Moon Dev's Risk Agent 🛡️"""
+        """Initialize Lumix Risk Agent"""
         super().__init__('risk')  # Initialize base agent with type
         
         # Initialize Ollama model
@@ -103,7 +104,7 @@ class RiskAgent(BaseAgent):
         total_value = 0.0
         
         try:
-            print("\n🔍 Moon Dev's Portfolio Value Calculator Starting... 🚀")
+            print("\n🔍 Portfolio Value Calculator Starting...")
             
             # Get USDC balance first
             print("💵 Getting USDC balance...")
@@ -137,7 +138,7 @@ class RiskAgent(BaseAgent):
                         print("🔍 Full error trace:")
                         traceback.print_exc()
             
-            print(f"\n💎 Moon Dev's Total Portfolio Value: ${total_value:.2f} 🌙")
+            print(f"\n💎 Total Portfolio Value: ${total_value:.2f}")
             return total_value
             
         except Exception as e:
@@ -152,8 +153,9 @@ class RiskAgent(BaseAgent):
             print("\n📝 Checking if we need to log daily balance...")
             
             # Create data directory if it doesn't exist
-            os.makedirs('src/data', exist_ok=True)
-            balance_file = 'src/data/portfolio_balance.csv'
+            balance_file = os.path.join(
+                os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                'data/portfolio/portfolio_balance.csv')
             print(f"📁 Using balance file: {balance_file}")
             
             # Check if we already have a recent log
@@ -270,7 +272,7 @@ class RiskAgent(BaseAgent):
                 
             try:
                 response = self.model.generate_response(
-                    system_prompt="You are Moon Dev's Risk Management AI. Analyze positions and respond with OVERRIDE or RESPECT_LIMIT.",
+                    system_prompt="You are Lumix Risk Management AI. Analyze positions and respond with OVERRIDE or RESPECT_LIMIT.",
                     user_content=prompt,
                     temperature=self.ai_temperature
                 )
@@ -388,13 +390,26 @@ class RiskAgent(BaseAgent):
     def check_risk_limits(self):
         """Check if any risk limits have been breached"""
         try:
-            # Get current PnL
+            # Get current PnL and balances
             current_pnl = self.get_current_pnl()
             current_balance = self.get_portfolio_value()
             
+            # Get SOL balance specifically
+            helius_client = HeliusClient()
+            wallet_key = Keypair.from_base58_string(os.getenv("SOLANA_PRIVATE_KEY"))
+            wallet_pubkey = str(wallet_key.pubkey())
+            sol_balance = helius_client.get_wallet_balance(wallet_pubkey)
+            
             print(f"\n💰 Current PnL: ${current_pnl:.2f}")
             print(f"💼 Current Balance: ${current_balance:.2f}")
+            print(f"🪙 SOL Balance: {sol_balance:.6f} SOL")
             print(f"📉 Minimum Balance Limit: ${MINIMUM_BALANCE_USD:.2f}")
+            
+            # Check SOL balance for transaction fees
+            if sol_balance < 0.05:  # Minimum 0.05 SOL for fees
+                print(f"⚠️ ALERT: SOL balance {sol_balance:.6f} is below minimum 0.05 SOL required for fees")
+                self.handle_limit_breach("LOW_SOL_BALANCE", sol_balance)
+                return True
             
             # Check minimum balance limit
             if current_balance < MINIMUM_BALANCE_USD:
@@ -474,7 +489,7 @@ Then explain your reasoning.
                 
             try:
                 response = self.model.generate_response(
-                    system_prompt="You are Moon Dev's Risk Management AI. Analyze the breach and decide whether to close positions.",
+                    system_prompt="You are Lumix Risk Management AI. Analyze the breach and decide whether to close positions.",
                     user_content=prompt,
                     temperature=self.ai_temperature
                 )
@@ -582,7 +597,7 @@ def main():
             break
         except Exception as e:
             print(f"❌ Error: {str(e)}")
-            print("🔧 Moon Dev suggests checking the logs and trying again!")
+            print("🔧 Please check the logs and try again!")
             time.sleep(300)  # Still sleep on error
 
 if __name__ == "__main__":

@@ -1,12 +1,11 @@
 """
-🌙 Moon Dev's Focus Agent
-Built with love by Moon Dev 🚀
+Lumix Focus Agent
 
 This agent randomly monitors speech samples and provides focus assessments.
 """
 
 # Use local DeepSeek flag
-# available free while moon dev is streaming: https://www.youtube.com/@moondevonyt 
+# Use local DeepSeek flag
 USE_LOCAL_DEEPSEEK = False  
 
 import sys
@@ -112,11 +111,11 @@ AUDIO_DIR = Path("src/audio")
 AUDIO_DIR.mkdir(parents=True, exist_ok=True)
 
 # Test transcript for debugging
-TEST_TRANSCRIPT = """Hey Moon Dev here, I'm working on implementing the new trading algorithm using Python. 
+TEST_TRANSCRIPT = """I'm working on implementing the new trading algorithm using Python. 
 The RSI calculations look good but I need to optimize the moving average calculations."""
 
 # Focus prompt optimized for all models
-FOCUS_PROMPT = """You are Moon Dev's Focus AI Agent. Your task is to analyze the following transcript and rate focus.
+FOCUS_PROMPT = """You are Lumix Focus AI Agent. Your task is to analyze the following transcript and rate focus.
 
 IMPORTANT: DO NOT USE ANY MARKDOWN OR FORMATTING. RESPOND WITH PLAIN TEXT ONLY.
 
@@ -132,7 +131,7 @@ Consider these ratings:
 
 EXAMPLE RESPONSE:
 8/10
-Keep crushing that code, Moon Dev! Your focus is leading to amazing results.
+Keep crushing that code! Your focus is leading to amazing results.
 
 TRANSCRIPT TO ANALYZE:
 {transcript}"""
@@ -179,13 +178,13 @@ class FocusAgent:
             raise ValueError("🚨 OPENAI_KEY not found in environment variables!")
         self.openai_client = openai.OpenAI(api_key=openai_key)
         
-        cprint("🎯 Moon Dev's Focus Agent initialized!", "green")
+        cprint("🎯 Lumix Focus Agent initialized!", "green")
         
         self.is_recording = False
         self.current_transcript = []
         
         # Add data directory path
-        self.data_dir = Path("/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data")
+        self.data_dir = Path("src/data")
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self.focus_log_path = self.data_dir / "focus_history.csv"
         
@@ -201,7 +200,7 @@ class FocusAgent:
         """Check if current time is within scheduled hours"""
         current_time = datetime.now().time()
         if not (SCHEDULE_START <= current_time <= SCHEDULE_END):
-            cprint(f"\n🌙 Moon Dev's Focus Agent is scheduled to run between {SCHEDULE_START.strftime('%I:%M %p')} and {SCHEDULE_END.strftime('%I:%M %p')}", "yellow")
+            cprint(f"\n🌙 Focus Agent is scheduled to run between {SCHEDULE_START.strftime('%I:%M %p')} and {SCHEDULE_END.strftime('%I:%M %p')}", "yellow")
             cprint("😴 Going to sleep until next scheduled time...", "yellow")
             raise SystemExit(0)
         
@@ -337,7 +336,7 @@ class FocusAgent:
         """Create empty focus history CSV"""
         df = pd.DataFrame(columns=['timestamp', 'focus_score', 'quote'])
         df.to_csv(self.focus_log_path, index=False)
-        cprint("🌟 Moon Dev's Focus History log created!", "green")
+        cprint("🌟 Focus History log created!", "green")
 
     def _log_focus_data(self, score, quote):
         """Log focus data to CSV"""
@@ -401,7 +400,7 @@ class FocusAgent:
 
     def run(self):
         """Main loop for random monitoring"""
-        cprint("\n🎯 Moon Dev's Focus Agent starting with voice monitoring...", "cyan")
+        cprint("\n🎯 Focus Agent starting with voice monitoring...", "cyan")
         cprint(f"⏰ Operating hours: {SCHEDULE_START.strftime('%I:%M %p')} - {SCHEDULE_END.strftime('%I:%M %p')}", "cyan")
         
         while True:

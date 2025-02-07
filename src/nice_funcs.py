@@ -1,6 +1,5 @@
 """
-🌙 Moon Dev's Nice Functions - A collection of utility functions for trading
-Built with love by Moon Dev 🚀
+Lumix Trading Functions - A collection of utility functions for trading
 """
 
 from src.config import *
@@ -22,6 +21,7 @@ from dotenv import load_dotenv
 import shutil
 import atexit
 from src.data.helius_client import HeliusClient
+from src.data.jupiter_client import JupiterClient
 
 # Constants
 MIN_TRADES_LAST_HOUR = 100  # Minimum trades required in last hour
@@ -51,7 +51,7 @@ os.makedirs('temp_data', exist_ok=True)
 
 def cleanup_temp_data():
     if os.path.exists('temp_data'):
-        print("🧹 Moon Dev cleaning up temporary data...")
+        print("🧹 Cleaning up temporary data...")
         shutil.rmtree('temp_data')
 
 atexit.register(cleanup_temp_data)
@@ -234,167 +234,167 @@ def token_creation_info(address):
     else:
         print("Failed to retrieve token creation info:", response.status_code)
 
-def market_buy(token, amount, slippage):
-    import requests
-    import sys
-    import json
-    import base64
-    from solders.keypair import Keypair
-    from solders.transaction import VersionedTransaction
-    from solana.rpc.api import Client
-    from solana.rpc.types import TxOpts
+def market_buy(token: str, amount: float, slippage: int = SLIPPAGE) -> bool:
+    """Execute a market buy order using Jupiter API"""
+    try:
+        # Initialize Jupiter client
+        jupiter = JupiterClient()
+        
+        # Get wallet public key
+        wallet_key = Keypair.from_base58_string(os.getenv("SOLANA_PRIVATE_KEY"))
+        wallet_pubkey = str(wallet_key.pubkey())
+        
+        # Get quote for USDC to token swap
+        quote = jupiter.get_quote(
+            input_mint=USDC_ADDRESS,
+            output_mint=token,
+            amount=int(amount),
+            slippage_bps=slippage
+        )
+        if not quote:
+            return False
+            
+        # Execute swap
+        tx = jupiter.execute_swap(quote, wallet_pubkey)
+        if not tx:
+            return False
+            
+        cprint(f"✅ Market buy executed: {amount} -> {token}", "green")
+        return True
+    except Exception as e:
+        cprint(f"❌ Market buy failed: {str(e)}", "red")
+        return False
 
-    KEY = Keypair.from_base58_string(os.getenv("SOLANA_PRIVATE_KEY"))
-    if not KEY:
-        raise ValueError("🚨 SOLANA_PRIVATE_KEY not found in environment variables!")
-    #print('key success')
-    SLIPPAGE = slippage # 5000 is 50%, 500 is 5% and 50 is .5%
-
-    QUOTE_TOKEN = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v" # usdc
-
-    http_client = Client(os.getenv("RPC_ENDPOINT"))
-    #print('http client success')
-    if not http_client:
-        raise ValueError("🚨 RPC_ENDPOINT not found in environment variables!")
-
-    quote = requests.get(f'https://quote-api.jup.ag/v6/quote?inputMint={QUOTE_TOKEN}&outputMint={token}&amount={amount}&slippageBps={SLIPPAGE}').json()
-    #print(quote)
-
-    txRes = requests.post('https://quote-api.jup.ag/v6/swap',
-                          headers={"Content-Type": "application/json"},
-                          data=json.dumps({
-                              "quoteResponse": quote,
-                              "userPublicKey": str(KEY.pubkey()),
-                              "prioritizationFeeLamports": PRIORITY_FEE  # or replace 'auto' with your specific lamport value
-                          })).json()
-    #print(txRes)
-    swapTx = base64.b64decode(txRes['swapTransaction'])
-    #print(swapTx)
-    tx1 = VersionedTransaction.from_bytes(swapTx)
-    tx = VersionedTransaction(tx1.message, [KEY])
-    txId = http_client.send_raw_transaction(bytes(tx), TxOpts(skip_preflight=True)).value
-    print(f"https://solscan.io/tx/{str(txId)}")
-
-
-
-def market_sell(QUOTE_TOKEN, amount, slippage):
-    import requests
-    import sys
-    import json
-    import base64
-    from solders.keypair import Keypair
-    from solders.transaction import VersionedTransaction
-    from solana.rpc.api import Client
-    from solana.rpc.types import TxOpts
-
-    KEY = Keypair.from_base58_string(os.getenv("SOLANA_PRIVATE_KEY"))
-    if not KEY:
-        raise ValueError("🚨 SOLANA_PRIVATE_KEY not found in environment variables!")
-    #print('key success')
-    SLIPPAGE = slippage  # 5000 is 50%, 500 is 5% and 50 is .5%
-
-    # token would be usdc for sell orders cause we are selling
-    token = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"  # USDC
-
-    http_client = Client(os.getenv("RPC_ENDPOINT"))
-    if not http_client:
-        raise ValueError("🚨 RPC_ENDPOINT not found in environment variables!")
-    print('http client success')
-
-    quote = requests.get(f'https://quote-api.jup.ag/v6/quote?inputMint={QUOTE_TOKEN}&outputMint={token}&amount={amount}&slippageBps={SLIPPAGE}').json()
-    #print(quote)
-    txRes = requests.post('https://quote-api.jup.ag/v6/swap',
-                          headers={"Content-Type": "application/json"},
-                          data=json.dumps({
-                              "quoteResponse": quote,
-                              "userPublicKey": str(KEY.pubkey()),
-                              "prioritizationFeeLamports": PRIORITY_FEE
-                          })).json()
-    #print(txRes)
-    swapTx = base64.b64decode(txRes['swapTransaction'])
-    #print(swapTx)
-    tx1 = VersionedTransaction.from_bytes(swapTx)
-    #print(tx1)
-    tx = VersionedTransaction(tx1.message, [KEY])
-    #print(tx)
-    txId = http_client.send_raw_transaction(bytes(tx), TxOpts(skip_preflight=True)).value
-    print(f"https://solscan.io/tx/{str(txId)}")
+def market_sell(token: str, amount: float, slippage: int = SLIPPAGE) -> bool:
+    """Execute a market sell order using Jupiter API"""
+    try:
+        # Initialize Jupiter client
+        jupiter = JupiterClient()
+        
+        # Get wallet public key
+        wallet_key = Keypair.from_base58_string(os.getenv("SOLANA_PRIVATE_KEY"))
+        wallet_pubkey = str(wallet_key.pubkey())
+        
+        # Get quote for token to USDC swap
+        quote = jupiter.get_quote(
+            input_mint=token,
+            output_mint=USDC_ADDRESS,
+            amount=int(amount),
+            slippage_bps=slippage
+        )
+        if not quote:
+            return False
+            
+        # Execute swap
+        tx = jupiter.execute_swap(quote, wallet_pubkey)
+        if not tx:
+            return False
+            
+        cprint(f"✅ Market sell executed: {amount} {token} -> USDC", "green")
+        return True
+    except Exception as e:
+        cprint(f"❌ Market sell failed: {str(e)}", "red")
+        return False
 
 
 
-def get_time_range():
 
-    now = datetime.now()
-    ten_days_earlier = now - timedelta(days=10)
-    time_to = int(now.timestamp())
-    time_from = int(ten_days_earlier.timestamp())
-    #print(time_from, time_to)
 
-    return time_from, time_to
 
-import math
-def round_down(value, decimals):
+
+def round_down(value: float, decimals: int) -> float:
+    """Round down a float value to specified number of decimal places"""
     factor = 10 ** decimals
     return math.floor(value * factor) / factor
 
-
-def get_time_range(days_back):
-
+def get_time_range(days_back: int) -> tuple[int, int]:
+    """Get time range with specified days lookback"""
     now = datetime.now()
-    ten_days_earlier = now - timedelta(days=days_back)
+    earlier = now - timedelta(days=days_back)
     time_to = int(now.timestamp())
-    time_from = int(ten_days_earlier.timestamp())
-    #print(time_from, time_to)
-
+    time_from = int(earlier.timestamp())
     return time_from, time_to
 
-def get_data(address, days_back_4_data, timeframe):
+def get_data(address: str, days_back_4_data: int, timeframe: str) -> pd.DataFrame:
     """Get market data using Helius API"""
     try:
-        # Use HeliusClient for data collection
         client = HeliusClient()
         return client.get_token_data(address, days_back_4_data, timeframe)
     except Exception as e:
         cprint(f"❌ Error getting market data: {str(e)}", "red")
         return pd.DataFrame()
 
-def fetch_wallet_holdings_og(address):
-
-    API_KEY = BIRDEYE_API_KEY  # Assume this is your API key; replace it with the actual one
-
-    # Initialize an empty DataFrame
+def fetch_wallet_holdings_og(wallet_address: str) -> pd.DataFrame:
+    """Fetch token holdings for a wallet using Helius API"""
     df = pd.DataFrame(columns=['Mint Address', 'Amount', 'USD Value'])
+    try:
+        # Get wallet SOL balance
+        helius_client = HeliusClient()
+        sol_balance = helius_client.get_wallet_balance(wallet_address)
+        if sol_balance > 0:
+            df = pd.DataFrame([{
+                'Mint Address': 'So11111111111111111111111111111111111111112',  # Native SOL mint
+                'Amount': sol_balance,
+                'USD Value': sol_balance * 100  # Approximate SOL price
+            }])
+            
+        # Get token accounts
+        response = requests.post(
+            f"{helius_client.base_url}",
+            headers=helius_client.headers,
+            json={
+                "jsonrpc": "2.0",
+                "id": "get-token-accounts",
+                "method": "getTokenAccountsByOwner",
+                "params": [
+                    wallet_address,
+                    {"programId": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"},
+                    {"encoding": "jsonParsed"}
+                ]
+            }
+        )
+        response.raise_for_status()
+        data = response.json()
+        
+        if "result" in data and "value" in data["result"]:
+            accounts = data["result"]["value"]
+            rows = []
+            
+            for account in accounts:
+                if "data" in account["account"] and "parsed" in account["account"]["data"]:
+                    token_info = account["account"]["data"]["parsed"]["info"]
+                    mint = token_info.get("mint")
+                    amount = float(token_info.get("tokenAmount", {}).get("uiAmount", 0))
+                    
+                    # Get token price
+                    price = float(helius_client.get_token_price(mint) or 0)
+                    usd_value = amount * price
+                    
+                    if usd_value > 0.05:  # Only include tokens worth more than $0.05
+                        rows.append({
+                            'Mint Address': mint,
+                            'Amount': amount,
+                            'USD Value': usd_value
+                        })
+            
+            if rows:
+                df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
+                cprint(f'Total USD balance: ${df["USD Value"].sum():.2f}', 'white', 'on_green')
+            
+        return df
+    except Exception as e:
+        cprint(f"Error fetching wallet holdings: {str(e)}", 'white', 'on_red')
+        return df
 
-    url = f"https://public-api.birdeye.so/v1/wallet/token_list?wallet={address}"
-    headers = {"x-chain": "solana", "X-API-KEY": API_KEY}
-    response = requests.get(url, headers=headers)
 
-    if response.status_code == 200:
-        json_response = response.json()
 
-        if 'data' in json_response and 'items' in json_response['data']:
-            df = pd.DataFrame(json_response['data']['items'])
-            df = df[['address', 'uiAmount', 'valueUsd']]
-            df = df.rename(columns={'address': 'Mint Address', 'uiAmount': 'Amount', 'valueUsd': 'USD Value'})
-            df = df.dropna()
-            df = df[df['USD Value'] > 0.05]
-        else:
-            cprint("No data available in the response.", 'white', 'on_red')
 
-    else:
-        cprint(f"Failed to retrieve token list for {address}.", 'white', 'on_magenta')
 
-    # Print the DataFrame if it's not empty
-    if not df.empty:
-        print(df)
-        # Assuming cprint is a function you have for printing in color
-        cprint(f'** Total USD balance is {df["USD Value"].sum()}', 'white', 'on_green')
-        # Save the filtered DataFrame to a CSV file
-        # TOKEN_PER_ADDY_CSV = 'filtered_wallet_holdings.csv'  # Define your CSV file name
-        # df.to_csv(TOKEN_PER_ADDY_CSV, index=False)
-    else:
-        # If the DataFrame is empty, print a message or handle it as needed
-        cprint("No wallet holdings to display.", 'white', 'on_red')
+
+
+
+
+
 
     return df
 

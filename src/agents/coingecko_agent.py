@@ -1,7 +1,7 @@
 from pathlib import Path
 
 """
-🌙 Moon Dev's CoinGecko Agent 🦎
+Lumix CoinGecko Agent
 Provides comprehensive access to CoinGecko API data and market intelligence
 
 =================================
@@ -98,7 +98,7 @@ Memory Files:
 - src/data/agent_memory/agent_two.json
 - src/data/agent_discussed_tokens.csv
 
-Author: Moon Dev 🌙
+Author: Lumix
 """
 
 # Model override settings
@@ -122,7 +122,7 @@ Focus on:
 - Support/resistance levels
 - Short to medium-term opportunities
 
-Remember to be specific about entry/exit points and always consider Moon Dev's risk management rules! 🎯
+Remember to be specific about entry/exit points and always consider our risk management rules! 🎯
 """
 
 AGENT_TWO_PROMPT = """
@@ -136,7 +136,7 @@ Focus on:
 - Competitor analysis
 - Long-term growth potential
 
-Always consider the bigger picture and help guide Moon Dev's long-term strategy! 🚀
+Always consider the bigger picture and help guide our long-term strategy! 🚀
 """
 
 TOKEN_EXTRACTOR_PROMPT = """
@@ -150,7 +150,7 @@ Rules:
 - Be thorough but avoid duplicates
 - When only a name is given, provide the symbol
 
-Keep Moon Dev's token tracking clean and organized! 📝
+Keep token tracking clean and organized! 📝
 """
 
 SYNOPSIS_AGENT_PROMPT = """
@@ -164,7 +164,7 @@ Guidelines:
 - Note significant market observations
 - Track progress toward the $10M goal
 
-Help Moon Dev keep track of the trading journey! 🎯
+Help keep track of the trading journey! 🎯
 """
 
 # 🤖 Agent Model Selection
@@ -245,7 +245,7 @@ load_dotenv()
 def print_banner():
     """Print a fun colorful banner"""
     cprint("\n" + "="*70, "white", "on_blue")
-    cprint("🌙 🎮 Moon Dev's Crypto Trading Game! 🎮 🌙", "white", "on_magenta", attrs=["bold"])
+    cprint("🌙 🎮 Lumix Crypto Trading Game! 🎮 🌙", "white", "on_magenta", attrs=["bold"])
     cprint("="*70 + "\n", "white", "on_blue")
 
 def print_section(title: str, color: str = "on_blue"):
@@ -343,7 +343,7 @@ Previous Agent Message:
 
 Remember to format your response like this:
 
-🤖 Hey Moon Dev! {self.name} here!
+🤖 Hey! {self.name} here!
 =================================
 
 📊 Market Vibes:

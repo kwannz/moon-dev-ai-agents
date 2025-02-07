@@ -1,9 +1,20 @@
 """
-🐦 Moon Dev's Tweet Generator
-Built with love by Moon Dev 🚀
+Lumix Tweet Generator
 
 This agent takes text input and generates tweets based on the content.
 """
+
+import os
+import pandas as pd
+import time
+from datetime import datetime
+from pathlib import Path
+from dotenv import load_dotenv
+import traceback
+from src.models import model_factory
+import math
+from termcolor import colored, cprint
+import sys
 
 # Model override settings
 # Set to "0" to use config.py's AI_MODEL setting
@@ -19,19 +30,11 @@ MAX_CHUNK_SIZE = 10000  # Maximum characters per chunk
 TWEETS_PER_CHUNK = 3   # Number of tweets to generate per chunk
 USE_TEXT_FILE = True   # Whether to use og_tweet_text.txt by default
 # if the above is true, then the below is the file to use
-OG_TWEET_FILE = "/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/tweets/og_tweet_text.txt"
+OG_TWEET_FILE = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    'data/tweets/og_tweet_text.txt')
 
-import os
-import pandas as pd
-import time
-from datetime import datetime
-from pathlib import Path
-from dotenv import load_dotenv
-import traceback
-from src.models import model_factory
-import math
-from termcolor import colored, cprint
-import sys
+# Import block moved to top of file
 
 # Get the project root directory
 PROJECT_ROOT = Path(__file__).parent.parent.parent
@@ -75,10 +78,25 @@ TWEET_COLORS = [
 ]
 
 class TweetAgent:
-    """Moon Dev's Tweet Generator 🐦"""
+    """Lumix Tweet Generator"""
     
     def __init__(self):
         """Initialize the Tweet Agent"""
+        load_dotenv()
+        
+        # Check Twitter configuration
+        self.twitter_enabled = os.getenv('TWITTER_ENABLED', 'true').lower() == 'true'
+        if not self.twitter_enabled:
+            print("⚠️ Twitter functionality is disabled")
+            return
+            
+        self.twitter_username = os.getenv('TWITTER_USERNAME')
+        self.twitter_password = os.getenv('TWITTER_PASSWORD')
+        self.twitter_email = os.getenv('TWITTER_EMAIL')
+        
+        if not all([self.twitter_username, self.twitter_password, self.twitter_email]):
+            raise ValueError("Twitter credentials not properly configured")
+            
         # Set AI parameters - use config values unless overridden
         self.ai_model = MODEL_OVERRIDE if MODEL_OVERRIDE != "0" else config.AI_MODEL
         self.ai_temperature = AI_TEMPERATURE if AI_TEMPERATURE > 0 else config.AI_TEMPERATURE
@@ -115,7 +133,9 @@ class TweetAgent:
                     raise ValueError(f"Failed to initialize model after {max_retries} attempts")
         
         # Create tweets directory if it doesn't exist
-        self.tweets_dir = Path("/Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/tweets")
+        self.tweets_dir = Path(os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            'data/tweets'))
         self.tweets_dir.mkdir(parents=True, exist_ok=True)
         
         # Generate output filename with timestamp
@@ -147,7 +167,15 @@ class TweetAgent:
     
     def generate_tweets(self, text=None):
         """Generate tweets from text input or file"""
+        if not hasattr(self, 'twitter_enabled') or not self.twitter_enabled:
+            print("⚠️ Twitter functionality is disabled")
+            return None
+            
         try:
+            if not all([self.twitter_username, self.twitter_password, self.twitter_email]):
+                print("❌ Twitter credentials not properly configured")
+                return None
+                
             # Get input text
             input_text = self._get_input_text(text)
             
@@ -185,7 +213,7 @@ class TweetAgent:
                     
                 try:
                     response = self.model.generate_response(
-                        system_prompt="You are Moon Dev's Tweet Generator. Generate tweets based on the provided text.",
+                        system_prompt="You are Lumix Tweet Generator. Generate tweets based on the provided text.",
                         user_content=context,
                         temperature=self.ai_temperature
                     )
@@ -216,9 +244,13 @@ class TweetAgent:
                 all_tweets.extend(chunk_tweets)
                 
                 # Write tweets to file with paragraph spacing (clean format)
-                with open(self.output_file, 'a') as f:
-                    for tweet in chunk_tweets:
-                        f.write(f"{tweet}\n\n")  # Double newline for paragraph spacing
+                try:
+                    with open(self.output_file, 'a') as f:
+                        for tweet in chunk_tweets:
+                            f.write(f"{tweet}\n\n")  # Double newline for paragraph spacing
+                except Exception as e:
+                    print(f"❌ Error writing tweets to file: {str(e)}")
+                    # Continue execution even if file write fails
                 
                 # Small delay between chunks to avoid rate limits
                 if i < total_chunks:

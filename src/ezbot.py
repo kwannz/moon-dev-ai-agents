@@ -1,5 +1,5 @@
 '''
-🌙 Moon Dev Trading Bot Control Panel 
+Lumix Trading Bot Control Panel 
 Controls different trading actions that our AI agents can execute:
 
 0 - close a position (in chunks)
@@ -24,7 +24,7 @@ import schedule
 
 ###### ASKING USER WHAT THEY WANNA DO - WILL REMOVE USER SOON AND REPLACE WITH BOT ######
 action = 0
-print('🌙 Moon Dev says: slow down, dont trade by hand... take it easy! 🚀')
+print('🌙 Trading tip: slow down, dont trade by hand... take it easy! 🚀')
 action = input('0 to close, 1 to buy, 2 stop loss, 3 breakout, 5 market maker  |||| 6 funding buy, 7 liquidation amount:')
 print('you entered:', action)
 action = int(action)
@@ -44,7 +44,7 @@ def bot():
             time.sleep(15)
             pos = n.get_position(symbol)
             if pos < .9:
-                print('position closed thanks moon dev....')
+                print('position closed successfully....')
                 time.sleep(SLEEP_AFTER_CLOSE)
                 break
 
@@ -76,7 +76,7 @@ def bot():
                 for i in range(orders_per_open):
                     n.market_buy(symbol, chunk_size, slippage)
                     # cprint green background black text
-                    cprint(f'chunk buy submitted of {symbol[-4:]} sz: {chunk_size} you my dawg moon dev', 'white', 'on_blue')
+                    cprint(f'chunk buy submitted of {symbol[-4:]} sz: {chunk_size}', 'white', 'on_blue')
                     time.sleep(1)
 
                 time.sleep(tx_sleep)
@@ -98,7 +98,7 @@ def bot():
                     for i in range(orders_per_open):
                         n.market_buy(symbol, chunk_size, slippage)
                         # cprint green background black text
-                        cprint(f'chunk buy submitted of {symbol[-4:]} sz: {chunk_size} you my dawg moon dev', 'white', 'on_blue')
+                        cprint(f'chunk buy submitted of {symbol[-4:]} sz: {chunk_size}', 'white', 'on_blue')
                         time.sleep(1)
 
                     time.sleep(tx_sleep)
@@ -184,7 +184,7 @@ def bot():
             if (pos_usd < usd_size) and (price > BREAKOUT_PRICE):
                 print(f'buying {symbol[-4:]} bc price is {price} and breakoutprice is {BREAKOUT_PRICE}')
                 n.breakout_entry(symbol, BREAKOUT_PRICE)
-                print('breakout entry complete, thanks moon dev...')
+                print('breakout entry complete...')
                 time.sleep(15)
 
         else:
@@ -245,7 +245,7 @@ def bot():
         print('liquidation amount')
 
     else:
-        print('COMPLETE THANKS MOON DEV!')
+        print('COMPLETE!')
 
 
 bot()

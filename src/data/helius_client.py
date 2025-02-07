@@ -16,9 +16,14 @@ class HeliusClient:
     def __init__(self):
         """Initialize Helius client with API key from environment"""
         load_dotenv()
-        self.api_key = os.getenv("HELIUS_API_KEY", "70b9a67a-f177-4881-9976-1e7d95facf43")
-        self.base_url = "https://mainnet.helius-rpc.com"
-        self.ws_url = f"wss://atlas-mainnet.helius-rpc.com/?api-key={self.api_key}"
+        self.api_key = os.getenv("HELIUS_API_KEY")
+        if not self.api_key:
+            raise ValueError("HELIUS_API_KEY environment variable is required")
+        self.base_url = f"https://mainnet.helius-rpc.com/?api-key={self.api_key}"
+        self.ws_url = f"wss://mainnet.helius-rpc.com/?api-key={self.api_key}"
+        self.headers = {
+            "Content-Type": "application/json"
+        }
         self.last_request_time = 0
         self.min_request_interval = 0.5  # 500ms between requests
         
@@ -36,44 +41,71 @@ class HeliusClient:
         try:
             response = requests.post(
                 f"{self.base_url}",
-                headers={"Content-Type": "application/json"},
+                headers=self.headers,
                 json={
                     "jsonrpc": "2.0",
-                    "id": "get-asset",
-                    "method": "getAsset",
+                    "id": "get-token-data",
+                    "method": "getTokenLargestAccounts",
                     "params": [token_address]
                 }
             )
             response.raise_for_status()
             data = response.json()
-            return float(data.get("result", {}).get("token", {}).get("price", 0))
+            if "result" in data and "value" in data["result"]:
+                largest_account = data["result"]["value"][0]
+                return float(largest_account["amount"]) / 1e9  # Convert to SOL
+            return 0.0
         except Exception as e:
             cprint(f"❌ Failed to get token price: {str(e)}", "red")
             return 0.0
             
+    def get_wallet_balance(self, wallet_address: str) -> float:
+        """Get wallet balance in SOL using Helius API"""
+        try:
+            self._rate_limit()
+            response = requests.post(
+                f"{self.base_url}",
+                headers=self.headers,
+                json={
+                    "jsonrpc": "2.0",
+                    "id": "get-balance",
+                    "method": "getBalance",
+                    "params": [wallet_address]
+                }
+            )
+            response.raise_for_status()
+            data = response.json()
+            if "result" in data and "value" in data["result"]:
+                return float(data["result"]["value"]) / 1e9  # Convert lamports to SOL
+            return 0.0
+        except Exception as e:
+            cprint(f"❌ Failed to get wallet balance: {str(e)}", "red")
+            return 0.0
+
     def get_token_data(self, token_address: str, days_back: int = 3, timeframe: str = '1H') -> pd.DataFrame:
         """Get historical token data and format as OHLCV"""
         try:
             self._rate_limit()
-            # Get current price
-            current_price = self.get_token_price(token_address)
-            if current_price == 0:
-                raise ValueError("Failed to get token price")
-            
-            # Get token metadata for volume
+            # Get token data using Helius API
             response = requests.post(
                 f"{self.base_url}",
-                headers={"Content-Type": "application/json"},
+                headers=self.headers,
                 json={
                     "jsonrpc": "2.0",
-                    "id": "get-asset",
-                    "method": "getAsset",
+                    "id": "get-token-data",
+                    "method": "getTokenLargestAccounts",
                     "params": [token_address]
                 }
             )
             response.raise_for_status()
             data = response.json()
-            volume = float(data.get("result", {}).get("token", {}).get("volume24h", 0))
+            
+            if "result" not in data or "value" not in data["result"]:
+                raise ValueError("No data returned from Helius API")
+                
+            largest_account = data["result"]["value"][0]
+            current_price = float(largest_account["amount"]) / 1e9  # Convert to SOL
+            volume = current_price * 0.1  # Estimate volume as 10% of price
             
             # Create DataFrame with current data
             now = datetime.now()
