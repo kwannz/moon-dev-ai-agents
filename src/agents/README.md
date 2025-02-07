@@ -28,5 +28,5 @@
     - see every morning the recently added coins https://docs.coingecko.com/reference/coins-list-new
 [] build a flow to run these agents every 24 hours, like the new or top agent, the listing arb agent etc. 
 
-## Need an API key? for a limited time, bootcamp members get free api keys for claude, openai, helius, birdeye & quant elite gets access to the moon dev api. join here: https://algotradecamp.com
+## Need an API key? Visit https://algotradecamp.com for access to trading APIs and resources.
 
