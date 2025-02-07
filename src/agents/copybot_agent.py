@@ -20,7 +20,7 @@ import time
 from src.config import *
 from src import nice_funcs as n
 from src.data.ohlcv_collector import collect_all_tokens, collect_token_data
-from src.models import model_factory
+from src.models import ModelFactory
 
 # Data path for current copybot portfolio
 COPYBOT_PORTFOLIO_PATH = os.path.join(
@@ -76,7 +76,8 @@ class CopyBotAgent:
         
         while self.model is None and retry_count < max_retries:
             try:
-                self.model = model_factory.get_model("ollama", "deepseek-r1:1.5b")
+                self.model_factory = ModelFactory()
+                self.model = self.model_factory.get_model("ollama")
                 if not self.model:
                     raise ValueError("Could not initialize Ollama model")
             except Exception as e:
@@ -88,7 +89,7 @@ class CopyBotAgent:
                     raise ValueError(f"Failed to initialize model after {max_retries} attempts")
                     
         self.recommendations_df = pd.DataFrame(columns=['token', 'action', 'confidence', 'reasoning'])
-        print("🤖 Moon Dev's CopyBot Agent initialized!")
+        print("CopyBot Agent initialized!")
         
     def load_portfolio_data(self):
         """Load current copybot portfolio data"""
