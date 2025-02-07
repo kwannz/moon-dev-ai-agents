@@ -1,8 +1,7 @@
 '''
 nice functions from hyper liquid i can use
 
-🌙 Moon Dev's Hyperliquid Functions
-Built with love by Moon Dev 🚀
+Lumix Hyperliquid Functions
 '''
 
 import pandas as pd
@@ -152,7 +151,7 @@ def add_technical_indicators(df):
 
 def get_data(symbol, timeframe='15m', bars=100, add_indicators=True):
     """
-    🌙 Moon Dev's Hyperliquid Data Fetcher
+    Lumix Hyperliquid Data Fetcher
     
     Args:
         symbol (str): Trading pair symbol (e.g., 'BTC', 'ETH')
@@ -164,7 +163,7 @@ def get_data(symbol, timeframe='15m', bars=100, add_indicators=True):
         pd.DataFrame: OHLCV data with columns [timestamp, open, high, low, close, volume]
                      and technical indicators if requested
     """
-    print("\n🌙 Moon Dev's Hyperliquid Data Fetcher")
+    print("\n🌙 Lumix Hyperliquid Data Fetcher")
     print(f"🎯 Symbol: {symbol}")
     print(f"⏰ Timeframe: {timeframe}")
     print(f"📊 Requested bars: {min(bars, MAX_ROWS)}")
@@ -197,7 +196,7 @@ def get_data(symbol, timeframe='15m', bars=100, add_indicators=True):
         print("\n📊 Data summary:")
         print(f"📈 Total candles: {len(df)}")
         print(f"📅 Range: {df['timestamp'].min()} to {df['timestamp'].max()}")
-        print("✨ Thanks for using Moon Dev's Data Fetcher! ✨")
+        print("✨ Thanks for using Lumix Data Fetcher! ✨")
 
     return df
 
@@ -340,7 +339,7 @@ def test_funding_rates():
         traceback.print_exc()
 
 if __name__ == "__main__":
-    print("\n🌙 Moon Dev's Hyperliquid Function Tester")
+    print("\n🌙 Lumix Hyperliquid Function Tester")
     print("=" * 50)
     
     def test_btc_data():
@@ -376,4 +375,4 @@ if __name__ == "__main__":
     test_market_info()
     test_funding_rates()  # Now tests individual symbols
     
-    print("\n✨ Testing complete! Moon Dev out! 🌙") 
+    print("\n✨ Testing complete! 🌙")   

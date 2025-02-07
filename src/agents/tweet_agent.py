@@ -1,6 +1,5 @@
 """
-🐦 Moon Dev's Tweet Generator
-Built with love by Moon Dev 🚀
+Lumix Tweet Generator
 
 This agent takes text input and generates tweets based on the content.
 """
@@ -79,7 +78,7 @@ TWEET_COLORS = [
 ]
 
 class TweetAgent:
-    """Moon Dev's Tweet Generator 🐦"""
+    """Lumix Tweet Generator"""
     
     def __init__(self):
         """Initialize the Tweet Agent"""
@@ -214,7 +213,7 @@ class TweetAgent:
                     
                 try:
                     response = self.model.generate_response(
-                        system_prompt="You are Moon Dev's Tweet Generator. Generate tweets based on the provided text.",
+                        system_prompt="You are Lumix Tweet Generator. Generate tweets based on the provided text.",
                         user_content=context,
                         temperature=self.ai_temperature
                     )
