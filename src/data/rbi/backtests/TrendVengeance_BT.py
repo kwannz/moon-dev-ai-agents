@@ -147,8 +147,8 @@ print(f"Optimized plot saved to {optimized_chart_file}")
    - The strategy optimizes RSI period, ATR period, and risk percentage per trade.
    - Optimization focuses on maximizing return percentage.
 
-7. **Moon Dev-Themed Debug Prints**:
-   - Debug prints include emojis and clear messages for entry/exit signals and strategy initialization.
+7. **Debug Messages**:
+   - Debug prints include clear messages for entry/exit signals and strategy initialization.
 
 8. **Chart Output**:
    - Plots are saved to the `charts` directory for both initial and optimized backtests.

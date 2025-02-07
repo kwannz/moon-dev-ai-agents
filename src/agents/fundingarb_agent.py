@@ -1,10 +1,6 @@
 """
-🌙 Moon Dev's Funding Arbitrage Agent 💰
-
-This agent scans all tokens on Hyperliquid for funding rate opportunities.
-When it finds rates above our threshold, it analyzes the opportunity using AI.
-
-Need an API key? for a limited time, bootcamp members get free api keys for claude, openai, helius, birdeye & quant elite gets access to the moon dev api. join here: https://algotradecamp.com
+Lumix Funding Arbitrage Agent
+Scans tokens on Hyperliquid for funding rate opportunities and analyzes opportunities using AI when rates exceed threshold.
 """
 
 import os
@@ -76,10 +72,10 @@ Note: First line must be ARBITRAGE or SKIP
 """
 
 class FundingArbAgent(BaseAgent):
-    """Moon Dev's Funding Arbitrage Agent 💰"""
+    """Lumix Funding Arbitrage Agent"""
     
     def __init__(self):
-        """Initialize Moon Dev's Funding Arbitrage Agent"""
+        """Initialize Lumix Funding Arbitrage Agent"""
         super().__init__('fundingarb')  # Initialize base agent with type
         
         # Set AI parameters - use config values unless overridden
@@ -222,7 +218,7 @@ class FundingArbAgent(BaseAgent):
         annual_rate = hourly_rate * 24 * 365
         
         announcement = f"""
-        Yo Moon Dev seven seven seven! High funding arbitrage opportunity detected!
+        Alert! High funding arbitrage opportunity detected!
         
         {symbol} has a {annual_rate:.2f}% annualized funding rate!
         Suggested arbitrage: Short on Hyperliquid and buy spot elsewhere
@@ -230,7 +226,7 @@ class FundingArbAgent(BaseAgent):
         AI Analysis: {analysis['analysis']}
         {analysis['confidence']}
         
-        Moon Dev's Funding Arbitrage Agent - Making that funding money! 🌙
+        Lumix Funding Arbitrage Agent - Monitoring funding opportunities
         """
         return announcement
     

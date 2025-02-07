@@ -39,7 +39,7 @@ class GapAndGoProfiter(Strategy):
       2. If true, then wait for a “pullback” candle that touches the 9-SMA or VWAP and then makes a new high.
       3. When found, calculate risk as (entry - candle low) and invest risk_pct of total equity.
       4. Set a stop loss at the candle low and a take profit based on risk_reward.
-      5. Exit early if the price falls below the 9-SMA (a Moon Dev safety signal ✨).
+      5. Exit early if the price falls below the 9-SMA (a safety signal ✨).
     """
     # Optimization parameters: using whole-number percentages for easier optimization via range()
     gap_pct_perc = 2     # e.g., 2 -> 2% gap up

@@ -9,7 +9,7 @@ change your x y coordinates by using the script in the scripts folder called fin
 """
 
 """
-🚀 Moon Dev's Code Executor Agent
+Lumix Code Executor Agent
 Moves to position, executes code, and captures screenshot
 
 1 - move mouse to code editor and hit command + return to run the code

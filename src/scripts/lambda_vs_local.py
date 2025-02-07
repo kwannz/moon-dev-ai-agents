@@ -38,7 +38,7 @@ def calculate_costs():
     years_to_breakeven = months_to_breakeven / 12
     
     # Print results
-    print(f"🌙 MoonDev's AI Cost Calculator")
+    print(f"Lumix AI Cost Calculator")
     print(f"\n💰 Lambda Labs Costs:")
     print(f"Daily cost: ${daily_lambda_cost:.2f}")
     print(f"Weekly cost: ${weekly_lambda_cost:.2f}")

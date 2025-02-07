@@ -1,6 +1,5 @@
 """
-🌙 Moon Dev's Gemini Model Implementation
-Built with love by Moon Dev 🚀
+Lumix Gemini Model Implementation
 """
 
 import google.generativeai as genai
@@ -66,4 +65,4 @@ class GeminiModel(BaseModel):
     
     @property
     def model_type(self) -> str:
-        return "gemini" 
+        return "gemini"  

@@ -36,5 +36,5 @@ Notes:
 - Implementing proper risk management (fixed % risk per trade)
 - Using pandas_ta for indicators
 - Adding print statements for debugging
-- Including Moon Dev easter eggs 🌙✨
-- Keeping files under 800 lines 
+- Including debug messages ✨
+- Keeping files under 800 lines  

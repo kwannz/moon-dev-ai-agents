@@ -1,5 +1,5 @@
 """
-🌙 Moon Dev's Base Strategy Class
+Lumix Base Strategy Class
 All custom strategies should inherit from this
 """
 
@@ -18,4 +18,4 @@ class BaseStrategy:
                 'metadata': dict       # Optional strategy-specific data
             }
         """
-        raise NotImplementedError("Strategy must implement generate_signals()") 
+        raise NotImplementedError("Strategy must implement generate_signals()")  

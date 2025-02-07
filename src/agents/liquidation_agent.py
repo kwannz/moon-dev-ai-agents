@@ -1,10 +1,6 @@
 """
-🌊 Moon Dev's Liquidation Monitor
-Built with love by Moon Dev 🚀
-
-Luna the Liquidation Agent tracks sudden increases in liquidation volume and announces when she sees potential market moves
-
-Need an API key? for a limited time, bootcamp members get free api keys for claude, openai, helius, birdeye & quant elite gets access to the moon dev api. join here: https://algotradecamp.com
+Lumix Liquidation Monitor
+Tracks sudden increases in liquidation volume and announces potential market moves based on volume analysis.
 """
 
 import os
@@ -18,7 +14,7 @@ from pathlib import Path
 from src.models import model_factory
 from src import nice_funcs as n
 from src import nice_funcs_hl as hl
-from src.agents.api import MoonDevAPI
+from src.agents.api import LumixAPI
 from collections import deque
 from src.agents.base_agent import BaseAgent
 import traceback
@@ -82,10 +78,10 @@ Consider the ratio of long vs short liquidations and their relative changes
 """
 
 class LiquidationAgent(BaseAgent):
-    """Luna the Liquidation Monitor 🌊"""
+    """Lumix Liquidation Monitor"""
     
     def __init__(self):
-        """Initialize Luna the Liquidation Agent"""
+        """Initialize Lumix Liquidation Agent"""
         super().__init__('liquidation')
         
         # Set AI parameters
@@ -120,7 +116,7 @@ class LiquidationAgent(BaseAgent):
                 else:
                     raise ValueError(f"Failed to initialize model after {max_retries} attempts")
         
-        self.api = MoonDevAPI()
+        self.api = LumixAPI()
         
         # Create data directories if they don't exist
         self.audio_dir = PROJECT_ROOT / "src" / "audio"
@@ -132,7 +128,7 @@ class LiquidationAgent(BaseAgent):
         self.history_file = self.data_dir / "liquidation_history.csv"
         self.load_history()
         
-        print("🌊 Luna the Liquidation Agent initialized!")
+        print("Lumix Liquidation Agent initialized!")
         print(f"🎯 Alerting on liquidation increases above +{LIQUIDATION_THRESHOLD*100:.0f}% from previous")
         print(f"📊 Analyzing last {LIQUIDATION_ROWS} liquidation events")
         print(f"📈 Using {LOOKBACK_BARS} {TIMEFRAME} candles for market context")
@@ -230,7 +226,7 @@ class LiquidationAgent(BaseAgent):
                 
                 # Print fun box with liquidation info
                 print("\n" + "╔" + "═" * 70 + "╗")
-                print("║                🌙 Moon Dev's Liquidation Party 💦                 ║")
+                print("║                Lumix Liquidation Analysis                 ║")
                 print("╠" + "═" * 70 + "╣")
                 
                 # Format each line based on which window is active
@@ -404,7 +400,7 @@ class LiquidationAgent(BaseAgent):
                     change_msg = f"down {abs(pct_change):.1f}%"
                 
                 message = (
-                    f"ayo moon dev seven seven seven! "
+                    f"Alert! "
                     f"Massive {liq_type} liquidations detected! "
                     f"{change_msg} in the last period! "
                     f"AI suggests {analysis['action']} with {analysis['confidence']}% confidence 🌙"
@@ -509,7 +505,7 @@ class LiquidationAgent(BaseAgent):
                                     
                                     # Print detailed analysis
                                     print("\n" + "╔" + "═" * 50 + "╗")
-                                    print("║        🌙 Moon Dev's Liquidation Analysis 💦       ║")
+                                    print("║        Lumix Liquidation Analysis       ║")
                                     print("╠" + "═" * 50 + "╣")
                                     print(f"║  Action: {analysis['action']:<41} ║")
                                     print(f"║  Confidence: {analysis['confidence']}%{' '*36} ║")
@@ -536,7 +532,7 @@ class LiquidationAgent(BaseAgent):
                 time.sleep(CHECK_INTERVAL_MINUTES * 60)
                 
             except KeyboardInterrupt:
-                print("\n👋 Luna the Liquidation Agent shutting down gracefully...")
+                print("\nLumix Liquidation Agent shutting down gracefully...")
                 break
             except Exception as e:
                 print(f"❌ Error in main loop: {str(e)}")

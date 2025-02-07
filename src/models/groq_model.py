@@ -1,6 +1,5 @@
 """
-🌙 Moon Dev's Groq Model Implementation
-Built with love by Moon Dev 🚀
+Lumix Groq Model Implementation
 """
 
 from groq import Groq
@@ -73,7 +72,7 @@ class GroqModel(BaseModel):
     
     def __init__(self, api_key: str, model_name: str = "mixtral-8x7b-32768", **kwargs):
         try:
-            cprint(f"\n🌙 Moon Dev's Groq Model Initialization", "cyan")
+            cprint(f"\nLumix Groq Model Initialization", "cyan")
             
             # Validate API key
             if not api_key or len(api_key.strip()) == 0:
@@ -215,4 +214,4 @@ class GroqModel(BaseModel):
     
     @property
     def model_type(self) -> str:
-        return "groq" 
+        return "groq"  

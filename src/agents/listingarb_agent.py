@@ -3,7 +3,7 @@ Listing Arbitrage Agent
 Monitors and analyzes new token listings for arbitrage opportunities
 
 Created by Lumix 🌙
-For updates: https://github.com/kwannz/moon-dev-ai-agents
+For updates: https://github.com/kwannz/lumix-ai-agents
 """
 
 import os

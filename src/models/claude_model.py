@@ -1,6 +1,5 @@
 """
-🌙 Moon Dev's Claude Model Implementation
-Built with love by Moon Dev 🚀
+Lumix Claude Model Implementation
 """
 
 from anthropic import Anthropic
@@ -65,4 +64,4 @@ class ClaudeModel(BaseModel):
     
     @property
     def model_type(self) -> str:
-        return "claude" 
+        return "claude"  

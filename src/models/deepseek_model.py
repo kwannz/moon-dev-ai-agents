@@ -1,6 +1,5 @@
 """
-🌙 Moon Dev's DeepSeek Model Implementation
-Built with love by Moon Dev 🚀
+Lumix DeepSeek Model Implementation
 """
 
 from openai import OpenAI
@@ -70,4 +69,4 @@ class DeepSeekModel(BaseModel):
     
     @property
     def model_type(self) -> str:
-        return "deepseek" 
+        return "deepseek"  

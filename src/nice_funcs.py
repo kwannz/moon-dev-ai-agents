@@ -771,7 +771,7 @@ def delete_dont_overtrade_file():
 
 def supply_demand_zones(token_address, timeframe, limit):
 
-    print('starting moons supply and demand zone calculations..')
+    print('starting supply and demand zone calculations..')
 
     sd_df = pd.DataFrame()
 
@@ -794,7 +794,7 @@ def supply_demand_zones(token_address, timeframe, limit):
 
     supp = df.iloc[-1]['support']
     resis = df.iloc[-1]['resis']
-    #print(f'this is moons support for 1h {supp_1h} this is resis: {resis_1h}')
+    #print(f'this is support for 1h {supp_1h} this is resis: {resis_1h}')
 
     df['supp_lo'] = df[:-2]['Low'].min()
     supp_lo = df.iloc[-1]['supp_lo']
