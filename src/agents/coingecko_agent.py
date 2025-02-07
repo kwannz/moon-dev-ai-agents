@@ -245,7 +245,7 @@ load_dotenv()
 def print_banner():
     """Print a fun colorful banner"""
     cprint("\n" + "="*70, "white", "on_blue")
-    cprint("🌙 🎮 Lumix Crypto Trading Game! 🎮 🌙", "white", "on_magenta", attrs=["bold"])
+    cprint("✨ 🎮 Lumix Crypto Trading Game! 🎮 ✨", "white", "on_magenta", attrs=["bold"])
     cprint("="*70 + "\n", "white", "on_blue")
 
 def print_section(title: str, color: str = "on_blue"):
@@ -362,7 +362,7 @@ Remember to format your response like this:
 💰 Portfolio Impact:
 [How this helps reach our $10M goal]
 
-🌙 Lumix Trading Wisdom:
+✨ Lumix Trading Wisdom:
 [Trading insights and analysis]
 """
             
@@ -762,7 +762,7 @@ def main():
             round_number += 1
             
     except KeyboardInterrupt:
-        cprint("\n👋 Thanks for playing Lumix Trading Game! 🌙", "white", "on_magenta", attrs=["bold"])
+        cprint("\n👋 Thanks for playing Lumix Trading Game! ✨", "white", "on_magenta", attrs=["bold"])
     except Exception as e:
         cprint(f"\n❌ Game Error: {str(e)}", "white", "on_red")
 

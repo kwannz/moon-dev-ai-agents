@@ -34,6 +34,6 @@ if __name__ == '__main__':
         stream=False
     )
 
-    print(f"🌙 Lumix DeepSeek Response:")
+    print(f"✨ Lumix DeepSeek Response:")
     print(f"🤖 Prompt: {PROMPT}")
     print(f"✨ Response: {response.choices[0].message.content}")

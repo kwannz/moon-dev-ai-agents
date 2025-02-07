@@ -25,7 +25,7 @@ os.makedirs(CHARTS_DIR, exist_ok=True)
 
 def load_and_clean_data(file_path):
     """Load and clean the data from CSV"""
-    print(f"🌙 Loading data from {file_path}")
+    print(f"✨ Loading data from {file_path}")
     df = pd.read_csv(file_path)
     
     # Clean column names - remove spaces and convert to lowercase
@@ -85,11 +85,11 @@ class ATRMeanReversion(Strategy):
         curr_open = self.data.Open[-1]
         
         # Print current candle info
-        print(f"🌙✨ [BAR] Current Candle >> Open: {curr_open:.2f}, High: {self.data.High[-1]:.2f}, "
+        print(f"✨✨ [BAR] Current Candle >> Open: {curr_open:.2f}, High: {self.data.High[-1]:.2f}, "
               f"Low: {self.data.Low[-1]:.2f}, Close: {curr_close:.2f}")
         
         # Print Keltner Channel levels
-        print(f"🌙✨ [LEVELS] Upper: {self.kc_upper[-1]:.2f}, Lower: {self.kc_lower[-1]:.2f}, "
+        print(f"✨✨ [LEVELS] Upper: {self.kc_upper[-1]:.2f}, Lower: {self.kc_lower[-1]:.2f}, "
               f"ATR: {(self.kc_upper[-1] - self.kc_lower[-1])/3:.2f}")
         
         try:
@@ -157,7 +157,7 @@ if __name__ == "__main__":
     
     try:
         stats = bt.run()
-        print("\n🌙✨ Backtest Results:")
+        print("\n✨✨ Backtest Results:")
         print(f"Return: {stats['Return [%]']:.2f}%")
         print(f"Sharpe Ratio: {stats['Sharpe Ratio']:.2f}")
         print(f"Max Drawdown: {stats['Max. Drawdown [%]']:.2f}%")

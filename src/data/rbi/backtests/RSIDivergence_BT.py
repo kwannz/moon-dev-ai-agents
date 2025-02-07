@@ -25,7 +25,7 @@ os.makedirs(CHARTS_DIR, exist_ok=True)
 
 def load_and_clean_data(file_path):
     """Load and clean the data from CSV"""
-    print(f"🌙 Loading data from {file_path}")
+    print(f"✨ Loading data from {file_path}")
     df = pd.read_csv(file_path)
     
     # Clean column names - remove spaces and convert to lowercase
@@ -121,10 +121,10 @@ class RSIDivergence(Strategy):
         """Define trading logic for each candle"""
         
         # Print current candle info
-        print(f"🌙✨ [BAR] Current Candle >> Open: {self.data.Open[-1]:.2f}, "
+        print(f"✨✨ [BAR] Current Candle >> Open: {self.data.Open[-1]:.2f}, "
               f"High: {self.data.High[-1]:.2f}, Low: {self.data.Low[-1]:.2f}, "
               f"Close: {self.data.Close[-1]:.2f}")
-        print(f"🌙✨ [RSI] Current: {self.rsi[-1]:.2f}")
+        print(f"✨✨ [RSI] Current: {self.rsi[-1]:.2f}")
         
         # Skip if not enough data
         if self.rsi[-1] == 0 or np.isnan(self.rsi[-1]):
@@ -180,7 +180,7 @@ if __name__ == "__main__":
     
     try:
         stats = bt.run()
-        print("\n🌙✨ Backtest Results:")
+        print("\n✨✨ Backtest Results:")
         print(f"Return: {stats['Return [%]']:.2f}%")
         print(f"Sharpe Ratio: {stats['Sharpe Ratio']:.2f}")
         print(f"Max Drawdown: {stats['Max. Drawdown [%]']:.2f}%")

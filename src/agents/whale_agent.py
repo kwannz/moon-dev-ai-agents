@@ -500,7 +500,7 @@ class WhaleAgent(BaseAgent):
                     # Get first line of analysis by splitting and taking first element
                     analysis_first_line = analysis['analysis'].split('\n')[0] if analysis['analysis'] else ""
                     message += f" | AI suggests {analysis['action']} with {analysis['confidence']}% confidence. "
-                    message += f"Analysis: {analysis_first_line} 🌙"
+                    message += f"Analysis: {analysis_first_line} ✨"
             
             # Return both message and whale status
             return message, is_whale

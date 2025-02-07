@@ -27,7 +27,7 @@ def vwap_func(close, high, low, volume):
 # ------------------------------
 class GapAndGoProfiter(Strategy):
     """
-    GapAndGoProfiter Strategy 🌙🚀
+    GapAndGoProfiter Strategy ✨🚀
     
     Parameters (to be optimized):
         gap_pct_perc   - Gap percentage in whole numbers compared to previous close (default=2 means 2%)
@@ -57,7 +57,7 @@ class GapAndGoProfiter(Strategy):
                                  self.data.Low, self.data.Volume)
         
         # Debug initialization print
-        print("🌙✨ Initialized GapAndGoProfiter with parameters: gap_pct = {:.2%}, risk_pct = {:.2%}, risk_reward = {}".format(
+        print("✨✨ Initialized GapAndGoProfiter with parameters: gap_pct = {:.2%}, risk_pct = {:.2%}, risk_reward = {}".format(
             self.gap_pct, self.risk_pct, self.risk_reward))
     
     def next(self):
@@ -79,7 +79,7 @@ class GapAndGoProfiter(Strategy):
         # Check for a gap up relative to the previous candle's close.
         if not self.position:
             if current_open >= previous_close * (1 + self.gap_pct):
-                print("🌙🚀 Gap detected! Current Open ({}) is >= {} (%) gap above Previous Close ({}).".format(
+                print("✨🚀 Gap detected! Current Open ({}) is >= {} (%) gap above Previous Close ({}).".format(
                     current_open, self.gap_pct_perc, previous_close))
                 # Now wait for a pullback candle touching SMA9 or VWAP AND making a new high
                 if (current_low <= self.sma9[-1] * 1.001 or current_low <= self.vwap[-1] * 1.001) and (current_high > prev_high):
@@ -87,7 +87,7 @@ class GapAndGoProfiter(Strategy):
                     stop_loss = current_low
                     risk = entry_price - stop_loss
                     if risk <= 0:
-                        print("🌙❌ Risk calculation error: risk (entry-stop_loss) <= 0. Skipping entry.")
+                        print("✨❌ Risk calculation error: risk (entry-stop_loss) <= 0. Skipping entry.")
                         return
 
                     # Calculate risk amount based on total account equity. Our cash: 1,000,000.
@@ -97,13 +97,13 @@ class GapAndGoProfiter(Strategy):
                     position_size = int(round(position_size))
                     
                     if position_size <= 0:
-                        print("🌙❌ Calculated position size is 0. Skipping entry.")
+                        print("✨❌ Calculated position size is 0. Skipping entry.")
                         return
                     
                     # Calculate take profit level using the risk_reward ratio.
                     take_profit = entry_price + risk * self.risk_reward
 
-                    print("🌙🚀 ENTRY SIGNAL: BUY {} units at price {} | Stop Loss: {} | Take Profit: {}".format(
+                    print("✨🚀 ENTRY SIGNAL: BUY {} units at price {} | Stop Loss: {} | Take Profit: {}".format(
                         position_size, entry_price, stop_loss, take_profit))
                     
                     # Place a buy order via backtesting.py's order function
@@ -115,7 +115,7 @@ class GapAndGoProfiter(Strategy):
         # Also exit early if we are in a position and the price falls below the 9-SMA (safety signal).
         if self.position:
             if current_close < self.sma9[-1]:
-                print("🌙✨ EXIT SIGNAL: Price ({}) dipped below SMA9 ({}). Exiting position.".format(
+                print("✨✨ EXIT SIGNAL: Price ({}) dipped below SMA9 ({}). Exiting position.".format(
                     current_close, self.sma9[-1]))
                 self.position.close()
 
@@ -127,7 +127,7 @@ def run_backtest():
     # DATA HANDLING
     # ------------------------------
     data_path = str(Path(__file__).parent.parent / "BTC-USD-15m.csv")
-    print("🌙 Reading data from: {}".format(data_path))
+    print("✨ Reading data from: {}".format(data_path))
     data = pd.read_csv(data_path)
     
     # Clean column names: strip spaces and lower-case, then drop unnamed columns.
@@ -142,7 +142,7 @@ def run_backtest():
     if 'DateTime' in data.columns:
         data['DateTime'] = pd.to_datetime(data['DateTime'])
     
-    print("🌙 Data columns after cleaning: ", list(data.columns))
+    print("✨ Data columns after cleaning: ", list(data.columns))
     
     # ------------------------------
     # INITIAL BACKTEST
@@ -150,22 +150,22 @@ def run_backtest():
     initial_cash = 1000000  # size should be 1,000,000
     bt = Backtest(data, GapAndGoProfiter, cash=initial_cash, commission=0.0, exclusive_orders=True)
     
-    print("🌙🚀 Running initial backtest with default parameters...")
+    print("✨🚀 Running initial backtest with default parameters...")
     stats = bt.run()
-    print("🌙 Full Stats:\n", stats)
-    print("🌙 Strategy details:\n", stats._strategy)
+    print("✨ Full Stats:\n", stats)
+    print("✨ Strategy details:\n", stats._strategy)
     
     # Save initial chart to charts directory
     strategy_name = "GapAndGoProfiter"
     chart_file = os.path.join(str(Path(__file__).parent.parent / "charts"),
                               f"{strategy_name}_initial_chart.html")
-    print("🌙 Saving initial performance chart to: {}".format(chart_file))
+    print("✨ Saving initial performance chart to: {}".format(chart_file))
     bt.plot(filename=chart_file, open_browser=False)
     
     # ------------------------------
     # PARAMETER OPTIMIZATION
     # ------------------------------
-    print("🌙🚀 Starting parameter optimization...")
+    print("✨🚀 Starting parameter optimization...")
     optimized_stats = bt.optimize(
         gap_pct_perc=range(1, 5, 1),      # try gap percentages 1% to 4%
         risk_pct_perc=range(1, 3, 1),       # try risk between 1% and 2%
@@ -175,12 +175,12 @@ def run_backtest():
         return_stats=True
     )
     
-    print("🌙 Optimized Result:\n", optimized_stats)
+    print("✨ Optimized Result:\n", optimized_stats)
     
     # Save optimized chart to charts directory (using best parameters)
     chart_file_opt = os.path.join(str(Path(__file__).parent.parent / "charts"),
                                   f"{strategy_name}_optimized_chart.html")
-    print("🌙 Saving optimized performance chart to: {}".format(chart_file_opt))
+    print("✨ Saving optimized performance chart to: {}".format(chart_file_opt))
     bt.plot(filename=chart_file_opt, open_browser=False)
 
 if __name__ == '__main__':

@@ -40,7 +40,7 @@ class AtrReversion(Strategy):
         # Lower Channel = EMA - keltner_mult * ATR
         self.keltner_upper = self.I(lambda ema, atr: ema + self.keltner_mult * atr, self.ema, self.atr)
         self.keltner_lower = self.I(lambda ema, atr: ema - self.keltner_mult * atr, self.ema, self.atr)
-        print("🌙 [INIT] Indicators set up: ATR period =", self.atr_period,
+        print("✨ [INIT] Indicators set up: ATR period =", self.atr_period,
               ", EMA period =", self.ema_period, ", Keltner Multiplier =", self.keltner_mult)
 
     def next(self):
@@ -61,10 +61,10 @@ class AtrReversion(Strategy):
         if self.position:
             # Exit logic: exit when price reverts back near the EMA midline.
             if self.position.is_short and C < self.ema[-1]:
-                print("🌙💥 [EXIT] Short position closed! Price has reverted near the EMA midline.")
+                print("✨💥 [EXIT] Short position closed! Price has reverted near the EMA midline.")
                 self.position.close()
             elif self.position.is_long and C > self.ema[-1]:
-                print("🌙💥 [EXIT] Long position closed! Price has reverted near the EMA midline.")
+                print("✨💥 [EXIT] Long position closed! Price has reverted near the EMA midline.")
                 self.position.close()
             return  # Do not open a new trade while in a position
 
@@ -86,7 +86,7 @@ class AtrReversion(Strategy):
         if prev_close > prev_keltner_upper and C < self.ema[-1]:
             # Calculate order size: trade_fraction is less than 1 so we treat it as a fraction of equity.
             order_size = self.trade_fraction  # using fractional sizing
-            print("🌙 [ENTRY] Short trade signal detected. Prev close:", prev_close,
+            print("✨ [ENTRY] Short trade signal detected. Prev close:", prev_close,
                   " > Prev Upper:", prev_keltner_upper, " | Current C:", C)
             # For protection, set stop loss at the high of the reversal candle (price level)
             stop_level = prev_high
@@ -98,7 +98,7 @@ class AtrReversion(Strategy):
         #   and current candle price shows reversal (i.e. current close above EMA).
         elif prev_close < prev_keltner_lower and C > self.ema[-1]:
             order_size = self.trade_fraction  # fractional sizing
-            print("🌙 [ENTRY] Long trade signal detected. Prev close:", prev_close,
+            print("✨ [ENTRY] Long trade signal detected. Prev close:", prev_close,
                   " < Prev Lower:", prev_keltner_lower, " | Current C:", C)
             # Stop loss at the low of the reversal candle (price level)
             stop_level = prev_low
@@ -113,7 +113,7 @@ class AtrReversion(Strategy):
 #     data = pd.read_csv('your_data.csv', parse_dates=True, index_col='Date')
 #     bt = Backtest(data, AtrReversion, cash=100000, commission=.0005)
 #     stats = bt.run()
-#     print("🌙 [STATS] Backtest results:")
+#     print("✨ [STATS] Backtest results:")
 #     print(stats)
 #     bt.plot()
 

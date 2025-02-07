@@ -60,14 +60,14 @@ class StructuralDemandReversal(Strategy):
         stop_loss = demand_zone[0] - 0.01
         take_profit = self.find_swing_high(demand_zone[0], demand_zone[1])
         self.buy(size=size, exectype=self.OrderTypes.StopLimit, price=demand_zone[0], valid=stop_loss)
-        print(f"🌙 Buying at demand zone: {demand_zone} | Stop Loss: {stop_loss} | Take Profit: {take_profit} | Size: {size:.2f} 💰")
+        print(f"✨ Buying at demand zone: {demand_zone} | Stop Loss: {stop_loss} | Take Profit: {take_profit} | Size: {size:.2f} 💰")
 
     def sell_signal(self, supply_zone: Tuple[float, float]):
         size = self.get_position_size(supply_zone[1], supply_zone[1] + 0.01)
         stop_loss = supply_zone[1] + 0.01
         take_profit = self.find_swing_low(supply_zone[0], supply_zone[1])
         self.sell(size=size, exectype=self.OrderTypes.StopLimit, price=supply_zone[1], valid=stop_loss)
-        print(f"🌙 Selling at supply zone: {supply_zone} | Stop Loss: {stop_loss} | Take Profit: {take_profit} | Size: {size:.2f} 💰")
+        print(f"✨ Selling at supply zone: {supply_zone} | Stop Loss: {stop_loss} | Take Profit: {take_profit} | Size: {size:.2f} 💰")
 
     def get_position_size(self, entry_price: float, stop_loss: float) -> float:
         risk_per_trade = self.broker.cash * self.params.risk_pct / 100

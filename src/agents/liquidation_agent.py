@@ -403,7 +403,7 @@ class LiquidationAgent(BaseAgent):
                     f"Alert! "
                     f"Massive {liq_type} liquidations detected! "
                     f"{change_msg} in the last period! "
-                    f"AI suggests {analysis['action']} with {analysis['confidence']}% confidence 🌙"
+                    f"AI suggests {analysis['action']} with {analysis['confidence']}% confidence ✨"
                 )
                 return message
             return None

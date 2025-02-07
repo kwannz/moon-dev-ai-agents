@@ -35,7 +35,7 @@ class AtrReversion(Strategy):
         # Upper Channel = EMA + keltner_mult * ATR; Lower Channel = EMA - keltner_mult * ATR.
         self.keltner_upper = self.I(lambda ema, atr: ema + self.keltner_mult * atr, self.ema, self.atr)
         self.keltner_lower = self.I(lambda ema, atr: ema - self.keltner_mult * atr, self.ema, self.atr)
-        print("🌙 [INIT] Indicators set up: ATR period =", self.atr_period,
+        print("✨ [INIT] Indicators set up: ATR period =", self.atr_period,
               ", EMA period =", self.ema_period, ", Keltner Multiplier =", self.keltner_mult)
 
     def next(self):
@@ -57,11 +57,11 @@ class AtrReversion(Strategy):
             # Exit logic: you might want to exit when price reverts to the EMA midline.
             # For short positions, we exit when price falls below the EMA.
             if self.position.is_short and C < self.ema[-1]:
-                print("🌙💥 [EXIT] Short position closed! Price has reverted near the EMA midline.")
+                print("✨💥 [EXIT] Short position closed! Price has reverted near the EMA midline.")
                 self.position.close()
             # For long positions, exit when price rises above the EMA.
             elif self.position.is_long and C > self.ema[-1]:
-                print("🌙💥 [EXIT] Long position closed! Price has reverted near the EMA midline.")
+                print("✨💥 [EXIT] Long position closed! Price has reverted near the EMA midline.")
                 self.position.close()
             return  # Do not open a new trade while in a position
 

@@ -64,7 +64,7 @@ class StoicReversal(Strategy):
                            fastd_period=self.stoch_fastd_period,
                            fastd_matype=self.stoch_fastd_matype)[1],
             name="stoch_d")
-        print("🌙✨ [INIT] STOCH RSI indicators (fast %K and fast %D) calculated!")
+        print("✨✨ [INIT] STOCH RSI indicators (fast %K and fast %D) calculated!")
 
     def next(self):
         # Get the latest closing price
@@ -85,7 +85,7 @@ class StoicReversal(Strategy):
                     position_size = risk_amount / risk_per_unit
                 else:
                     position_size = 0
-                print(f"🌙🚀 [ENTRY] BUY signal detected at price {price:.2f}!")
+                print(f"✨🚀 [ENTRY] BUY signal detected at price {price:.2f}!")
                 print(f"   ➤ Stop Loss set at {stop_loss_price:.2f}, Take Profit at {take_profit_price:.2f}")
                 print(f"   ➤ Calculated position size: {position_size:.4f} (risk_amount: {risk_amount:.2f})")
                 self.buy(size=position_size, sl=stop_loss_price, tp=take_profit_price)
@@ -101,7 +101,7 @@ class StoicReversal(Strategy):
                 # Crossover condition using pure array indexing:
                 if self.stoch_k[-2] < self.stoch_d[-2] and self.stoch_k[-1] > self.stoch_d[-1]:
                     if self.stoch_k[-1] > self.stoch_overbought:
-                        print(f"🌙✨ [EXIT] SELL signal triggered at price {price:.2f}!")
+                        print(f"✨✨ [EXIT] SELL signal triggered at price {price:.2f}!")
                         print("   ➤ STOCH RSI crossover and overbought condition confirmed!")
                         self.position.close()
 
@@ -110,7 +110,7 @@ class StoicReversal(Strategy):
 #  MAIN BACKTEST EXECUTION
 # ─────────────────────────────────────────────────────────────
 if __name__ == '__main__':
-    print("🌙🚀 [MAIN] Starting Stoic Reversal backtest...")
+    print("✨🚀 [MAIN] Starting Stoic Reversal backtest...")
 
     # ─────────────────────────────────────────────────────────────
     # Load and preprocess data.
@@ -120,7 +120,7 @@ if __name__ == '__main__':
     data_path = str(Path(__file__).parent.parent / "BTC-USD-15m.csv")
     try:
         data = pd.read_csv(data_path)
-        print("🌙✨ [DATA] CSV loaded successfully!")
+        print("✨✨ [DATA] CSV loaded successfully!")
     except Exception as e:
         print(f"🚀 [ERROR] Failed to load data: {e}")
         raise
@@ -142,35 +142,35 @@ if __name__ == '__main__':
     if 'datetime' in data.columns:
         data['datetime'] = pd.to_datetime(data['datetime'])
         data.set_index('datetime', inplace=True)
-    print("🌙✨ [DATA] Data preprocessing complete. Required columns: 'Open', 'High', 'Low', 'Close', 'Volume'.")
+    print("✨✨ [DATA] Data preprocessing complete. Required columns: 'Open', 'High', 'Low', 'Close', 'Volume'.")
 
     # ─────────────────────────────────────────────────────────────
     # Create the Backtest instance with starting capital of 1,000,000.
     # ─────────────────────────────────────────────────────────────
     bt = Backtest(data, StoicReversal, cash=1_000_000, commission=0.000)
-    print("🌙🚀 [BACKTEST] Backtest object created with cash = 1,000,000!")
+    print("✨🚀 [BACKTEST] Backtest object created with cash = 1,000,000!")
     
     # ─────────────────────────────────────────────────────────────
     # 3. Initial Backtest Execution
     # ─────────────────────────────────────────────────────────────
-    print("🌙✨ [RUN] Running initial backtest with default parameters...")
+    print("✨✨ [RUN] Running initial backtest with default parameters...")
     stats = bt.run()
-    print("🌙✨ [STATS] Full backtest stats:")
+    print("✨✨ [STATS] Full backtest stats:")
     print(stats)
-    print("🌙✨ [STRATEGY INFO] Strategy parameters:")
+    print("✨✨ [STRATEGY INFO] Strategy parameters:")
     print(stats._strategy)
 
     # Save the initial performance plot to the charts directory.
     chart_dir = str(Path(__file__).parent.parent / "charts")
     strategy_name = "StoicReversal"
     chart_file = os.path.join(chart_dir, f"{strategy_name}_chart.html")
-    print(f"🌙🚀 [PLOT] Saving initial performance chart to: {chart_file}")
+    print(f"✨🚀 [PLOT] Saving initial performance chart to: {chart_file}")
     bt.plot(filename=chart_file, open_browser=False)
 
     # ─────────────────────────────────────────────────────────────
     # 4. Run Parameter Optimization
     # ─────────────────────────────────────────────────────────────
-    print("🌙🚀 [OPTIMIZE] Starting optimization of strategy parameters...")
+    print("✨🚀 [OPTIMIZE] Starting optimization of strategy parameters...")
     opt_stats = bt.optimize(
         stoch_oversold=range(10, 30, 5),          # Trying oversold thresholds: 10, 15, 20, 25
         stoch_overbought=range(70, 100, 10),        # Trying overbought thresholds: 70, 80, 90
@@ -178,7 +178,7 @@ if __name__ == '__main__':
         maximize='Equity Final [$]',              # Optimize for final account equity.
         constraint=lambda p: p.stoch_overbought > p.stoch_oversold
     )
-    print("🌙✨ [OPTIMIZE STATS] Optimization complete. Best result:")
+    print("✨✨ [OPTIMIZE STATS] Optimization complete. Best result:")
     print(opt_stats)
     
     # Save the optimized performance plot.
