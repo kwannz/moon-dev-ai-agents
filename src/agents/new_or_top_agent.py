@@ -99,7 +99,7 @@ from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
 from src.models import model_factory
-from typing import Dict, List
+from typing import Dict, List, Optional
 import time
 from termcolor import colored, cprint
 import random
@@ -151,7 +151,7 @@ def print_spinner(message: str, emoji_set: List[str], color: str = 'white', bg_c
         time.sleep(0.2)
     print()  # New line after animation
 
-def print_fancy(message: str, color: str = 'white', bg_color: str = 'on_blue', emojis: List[str] = None):
+def print_fancy(message: str, color: str = 'white', bg_color: str = 'on_blue', emojis: Optional[List[str]] = None):
     """Print a message with random emojis from set"""
     if emojis:
         emoji = random.choice(emojis)
@@ -168,20 +168,26 @@ class NewOrTopAgent:
             "Content-Type": "application/json"
         }
         
-        # Initialize AI client based on model
-        if "deepseek" in AI_MODEL.lower():
-            deepseek_key = os.getenv("DEEPSEEK_KEY")
-            if deepseek_key:
-                self.ai_client = openai.OpenAI(
-                    api_key=deepseek_key,
-                    base_url=DEEPSEEK_BASE_URL
-                )
-                print(f"🚀 Using DeepSeek model: {AI_MODEL}")
-            else:
-                raise ValueError("🚨 DEEPSEEK_KEY not found in environment variables!")
-        else:
-            self.ai_client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_KEY"))
-            print(f"🤖 Using Claude model: {AI_MODEL}")
+        # Initialize Ollama model
+        print("🚀 Initializing Ollama model...")
+        self.model = None
+        max_retries = 3
+        retry_count = 0
+        
+        while self.model is None and retry_count < max_retries:
+            try:
+                self.model = model_factory.get_model("ollama", "deepseek-r1:1.5b")
+                if self.model and hasattr(self.model, 'generate_response'):
+                    break
+                raise ValueError("Could not initialize Ollama model")
+            except Exception as e:
+                print(f"⚠️ Error initializing model (attempt {retry_count + 1}/{max_retries}): {str(e)}")
+                retry_count += 1
+                if retry_count < max_retries:
+                    time.sleep(1)  # Wait before retrying
+                else:
+                    raise ValueError(f"Failed to initialize model after {max_retries} attempts")
+        print("🚀 Using Ollama model: deepseek-r1:1.5b")
             
         print_fancy("🌙 Moon Dev's New & Top Coins Agent Initialized! 🌟", 'white', 'on_magenta', SUCCESS_EMOJIS)
         
@@ -365,16 +371,22 @@ class NewOrTopAgent:
             print_fancy("🧠 AI Agent Processing...", 'yellow', 'on_blue', SPINNER_EMOJIS)
             
             # Get AI response using Ollama model
-            response = self.model.generate_response(
-                system_prompt="You are a cryptocurrency analyst.",
-                user_content=prompt,
-                temperature=0.7
-            )
-            
-            if not response:
-                raise ValueError("Failed to get model response")
+            if self.model is None:
+                print_fancy("⚠️ Model not initialized, skipping analysis", 'white', 'on_red', ERROR_EMOJIS)
+                return "Error: Model not initialized"
                 
-            analysis = str(response)
+            try:
+                response = self.model.generate_response(
+                    system_prompt="You are a cryptocurrency analyst.",
+                    user_content=prompt,
+                    temperature=0.7
+                )
+                if not response:
+                    raise ValueError("Failed to get model response")
+                analysis = str(response)
+            except Exception as e:
+                print_fancy(f"❌ Error in AI analysis: {str(e)}", 'white', 'on_red', ERROR_EMOJIS)
+                return f"Error in analysis: {str(e)}"
                 
             # Extract and display recommendation prominently
             recommendation = self.extract_recommendation(analysis)

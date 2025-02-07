@@ -153,14 +153,22 @@ class FundingArbAgent(BaseAgent):
             """
             
             # Get AI analysis using model factory
-            response = self.model.generate_response(
-                system_prompt="You are a funding arbitrage analyst. You must respond in exactly 2 lines: ARBITRAGE/SKIP and your reason.",
-                user_content=FUNDING_ANALYSIS_PROMPT.format(
-                    market_data=context,
-                    threshold=YEARLY_FUNDING_THRESHOLD
-                ),
-                temperature=self.ai_temperature
-            )
+            if self.model is None:
+                print("⚠️ Model not initialized, skipping funding analysis")
+                return None
+                
+            try:
+                response = self.model.generate_response(
+                    system_prompt="You are a funding arbitrage analyst. You must respond in exactly 2 lines: ARBITRAGE/SKIP and your reason.",
+                    user_content=FUNDING_ANALYSIS_PROMPT.format(
+                        market_data=context,
+                        threshold=YEARLY_FUNDING_THRESHOLD
+                    ),
+                    temperature=self.ai_temperature
+                )
+            except Exception as e:
+                print(f"❌ Error getting AI analysis: {str(e)}")
+                return None
             
             if not response:
                 print("❌ No response from AI")

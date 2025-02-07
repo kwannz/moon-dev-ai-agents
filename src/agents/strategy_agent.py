@@ -101,14 +101,25 @@ class StrategyAgent:
             # Format signals for prompt
             signals_str = json.dumps(signals, indent=2)
             
-            response = self.model.generate_response(
-                system_prompt="You are Moon Dev's Strategy Validation Assistant. Analyze strategy signals and validate recommendations.",
-                user_content=STRATEGY_EVAL_PROMPT.format(
-                    strategy_signals=signals_str,
-                    market_data=market_data
-                ),
-                temperature=AI_TEMPERATURE
-            )
+            if self.model is None:
+                print("⚠️ Model not initialized, skipping signal evaluation")
+                return None
+                
+            try:
+                response = self.model.generate_response(
+                    system_prompt="You are Moon Dev's Strategy Validation Assistant. Analyze strategy signals and validate recommendations.",
+                    user_content=STRATEGY_EVAL_PROMPT.format(
+                        strategy_signals=signals_str,
+                        market_data=market_data
+                    ),
+                    temperature=AI_TEMPERATURE
+                )
+                if not response:
+                    print("❌ No response from model")
+                    return None
+            except Exception as e:
+                print(f"❌ Error getting AI analysis: {str(e)}")
+                return None
             if not response:
                 return None
                 
@@ -290,4 +301,4 @@ class StrategyAgent:
                 
         except Exception as e:
             print(f"❌ Error executing strategy signals: {str(e)}")
-            print("🔧 Moon Dev suggests checking the logs and trying again!")      
+            print("🔧 Moon Dev suggests checking the logs and trying again!")        

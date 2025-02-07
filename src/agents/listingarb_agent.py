@@ -270,7 +270,7 @@ class AIAgent:
         with open(self.memory_file, 'w') as f:
             json.dump(self.memory, f, indent=2)
             
-    def analyze(self, token_data: Dict, other_agent_analysis: str = None) -> str:
+    def analyze(self, token_data: Dict, other_agent_analysis: str | None = None) -> str:
         """Analyze a token and provide insights"""
         try:
             # Validate token_data has required fields
@@ -326,11 +326,19 @@ Focus on:
 Remember to reference specific data points from the OHLCV table in your analysis!"""
             
             # Get AI response using model factory
-            response = self.model.generate_response(
-                system_prompt=system_prompt,
-                user_content=user_prompt,
-                temperature=0.7
-            )
+            if self.model is None:
+                print("⚠️ Model not initialized, skipping token analysis")
+                return "Error: Model not initialized"
+                
+            try:
+                response = self.model.generate_response(
+                    system_prompt=system_prompt,
+                    user_content=user_prompt,
+                    temperature=0.7
+                )
+            except Exception as e:
+                print(f"❌ Error getting AI analysis: {str(e)}")
+                return f"Error analyzing token: {str(e)}"
             
             if not response:
                 print("❌ No response from AI")

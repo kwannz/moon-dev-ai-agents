@@ -91,7 +91,9 @@ def patched_client(*args, **kwargs):
 
 httpx.Client = patched_client
 
-# imports 
+# imports
+from .base_agent import BaseAgent
+
 class SentimentAgent(BaseAgent):
     def __init__(self):
         """Initialize the Sentiment Agent"""
@@ -107,8 +109,13 @@ class SentimentAgent(BaseAgent):
         
         # Load the sentiment model at initialization
         cprint("🤖 Loading sentiment model...", "cyan")
-        self.init_sentiment_model()
-        cprint("✨ Sentiment model loaded!", "green")
+        try:
+            self.init_sentiment_model()
+            cprint("✨ Sentiment model loaded!", "green")
+        except Exception as e:
+            cprint(f"⚠️ Error loading sentiment model: {str(e)}", "yellow")
+            self.tokenizer = None
+            self.model = None
         cprint("🌙 Moon Dev's Sentiment Agent initialized! (Twitter functionality disabled)", "green")
         
     def init_sentiment_model(self):
@@ -130,7 +137,15 @@ class SentimentAgent(BaseAgent):
             
         try:
             if self.tokenizer is None or self.model is None:
-                self.init_sentiment_model()
+                try:
+                    self.init_sentiment_model()
+                except Exception:
+                    cprint("⚠️ Could not initialize sentiment model, returning neutral sentiment", "yellow")
+                    return 0.0
+                    
+            if self.tokenizer is None or self.model is None:
+                cprint("⚠️ Model initialization failed, returning neutral sentiment", "yellow")
+                return 0.0
                 
             sentiments = []
             batch_size = 8  # Process in small batches to avoid memory issues

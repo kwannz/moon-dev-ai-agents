@@ -264,11 +264,22 @@ class RiskAgent(BaseAgent):
             
             # Use model factory
             print("🤖 Using model for analysis...")
-            response = self.model.generate_response(
-                system_prompt="You are Moon Dev's Risk Management AI. Analyze positions and respond with OVERRIDE or RESPECT_LIMIT.",
-                user_content=prompt,
-                temperature=self.ai_temperature
-            )
+            if self.model is None:
+                print("⚠️ Model not initialized, skipping analysis")
+                return False
+                
+            try:
+                response = self.model.generate_response(
+                    system_prompt="You are Moon Dev's Risk Management AI. Analyze positions and respond with OVERRIDE or RESPECT_LIMIT.",
+                    user_content=prompt,
+                    temperature=self.ai_temperature
+                )
+                if not response:
+                    print("❌ No response from model")
+                    return False
+            except Exception as e:
+                print(f"❌ Error getting AI analysis: {str(e)}")
+                return False
             
             # Handle response
             response_text = str(response) if response else "RESPECT_LIMIT: Failed to get model response"
@@ -457,11 +468,22 @@ Then explain your reasoning.
 """
             # Use model factory
             print("🤖 Using model for analysis...")
-            response = self.model.generate_response(
-                system_prompt="You are Moon Dev's Risk Management AI. Analyze the breach and decide whether to close positions.",
-                user_content=prompt,
-                temperature=self.ai_temperature
-            )
+            if self.model is None:
+                print("⚠️ Model not initialized, skipping analysis")
+                return False
+                
+            try:
+                response = self.model.generate_response(
+                    system_prompt="You are Moon Dev's Risk Management AI. Analyze the breach and decide whether to close positions.",
+                    user_content=prompt,
+                    temperature=self.ai_temperature
+                )
+                if not response:
+                    print("❌ No response from model")
+                    return False
+            except Exception as e:
+                print(f"❌ Error getting AI analysis: {str(e)}")
+                return False
             
             # Handle response
             response_text = str(response) if response else "CLOSE_ALL: Failed to get model response"
